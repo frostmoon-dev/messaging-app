@@ -8,7 +8,7 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 // Hover changes colour, never opacity: faded buttons read as disabled.
 const VARIANTS: Record<Variant, string> = {
-  primary: "pill bg-accent px-5 font-bold text-accent-foreground hover:bg-accent-hover",
+  primary: "pill bg-accent px-5 font-bold text-accent-foreground shadow-[var(--shadow-raised)] hover:bg-accent-hover",
   secondary: "pill bg-panel-strong px-5 text-foreground hover:bg-border",
   ghost: "pill bg-transparent text-foreground hover:bg-panel-strong",
   danger: "pill bg-transparent text-danger hover:bg-panel-strong",
@@ -29,7 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       transition={{ duration: 0.1 }}
       className={cn(
         "inline-flex min-h-11 items-center justify-center gap-2 px-4 text-body font-semibold whitespace-nowrap transition-colors",
-        "disabled:cursor-not-allowed disabled:bg-panel-strong disabled:text-muted",
+        "disabled:cursor-not-allowed disabled:bg-panel-strong disabled:text-muted disabled:shadow-none",
         VARIANTS[variant],
         className,
       )}
