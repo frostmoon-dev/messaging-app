@@ -10,7 +10,7 @@ import { useSignedUrl } from "@/lib/hooks/useSignedUrl";
 import { CENTERED, cropRect, type Crop } from "@/lib/storage/crop";
 import { ImageValidationError, prepareImage, type PreparedImage } from "@/lib/storage/image";
 import { addSticker, addStickerFile, listStickers, removeSticker } from "@/lib/stickers";
-import { readStickerFiles, stickerSize } from "@/lib/sticker-import";
+import { describeSeen, readStickerFiles, stickerSize } from "@/lib/sticker-import";
 import { friendlyError, MESSAGES } from "@/lib/errors";
 import type { GiphyItem, GiphyKind, GiphyPage } from "@/lib/giphy";
 import { cn, devLog } from "@/lib/utils";
@@ -95,25 +95,47 @@ function OurStickers({ onPick }: { onPick: (media: MediaToSend) => void }) {
   const importFiles = async (files: File[]) => {
     setError(null);
     setNotice(null);
-    const { stickers: found, skipped } = await readStickerFiles(files);
+    setNotice("Looking for stickers…");
+    let report: Awaited<ReturnType<typeof readStickerFiles>>;
+    try {
+      report = await readStickerFiles(files);
+    } catch (err) {
+      devLog("sticker import read failed", err);
+      setNotice(null);
+      setError("Couldn't open that file. Try a smaller export, or pick the .webp stickers directly.");
+      return;
+    }
+    const { stickers: found, skipped, seen } = report;
+    setNotice(null);
     if (!found.length) {
-      setError("No stickers found. Choose .webp stickers, a WhatsApp chat export (.zip) or a .wastickers pack.");
+      const inside = describeSeen(seen);
+      setError(
+        inside
+          ? `No stickers in there (found ${inside}). WhatsApp stickers are .webp files: export the chat where you sent them, with "Attach media".`
+          : "No stickers found. Choose .webp stickers, a WhatsApp chat export (.zip) or a .wastickers pack.",
+      );
       return;
     }
     setImporting({ done: 0, total: found.length });
     const added: StickerRow[] = [];
     let failed = 0;
+    let lastError: unknown = null;
     for (const file of found) {
       try {
         added.push(await addStickerFile(conversationId, file, await stickerSize(file.blob)));
       } catch (err) {
         devLog("sticker import failed", err);
+        lastError = err;
         failed++;
       }
       setImporting({ done: added.length + failed, total: found.length });
     }
     setStickers((prev) => [...added.reverse(), ...(prev ?? [])]);
     setImporting(null);
+    if (!added.length && lastError) {
+      setError(friendlyError(lastError, "upload"));
+      return;
+    }
     const left = skipped + failed;
     setNotice(`Added ${added.length} sticker${added.length === 1 ? "" : "s"}${left ? ` · ${left} skipped` : ""}.`);
   };

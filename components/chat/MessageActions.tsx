@@ -23,7 +23,7 @@ export function MessageActions({
   onReply: (id: string) => void;
   onClose: () => void;
 }) {
-  const { me, deleteMessage, pinned, setPinned, starred, toggleStar } = useChat();
+  const { me, deleteMessage, hideMessage, pinned, setPinned, starred, toggleStar, partner } = useChat();
   const isPinned = pinned.some((p) => p.id === message.id);
   const isStarred = starred.has(message.id);
 
@@ -41,7 +41,9 @@ export function MessageActions({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const mine = message.sender_id === me.id;
+  const deleted = Boolean(message.deleted_at);
+  // Once deleted for everyone, only "Delete for me" is left (removes the marker).
+  const mine = message.sender_id === me.id && !deleted;
   const text = message.message_type === "text" || message.message_type === "image" ? message.content : null;
 
   const copy = async () => {
@@ -55,11 +57,12 @@ export function MessageActions({
     }
   };
 
-  const remove = async () => {
+  const remove = async (mode: "everyone" | "me") => {
     setBusy(true);
     setError(null);
     try {
-      await deleteMessage(message.id);
+      if (mode === "everyone") await deleteMessage(message.id);
+      else await hideMessage(message.id);
       onClose();
     } catch (err) {
       setBusy(false);
@@ -75,53 +78,71 @@ export function MessageActions({
 
         {confirming ? (
           <div className="px-2 pb-1">
-            <h2 className="text-title font-bold">Delete for both of you?</h2>
+            <h2 className="text-title font-bold">Delete this message?</h2>
             <p className="mt-1 text-small text-muted-strong">
-              It disappears from both phones and shows as &ldquo;Message deleted&rdquo;. This can&apos;t be undone.
+              {mine
+                ? `"For everyone" removes it from both phones and leaves "Message deleted". "For me" only hides it on your side. Neither can be undone.`
+                : `It disappears from your side only. ${partner.display_name} still has it. This can't be undone.`}
             </p>
             {error && (
               <p className="mt-3 text-small text-danger" role="alert">
                 {error}
               </p>
             )}
-            <div className="mt-5 flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setConfirming(false)} disabled={busy}>
-                Keep it
-              </Button>
+            <div className="mt-5 flex flex-col gap-2">
+              {mine && (
+                <button
+                  type="button"
+                  onClick={() => void remove("everyone")}
+                  disabled={busy}
+                  className="pill min-h-12 bg-danger px-5 font-bold text-background shadow-[var(--shadow-raised)] disabled:opacity-80"
+                >
+                  Delete for everyone
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => void remove()}
+                onClick={() => void remove("me")}
                 disabled={busy}
-                className="pill min-h-11 flex-1 bg-danger px-5 font-bold text-background shadow-[var(--shadow-raised)] disabled:opacity-80"
+                className={
+                  mine
+                    ? "pill min-h-12 border-2 border-danger px-5 font-bold text-danger disabled:opacity-80"
+                    : "pill min-h-12 bg-danger px-5 font-bold text-background shadow-[var(--shadow-raised)] disabled:opacity-80"
+                }
               >
-                {busy ? "Deleting…" : "Delete"}
+                Delete for me
               </button>
+              <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
+                {busy ? "Deleting…" : "Keep it"}
+              </Button>
             </div>
           </div>
         ) : (
           <ul className="flex flex-col">
-            <Action
-              icon={<ReplyIcon size={20} />}
-              label="Reply"
-              onClick={() => {
-                onReply(message.id);
-                onClose();
-              }}
-            />
-            {text && <Action icon={<CopyIcon size={20} />} label={copied ? "Copied" : "Copy text"} onClick={() => void copy()} />}
-            <Action
-              icon={<PinIcon size={20} />}
-              label={isPinned ? "Unpin" : "Pin for both of you"}
-              onClick={() => void run(() => setPinned(message.id, !isPinned))}
-            />
-            <Action
-              icon={<StarIcon size={20} fill={isStarred ? "currentColor" : "none"} />}
-              label={isStarred ? "Remove from favourites" : "Add to favourites"}
-              onClick={() => void run(() => toggleStar(message.id))}
-            />
-            {mine && (
-              <Action icon={<TrashIcon size={20} />} label="Delete for everyone" danger onClick={() => setConfirming(true)} />
+            {!deleted && (
+              <>
+                <Action
+                  icon={<ReplyIcon size={20} />}
+                  label="Reply"
+                  onClick={() => {
+                    onReply(message.id);
+                    onClose();
+                  }}
+                />
+                {text && <Action icon={<CopyIcon size={20} />} label={copied ? "Copied" : "Copy text"} onClick={() => void copy()} />}
+                <Action
+                  icon={<PinIcon size={20} />}
+                  label={isPinned ? "Unpin" : "Pin for both of you"}
+                  onClick={() => void run(() => setPinned(message.id, !isPinned))}
+                />
+                <Action
+                  icon={<StarIcon size={20} fill={isStarred ? "currentColor" : "none"} />}
+                  label={isStarred ? "Remove from favourites" : "Add to favourites"}
+                  onClick={() => void run(() => toggleStar(message.id))}
+                />
+              </>
             )}
+            <Action icon={<TrashIcon size={20} />} label={deleted ? "Delete for me" : "Delete…"} danger onClick={() => setConfirming(true)} />
             {error && (
               <li className="px-3 pt-2 text-small text-danger" role="alert">
                 {error}

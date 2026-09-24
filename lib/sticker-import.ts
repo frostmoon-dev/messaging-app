@@ -1,4 +1,4 @@
-import { unzipSync } from "fflate";
+import { Unzip, UnzipInflate } from "fflate";
 
 /**
  * Turns what people have into sticker files, without re-encoding (so animated
@@ -32,39 +32,96 @@ export function pickStickerEntries(names: string[], kind: "wastickers" | "zip") 
   });
 }
 
-export async function readStickerFiles(files: File[]): Promise<{ stickers: StickerFile[]; skipped: number }> {
+/** File types seen inside an archive, for a helpful message when it holds no stickers. */
+export type ImportReport = { stickers: StickerFile[]; skipped: number; seen: Record<string, number> };
+
+/**
+ * Streams through a zip and keeps only the sticker entries, so a WhatsApp
+ * chat export full of photos and videos (often hundreds of MB) never has to
+ * fit in the phone's memory at once.
+ */
+async function stickersFromZip(file: File, kind: "zip" | "wastickers", room: number) {
+  const found: StickerFile[] = [];
+  const seen: Record<string, number> = {};
+  let skipped = 0;
+  const pending: Promise<void>[] = [];
+
+  const unzip = new Unzip((entry) => {
+    const ext = extension(entry.name);
+    if (!entry.name.endsWith("/")) seen[ext || "other"] = (seen[ext || "other"] ?? 0) + 1;
+    if (!pickStickerEntries([entry.name], kind).length) return;
+    if (found.length + pending.length >= room || (entry.originalSize ?? 0) > MAX_BYTES) {
+      skipped++;
+      return;
+    }
+    const type = TYPES[ext];
+    pending.push(
+      new Promise<void>((resolve) => {
+        const chunks: Uint8Array[] = [];
+        entry.ondata = (err, data, final) => {
+          if (err) {
+            skipped++;
+            resolve();
+            return;
+          }
+          chunks.push(data);
+          if (final) {
+            found.push({ name: entry.name, blob: new Blob(chunks as BlobPart[], { type }), contentType: type });
+            resolve();
+          }
+        };
+        entry.start();
+      }),
+    );
+  });
+  unzip.register(UnzipInflate);
+
+  const reader = file.stream().getReader();
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) {
+      unzip.push(new Uint8Array(0), true);
+      break;
+    }
+    unzip.push(value);
+  }
+  await Promise.all(pending);
+  return { found, skipped, seen };
+}
+
+export async function readStickerFiles(files: File[]): Promise<ImportReport> {
   const stickers: StickerFile[] = [];
+  const seen: Record<string, number> = {};
   let skipped = 0;
   for (const file of files) {
     const ext = extension(file.name);
+    const room = MAX_IMPORT - stickers.length;
     if (ext === "zip" || ext === "wastickers") {
-      let entries: Record<string, Uint8Array>;
       try {
-        entries = unzipSync(new Uint8Array(await file.arrayBuffer()));
+        const result = await stickersFromZip(file, ext === "zip" ? "zip" : "wastickers", room);
+        stickers.push(...result.found);
+        skipped += result.skipped;
+        for (const [k, n] of Object.entries(result.seen)) seen[k] = (seen[k] ?? 0) + n;
       } catch {
         skipped++;
-        continue;
       }
-      for (const name of pickStickerEntries(Object.keys(entries), ext === "zip" ? "zip" : "wastickers")) {
-        const bytes = entries[name];
-        const type = TYPES[extension(name)];
-        if (bytes.byteLength > MAX_BYTES) {
-          skipped++;
-          continue;
-        }
-        stickers.push({ name, blob: new Blob([bytes as BlobPart], { type }), contentType: type });
-      }
-    } else if (TYPES[ext] && file.size <= MAX_BYTES) {
+    } else if (TYPES[ext] && file.size <= MAX_BYTES && room > 0) {
       stickers.push({ name: file.name, blob: file, contentType: TYPES[ext] });
     } else {
       skipped++;
+      seen[ext || "other"] = (seen[ext || "other"] ?? 0) + 1;
     }
   }
-  if (stickers.length > MAX_IMPORT) {
-    skipped += stickers.length - MAX_IMPORT;
-    stickers.length = MAX_IMPORT;
-  }
-  return { stickers, skipped };
+  return { stickers, skipped, seen };
+}
+
+/** "12 .jpg, 3 .mp4, 1 .txt" — what was inside, when nothing could be used. */
+export function describeSeen(seen: Record<string, number>) {
+  return Object.entries(seen)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([ext, n]) => `${n} .${ext}`)
+    .join(", ");
 }
 
 /** Width and height, read from the first frame. WhatsApp stickers are 512×512. */

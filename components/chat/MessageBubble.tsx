@@ -65,6 +65,8 @@ function MessageBubbleImpl({
   const failed = message.local?.status === "failed";
   const deleted = Boolean(message.deleted_at);
   const canAct = !message.local && !deleted;
+  // A "Message deleted" marker can still be removed from your view (Delete for me).
+  const canOpenActions = !message.local;
 
   // Long-press (phones): hold still for a moment. Moving (scroll or swipe-to-reply) cancels it.
   const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
@@ -72,7 +74,7 @@ function MessageBubbleImpl({
     if (press.current) clearTimeout(press.current.timer);
     press.current = null;
   };
-  const pressHandlers = canAct
+  const pressHandlers = canOpenActions
     ? {
         onPointerDown: (e: React.PointerEvent) => {
           if (e.pointerType === "mouse") return;
@@ -82,6 +84,8 @@ function MessageBubbleImpl({
             y: e.clientY,
             timer: setTimeout(() => {
               press.current = null;
+              // iPhone may already have started selecting a word; drop it.
+              window.getSelection()?.removeAllRanges();
               navigator.vibrate?.(10);
               onActions(message.id);
             }, LONG_PRESS_MS),
@@ -122,7 +126,8 @@ function MessageBubbleImpl({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.16, ease: [0.2, 0.8, 0.2, 1] }}
       className={cn(
-        "group relative flex w-full items-end gap-2 px-4",
+        // message-touch: no text selection or callout on touch screens (long-press opens the options; Copy is there).
+        "message-touch group relative flex w-full items-end gap-2 px-4",
         mine ? "justify-end" : "justify-start",
         firstInGroup ? "mt-4" : "mt-1",
       )}
@@ -163,8 +168,7 @@ function MessageBubbleImpl({
           dragSnapToOrigin
           onDragEnd={onDragEnd}
           style={{ x, touchAction: "pan-y" }}
-          // No text-selection callout on a long press: it opens the message actions instead (Copy is there).
-          className="relative min-w-0 [-webkit-touch-callout:none] [@media(pointer:coarse)]:select-none"
+          className="relative min-w-0"
           {...pressHandlers}
         >
           <div

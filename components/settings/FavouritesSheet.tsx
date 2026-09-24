@@ -13,7 +13,7 @@ import { formatLongDate, formatTime } from "@/lib/time";
 import type { MessageRow } from "@/types/app";
 
 /** Your favourites, newest first. Tap one to open the chat at that message. */
-export function FavouritesSheet({ onClose }: { onClose: () => void }) {
+export function FavouritesSheet({ onClose, onPick }: { onClose: () => void; onPick?: (id: string) => void }) {
   const router = useRouter();
   const { me, partner } = useChat();
   const [items, setItems] = useState<MessageRow[] | null>(null);
@@ -73,7 +73,9 @@ export function FavouritesSheet({ onClose }: { onClose: () => void }) {
                     type="button"
                     onClick={() => {
                       onClose();
-                      router.push(`/chat?m=${m.id}`);
+                      // In the chat: jump straight there. Elsewhere: open the chat at it.
+                      if (onPick) onPick(m.id);
+                      else router.push(`/chat?m=${m.id}`);
                     }}
                     className="flex w-full flex-col gap-0.5 rounded-2xl px-3 py-2.5 text-left hover:bg-panel-strong"
                   >
