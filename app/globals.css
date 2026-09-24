@@ -190,9 +190,16 @@ body {
   color: var(--accent-foreground);
 }
 
-:focus-visible {
+/* Keyboard focus ring for buttons and links. Text fields show focus with
+   their border instead (a second ring around them reads as a double line). */
+:focus-visible:not(input:not([type="range"], [type="checkbox"], [type="radio"]), textarea, select) {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
+}
+input:not([type="range"], [type="checkbox"], [type="radio"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
 }
 
 /* ==========================================================================
@@ -265,6 +272,13 @@ body {
   /* Small labels (day dividers) are pills. */
   .day-tag {
     border-radius: 9999px;
+  }
+}
+
+/* While typing on a phone, the keyboard needs the room: hide the tab bar. */
+@media (max-width: 1023.98px) {
+  body:has(#composer:focus) .bottom-nav {
+    display: none;
   }
 }
 
@@ -403,7 +417,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  /* Centred in the visible area, clear of the notch and home indicator. */
+  padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
   background: #f2f1ef;
   color: #171717;
   transition: opacity 0.3s var(--ease-out);
@@ -415,11 +430,13 @@ body {
   pointer-events: none;
 }
 .preloader-icon {
-  width: 112px;
-  height: 112px;
+  width: 96px;
+  height: 96px;
   border-radius: 9999px;
 }
+/* Icon, then the word and its bar as one group: 20px apart, 12px within. */
 .preloader-text {
+  margin-top: 20px;
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 700;
@@ -427,6 +444,7 @@ body {
 }
 .preloader-bar {
   position: relative;
+  margin-top: 12px;
   width: 96px;
   height: 3px;
   overflow: hidden;

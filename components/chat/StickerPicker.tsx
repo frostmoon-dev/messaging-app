@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { CloseIcon, PlusIcon } from "@/components/ui/icons";
+import { ChevronLeftIcon, CloseIcon, PlusIcon } from "@/components/ui/icons";
 import { ImageCropper } from "@/components/ui/ImageCropper";
 import { useChat, type MediaToSend } from "@/components/providers/ChatProvider";
 import { useSignedUrl } from "@/lib/hooks/useSignedUrl";
@@ -35,7 +35,7 @@ export function StickerPicker({ onPick, onClose }: { onPick: (media: MediaToSend
 
   return (
     <Dialog onClose={onClose} label="Stickers and GIFs" className="w-full sm:w-[480px]">
-      <div className="flex h-[min(70dvh,560px)] flex-col bg-background-raised pb-[env(safe-area-inset-bottom)]">
+      <div className="relative flex h-[min(75dvh,600px)] flex-col bg-background-raised pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center gap-3 px-4 pt-4 pb-3">
           <div role="tablist" aria-label="Stickers and GIFs" className="flex flex-1 gap-1 rounded-full bg-panel-strong p-1">
             {TABS.map((t) => (
@@ -147,33 +147,56 @@ function OurStickers({ onPick }: { onPick: (media: MediaToSend) => void }) {
   if (pending) {
     const gif = pending.image.contentType === "image/gif";
     return (
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4">
-        {gif ? (
-          // Animated GIFs are added as they are; cropping would stop the animation.
-          // eslint-disable-next-line @next/next/no-img-element -- local blob preview
-          <img src={pending.url} alt="New sticker" className="mx-auto max-h-60 rounded-lg object-contain" />
-        ) : (
-          <ImageCropper
-            src={pending.url}
-            width={pending.image.width}
-            height={pending.image.height}
-            aspect={1}
-            crop={crop}
-            onCropChange={setCrop}
-            label="Crop sticker"
-          />
-        )}
-        {error && (
-          <p className="mt-3 text-small text-danger" role="alert">
-            {error}
+      // Covers the whole sheet (tabs included) so making a sticker is one clear step.
+      <div className="absolute inset-0 z-10 flex flex-col bg-background-raised pb-[env(safe-area-inset-bottom)]" role="group" aria-labelledby="new-sticker-title">
+        <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+          <button
+            type="button"
+            onClick={closeCropper}
+            disabled={saving}
+            className="-ml-2.5 flex size-11 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong hover:text-foreground"
+            aria-label="Back to stickers"
+          >
+            <ChevronLeftIcon size={22} />
+          </button>
+          <h2 id="new-sticker-title" className="text-title font-bold">
+            New sticker
+          </h2>
+        </div>
+
+        <div className="scroll-area min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+          <p className="mb-3 text-small text-muted-strong">
+            {gif ? "GIFs are added as they are, so they keep moving." : "Stickers are square. Frame the part you want."}
           </p>
-        )}
-        <div className="mt-4 flex justify-end gap-3">
-          <Button variant="ghost" onClick={closeCropper} disabled={saving}>
+          {gif ? (
+            // eslint-disable-next-line @next/next/no-img-element -- local blob preview
+            <img src={pending.url} alt="New sticker" className="mx-auto max-h-56 rounded-2xl object-contain" />
+          ) : (
+            <ImageCropper
+              src={pending.url}
+              width={pending.image.width}
+              height={pending.image.height}
+              aspect={1}
+              crop={crop}
+              onCropChange={setCrop}
+              label="Crop sticker"
+              maxHeightRatio={0.38}
+            />
+          )}
+          {error && (
+            <p className="mt-3 text-small text-danger" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+
+        {/* Always visible, whatever the screen height. */}
+        <div className="flex gap-3 border-t border-border px-4 pt-3 pb-4">
+          <Button variant="ghost" className="flex-1" onClick={closeCropper} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={() => void save()} disabled={saving}>
-            {saving ? "Adding…" : "Add sticker"}
+          <Button className="flex-1" onClick={() => void save()} disabled={saving}>
+            {saving ? "Adding…" : "Add to our stickers"}
           </Button>
         </div>
       </div>
