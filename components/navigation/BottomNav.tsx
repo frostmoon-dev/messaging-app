@@ -14,7 +14,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="bottom-nav relative z-20 shrink-0 border-t border-border bg-background-raised pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="bottom-nav relative z-20 shrink-0 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="grid grid-cols-5">
         {NAV_ITEMS.filter((item) => item.phone).map(({ href, label, Icon }) => {
