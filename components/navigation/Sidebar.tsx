@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useChat, usePresence } from "@/components/providers/ChatProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusPicker } from "@/components/profile/StatusPicker";
+import { StatusIcon } from "@/components/ui/StatusIcon";
 import { NAV_ITEMS, isActive } from "./nav-items";
 import { activeStatus } from "@/lib/status";
 import { formatLastSeen } from "@/lib/time";
@@ -22,7 +23,7 @@ export function Sidebar() {
 
   return (
     <aside className="hidden w-[288px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-background-raised p-4 lg:flex">
-      <section aria-label={`${partner.display_name}'s profile`} className="rounded-card bg-background p-4">
+      <section aria-label={`${partner.display_name}'s profile`} className="p5-panel bg-background p-4">
         <div className="flex items-center gap-3">
           <Avatar profile={partner} size="lg" online={partnerOnline} />
           <div className="min-w-0">
@@ -33,8 +34,9 @@ export function Sidebar() {
           </div>
         </div>
         {partnerStatus && (
-          <p className="mt-3 text-small text-muted-strong">
-            <span aria-hidden="true">{partnerStatus.emoji}</span> {partnerStatus.text}
+          <p className="mt-3 flex items-center gap-2 text-small text-muted-strong">
+            {partnerStatus.icon && <StatusIcon icon={partnerStatus.icon} />}
+            {partnerStatus.text}
           </p>
         )}
       </section>
@@ -52,10 +54,10 @@ export function Sidebar() {
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "flex min-h-12 items-center gap-3 px-4 text-body transition-colors",
-                    active ? "menu-cursor font-bold text-foreground" : "rounded-control text-muted-strong hover:bg-panel-strong hover:text-foreground",
+                    active ? "p5-cursor font-bold" : "text-muted-strong hover:bg-panel-strong hover:text-foreground",
                   )}
                 >
-                  <Icon size={20} className={active ? "text-accent" : undefined} />
+                  <Icon size={20} />
                   <span>{label}</span>
                   {badge > 0 && (
                     <span className="ml-auto min-w-6 rounded-full bg-accent px-2 text-center font-mono text-meta leading-6 font-bold text-accent-foreground">
@@ -73,7 +75,7 @@ export function Sidebar() {
       {bond && (
         <Link
           href="/bond"
-          className="block rounded-card bg-background p-4 transition-colors hover:bg-panel-strong"
+          className="p5-panel block bg-background p-4 transition-colors hover:bg-panel-strong"
           aria-label={`Bond rank ${bond.level}, ${bond.title}, ${bond.progress}% to the next rank`}
         >
           <div className="flex items-baseline justify-between gap-2">
@@ -81,8 +83,8 @@ export function Sidebar() {
             <span className="font-mono text-title font-bold">{bond.level}</span>
           </div>
           <p className="truncate text-small font-semibold">{bond.title}</p>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-panel-strong">
-            <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${bond.progress}%` }} />
+          <div className="mt-2 h-2 overflow-hidden bg-panel-strong">
+            <div className="h-full bg-accent transition-[width] duration-300" style={{ width: `${bond.progress}%` }} />
           </div>
         </Link>
       )}
@@ -94,9 +96,10 @@ export function Sidebar() {
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="block min-h-6 max-w-full truncate text-left text-meta text-muted-strong underline-offset-2 hover:text-foreground hover:underline"
+            className="flex min-h-6 max-w-full items-center gap-1.5 text-left text-meta text-muted-strong underline-offset-2 hover:text-foreground hover:underline"
           >
-            {myStatus ? `${myStatus.emoji} ${myStatus.text}` : "Set a status"}
+            {myStatus?.icon && <StatusIcon icon={myStatus.icon} className="size-4" />}
+            <span className="truncate">{myStatus ? myStatus.text : "Set a status"}</span>
           </button>
         </div>
       </div>

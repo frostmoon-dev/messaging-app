@@ -22,9 +22,9 @@ export function TypingIndicator() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="relative ml-11 inline-flex h-10 w-12 items-center justify-center"
+            className="bubble-in-shadow relative ml-11 inline-flex h-10 w-12 items-center justify-center"
           >
-            <UiMark name="talk" className="absolute inset-0 size-full bg-incoming [filter:drop-shadow(0_0_1px_var(--field-border))]" />
+            <UiMark name="talk" className="absolute inset-0 size-full bg-incoming" />
             <span className="relative -mt-1.5 flex gap-1">
               {[0, 1, 2].map((i) => (
                 <span

@@ -20,58 +20,59 @@ export function LoginForm() {
         <DayClock className="hidden sm:flex" />
       </div>
 
-      <section className="m-auto w-full max-w-sm rounded-card bg-panel p-6 sm:p-7" aria-labelledby="login-title">
-        <h1 id="login-title" className="title-caps flex items-center gap-2 text-display">
-          <UiMark name="slash" className="h-9 w-7 bg-accent" />
+      <section className="m-auto w-full max-w-sm" aria-labelledby="login-title">
+        <h1 id="login-title" className="p5-title relative z-10 ml-3 text-display">
           Sign in
         </h1>
-        <p className="mt-3 text-body text-muted-strong">A private line for two people.</p>
+        <div className="p5-panel -mt-3 bg-panel px-6 pt-9 pb-7 sm:px-7">
+          <p className="text-body text-muted-strong">A private line for two people.</p>
 
-        <form action={action} className="mt-6 flex flex-col gap-4" noValidate>
-          <div>
-            <label htmlFor="email" className={labelClass}>
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              required
-              defaultValue={state.email}
-              className={fieldClass}
-              aria-invalid={state.error ? true : undefined}
-              aria-describedby={state.error ? "login-error" : undefined}
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className={labelClass}>
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className={fieldClass}
-              aria-invalid={state.error ? true : undefined}
-              aria-describedby={state.error ? "login-error" : undefined}
-            />
-          </div>
+          <form action={action} className="mt-6 flex flex-col gap-4" noValidate>
+            <div>
+              <label htmlFor="email" className={labelClass}>
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                required
+                defaultValue={state.email}
+                className={fieldClass}
+                aria-invalid={state.error ? true : undefined}
+                aria-describedby={state.error ? "login-error" : undefined}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className={labelClass}>
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className={fieldClass}
+                aria-invalid={state.error ? true : undefined}
+                aria-describedby={state.error ? "login-error" : undefined}
+              />
+            </div>
 
-          {state.error && (
-            <p id="login-error" role="alert" className="flex items-center gap-2.5 rounded-control bg-panel-strong px-3 py-2.5 text-small">
-              <UiMark name="alert" className="size-6 bg-danger" />
-              {state.error}
-            </p>
-          )}
+            {state.error && (
+              <p id="login-error" role="alert" className="flex items-center gap-2.5 bg-panel-strong px-3 py-2.5 text-small">
+                <UiMark name="alert" className="size-6 bg-danger" />
+                {state.error}
+              </p>
+            )}
 
-          <Button type="submit" disabled={pending} className="mt-2 w-full">
-            {pending ? "Signing in…" : "Sign in"}
-          </Button>
-        </form>
+            <Button type="submit" disabled={pending} className="mt-2 w-full">
+              {pending ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+        </div>
       </section>
     </main>
   );

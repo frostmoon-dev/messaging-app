@@ -199,8 +199,8 @@ export function MessageList({
             transition={{ duration: 0.16 }}
             onClick={() => scrollToBottom()}
             className={cn(
-              "absolute right-4 bottom-3 flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full border border-border px-3 text-small font-semibold",
-              unseen ? "border-transparent bg-accent text-accent-foreground" : "border-field-border bg-background-raised text-foreground",
+              "p5-button absolute right-4 bottom-3 flex min-h-11 min-w-12 items-center justify-center gap-2 px-4 text-small font-bold",
+              unseen ? "bg-accent text-accent-foreground" : "bg-foreground text-background",
             )}
             aria-label={unseen ? `${unseen} new messages. Scroll to latest.` : "Scroll to latest message"}
           >
@@ -217,7 +217,8 @@ export function MessageList({
 function DayDivider({ iso }: { iso: string }) {
   return (
     <div className="my-4 flex justify-center px-4" role="separator" aria-label={formatDayLabel(iso)}>
-      <span className="rounded-full bg-panel-strong px-3 py-0.5 text-meta font-semibold text-muted-strong">
+      {/* A small paper tag, like the game's date labels. */}
+      <span className="p5-button -rotate-2 bg-foreground px-3 py-0.5 text-meta font-bold text-background">
         {formatDayLabel(iso)}
       </span>
     </div>
@@ -238,7 +239,7 @@ function ChatSkeleton() {
       {rows.map((r, i) => (
         <div key={i} className={cn("flex items-end gap-2", r.mine ? "justify-end" : "justify-start")}>
           {!r.mine && <Skeleton className="size-9 rounded-full" />}
-          <Skeleton className={cn("h-10 max-w-[70%] rounded-bubble", r.w)} />
+          <Skeleton className={cn("h-10 max-w-[70%]", r.w)} />
         </div>
       ))}
     </div>

@@ -1,7 +1,7 @@
 export const THEMES = [
   { id: "system", name: "Automatic", description: "Follows your device." },
-  { id: "darkhour", name: "Dark Hour", description: "Deep blue. Easy on the eyes at night." },
-  { id: "daylight", name: "Daylight", description: "Light blue and white." },
+  { id: "phantom", name: "Phantom", description: "Black, white and red. Best at night." },
+  { id: "paper", name: "Paper", description: "White paper with black and red." },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
@@ -15,12 +15,12 @@ export function isThemeId(value: unknown): value is ThemeId {
 
 /** Browser chrome colour for each scheme. Matches --background in globals.css. */
 export const SCHEME_COLORS = {
-  dark: "#06112a",
-  light: "#eef3fb",
+  dark: "#0a0a0b",
+  light: "#f3f1ee",
 } as const;
 
 export type Scheme = keyof typeof SCHEME_COLORS;
 
 export function themeScheme(theme: Exclude<ThemeId, "system">): Scheme {
-  return theme === "daylight" ? "light" : "dark";
+  return theme === "paper" ? "light" : "dark";
 }

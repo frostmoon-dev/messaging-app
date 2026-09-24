@@ -99,7 +99,7 @@ function MessageBubbleImpl({
         {swipeEnabled && (
           <motion.span
             style={{ opacity: hintOpacity }}
-            className="absolute top-1/2 -left-8 -translate-y-1/2 text-accent-strong"
+            className="absolute top-1/2 -left-8 -translate-y-1/2 text-accent-text"
             aria-hidden="true"
           >
             <ReplyIcon size={20} />
@@ -114,7 +114,8 @@ function MessageBubbleImpl({
           dragSnapToOrigin
           onDragEnd={onDragEnd}
           style={{ x, touchAction: "pan-y" }}
-          className="relative min-w-0"
+          // The hard offset shadow lives here: the bubble's clip-path would cut it off.
+          className={cn("relative min-w-0", !emojiOnly && (mine ? "bubble-out-shadow" : "bubble-in-shadow"))}
         >
           <div
             className={cn(
@@ -122,13 +123,10 @@ function MessageBubbleImpl({
               emojiOnly
                 ? "bg-transparent px-1 py-0.5"
                 : cn(
-                    "rounded-bubble",
-                    mine
-                      ? "bg-outgoing text-outgoing-foreground"
-                      : "bg-incoming text-incoming-foreground shadow-[inset_0_0_0_1px_var(--border)]",
-                    // The corner nearest the sender flattens on the last bubble of a group.
-                    lastInGroup && (mine ? "rounded-br-md" : "rounded-bl-md"),
-                    message.message_type === "image" ? "p-1" : "px-3.5 py-2",
+                    // Persona 5 texting screen: white bubbles in, red bubbles out,
+                    // each a slightly uneven four-sided shape.
+                    mine ? "bubble-out bg-outgoing text-outgoing-foreground" : "bubble-in bg-incoming text-incoming-foreground",
+                    message.message_type === "image" ? "p-1.5" : "px-4 py-2.5",
                   ),
               failed && "opacity-70",
             )}
@@ -195,14 +193,14 @@ function MessageBubbleImpl({
             <button
               type="button"
               onClick={() => onRetry(message.id)}
-              className="inline-flex min-h-11 items-center gap-1 rounded-control px-2 font-semibold text-foreground hover:bg-panel-strong"
+              className="inline-flex min-h-11 items-center gap-1 px-2 font-semibold text-foreground hover:bg-panel-strong"
             >
               <RetryIcon size={14} /> Retry
             </button>
             <button
               type="button"
               onClick={() => onDiscard(message.id)}
-              className="inline-flex size-11 items-center justify-center rounded-control text-muted hover:bg-panel-strong hover:text-foreground"
+              className="inline-flex size-11 items-center justify-center text-muted hover:bg-panel-strong hover:text-foreground"
               aria-label="Delete unsent message"
             >
               <TrashIcon size={14} />

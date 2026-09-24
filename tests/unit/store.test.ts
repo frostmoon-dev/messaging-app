@@ -66,9 +66,20 @@ describe("validateMessageText", () => {
 });
 
 describe("activeStatus", () => {
+  const now = Date.parse("2026-09-24T12:00:00Z");
+  const fresh = "2026-09-24T08:00:00Z";
+
   it("expires after 24 hours", () => {
-    const now = Date.parse("2026-09-24T12:00:00Z");
-    expect(activeStatus({ status_emoji: "☕", status_text: "working", status_updated_at: "2026-09-24T08:00:00Z" }, now)).toEqual({ emoji: "☕", text: "working" });
-    expect(activeStatus({ status_emoji: "☕", status_text: "working", status_updated_at: "2026-09-23T08:00:00Z" }, now)).toBeNull();
+    expect(activeStatus({ status_emoji: "studying", status_text: "Exams", status_updated_at: fresh }, now)).toEqual({ icon: "studying", text: "Exams" });
+    expect(activeStatus({ status_emoji: "studying", status_text: "Exams", status_updated_at: "2026-09-23T08:00:00Z" }, now)).toBeNull();
+  });
+
+  it("uses the preset label when there is no text", () => {
+    expect(activeStatus({ status_emoji: "out", status_text: null, status_updated_at: fresh }, now)).toEqual({ icon: "out", text: "Out" });
+  });
+
+  it("ignores old emoji values", () => {
+    expect(activeStatus({ status_emoji: "☕", status_text: "working", status_updated_at: fresh }, now)).toEqual({ icon: null, text: "working" });
+    expect(activeStatus({ status_emoji: "☕", status_text: null, status_updated_at: fresh }, now)).toBeNull();
   });
 });

@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { BondEditor } from "./BondEditor";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { daysSince, formatLongDate } from "@/lib/time";
+import { daysSince, formatLongDate, todayDateOnly } from "@/lib/time";
 import { friendlyError } from "@/lib/errors";
 import type { Profile } from "@/types/app";
 
@@ -57,26 +57,28 @@ export function BondScreen() {
           }
         />
 
-        {/* Social Link card: the two of you, the arcana, the rank. */}
-        <section className="rounded-card bg-panel p-5 sm:p-6" aria-labelledby="bond-rank">
+        {/* Confidant card: the two of you, the arcana, the rank. */}
+        <section className="p5-panel bg-panel p-5 sm:p-6" aria-labelledby="bond-rank">
           <div className="flex items-center justify-between gap-3">
             <Member profile={me} label="You" />
-            <UiMark name="arcana" className="size-16 bg-accent sm:size-20" />
+            <span className="p5-frame flex size-20 items-center justify-center bg-accent sm:size-24">
+              <UiMark name="arcana" className="size-14 bg-accent-foreground sm:size-16" />
+            </span>
             <Member profile={partner} label={partner.display_name} />
           </div>
 
           <div className="mt-6 flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <h2 id="bond-rank" className="text-small text-muted-strong">
+              <h2 id="bond-rank" className="p5-button inline-block bg-accent px-3 py-0.5 text-small font-extrabold text-accent-foreground uppercase">
                 Rank
               </h2>
-              <p className="font-mono text-[3.5rem] leading-none font-bold">{rank}</p>
+              <p className="mt-1 font-mono text-[3.5rem] leading-none font-bold">{rank}</p>
             </div>
             <p className="min-w-0 text-right text-title font-bold">{bond?.title ?? "Partners in Crime"}</p>
           </div>
 
           <div
-            className="mt-4 h-3 overflow-hidden rounded-full bg-panel-strong"
+            className="mt-4 h-3 overflow-hidden bg-panel-strong"
             role="progressbar"
             aria-label={`Progress to rank ${rank + 1}`}
             aria-valuemin={0}
@@ -84,7 +86,7 @@ export function BondScreen() {
             aria-valuenow={progress}
           >
             <motion.div
-              className="h-full rounded-full bg-accent"
+              className="h-full bg-accent"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
@@ -109,7 +111,7 @@ export function BondScreen() {
             Your record
           </h2>
           {statsError ? (
-            <div className="flex items-center justify-between gap-3 rounded-card bg-panel p-4" role="alert">
+            <div className="p5-panel flex items-center justify-between gap-3 bg-panel p-4" role="alert">
               <span className="text-small text-muted-strong">{statsError}</span>
               <Button variant="secondary" onClick={() => void loadStats()}>
                 Try again
@@ -124,7 +126,7 @@ export function BondScreen() {
                 hint={bond?.together_since ? `Since ${formatLongDate(bond.together_since)}` : "Set the date in Edit"}
               />
               <Stat label="Photos shared" value={stats ? stats.image_count.toLocaleString() : null} />
-              <Stat label="Most used emoji" value={stats ? (stats.favorite_emoji ?? "None yet") : null} />
+              <Stat label="Messages a day" value={stats ? perDay(stats) : null} hint="Average since the first message" />
               <Stat
                 label="First message"
                 value={stats ? (stats.first_message_at ? formatLongDate(stats.first_message_at) : "Not yet") : null}
@@ -140,6 +142,12 @@ export function BondScreen() {
   );
 }
 
+function perDay(stats: Stats) {
+  if (!stats.first_message_at || stats.message_count === 0) return "None yet";
+  const days = daysSince(todayDateOnly(new Date(stats.first_message_at)));
+  return (stats.message_count / Math.max(1, days)).toLocaleString(undefined, { maximumFractionDigits: 1 });
+}
+
 function Member({ profile, label }: { profile: Profile; label: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
@@ -151,7 +159,7 @@ function Member({ profile, label }: { profile: Profile; label: string }) {
 
 function Stat({ label, value, hint, wide }: { label: string; value: string | null; hint?: string; wide?: boolean }) {
   return (
-    <div className={cn("rounded-card bg-panel p-4", wide && "col-span-2")}>
+    <div className={cn("p5-panel bg-panel p-4", wide && "col-span-2")}>
       <dt className="text-small text-muted-strong">{label}</dt>
       <dd className="mt-1 font-mono text-heading font-bold">
         {value === null ? <Skeleton className="h-8 w-20" /> : value}

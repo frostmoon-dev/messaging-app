@@ -24,7 +24,7 @@ export function ImageViewer({ src, alt, onClose, children }: {
       <img
         src={src}
         alt={alt}
-        className="max-h-[calc(var(--app-height,100dvh)-9rem)] max-w-full rounded-card object-contain"
+        className="max-h-[calc(var(--app-height,100dvh)-9rem)] max-w-full object-contain"
         onClick={onClose}
       />
       {children}

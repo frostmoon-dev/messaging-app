@@ -126,7 +126,7 @@ export function MessageComposer({
                 </p>
                 <p className="truncate text-small text-muted-strong">{snippetText(replySnippet)}</p>
               </div>
-              <button type="button" onClick={onCancelReply} className="flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground" aria-label="Cancel reply">
+              <button type="button" onClick={onCancelReply} className="flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground" aria-label="Cancel reply">
                 <CloseIcon size={18} />
               </button>
             </div>
@@ -148,10 +148,10 @@ export function MessageComposer({
                 <img
                   src={attachment.previewUrl}
                   alt="Selected photo preview"
-                  className="h-16 w-auto max-w-28 rounded-control object-cover"
+                  className="h-16 w-auto max-w-28 object-cover"
                 />
               )}
-              {attachment.state === "processing" && <div className="skeleton h-16 w-20 rounded-control" aria-hidden="true" />}
+              {attachment.state === "processing" && <div className="skeleton h-16 w-20" aria-hidden="true" />}
               <p
                 className={cn("flex-1 text-small", attachment.state === "error" ? "text-danger" : "text-muted-strong")}
                 role={attachment.state === "error" ? "alert" : "status"}
@@ -163,7 +163,7 @@ export function MessageComposer({
               <button
                 type="button"
                 onClick={() => setAttachment(null)}
-                className="flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground"
+                className="flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
                 aria-label="Remove photo"
               >
                 <CloseIcon size={18} />
@@ -197,7 +197,7 @@ export function MessageComposer({
           type="button"
           whileTap={{ scale: 0.9 }}
           onClick={() => fileRef.current?.click()}
-          className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong hover:text-foreground"
+          className="flex size-11 shrink-0 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
           aria-label="Attach a photo"
         >
           <ImageIcon />
@@ -224,7 +224,7 @@ export function MessageComposer({
             enterKeyHint={isTouch ? "enter" : "send"}
             autoComplete="off"
             className={cn(
-              "block max-h-36 min-h-11 w-full resize-none rounded-[22px] border border-field-border bg-panel px-4 py-[10px] text-body leading-[1.45]",
+              "block max-h-36 min-h-11 w-full resize-none border-2 border-field-border bg-panel px-4 py-[10px] text-body leading-[1.45]",
               "placeholder:text-muted focus:border-accent focus:outline-none",
               tooLong && "border-danger",
             )}
@@ -248,8 +248,8 @@ export function MessageComposer({
           // Keep the keyboard open on mobile after tapping send.
           onPointerDown={(e) => e.preventDefault()}
           className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-full transition-colors",
-            canSend ? "bg-accent text-accent-foreground hover:bg-accent-strong" : "bg-panel-strong text-muted",
+            "p5-button flex h-11 w-13 shrink-0 items-center justify-center transition-colors",
+            canSend ? "bg-accent text-accent-foreground hover:bg-accent-hover" : "bg-panel-strong text-muted",
           )}
           aria-label="Send message"
         >

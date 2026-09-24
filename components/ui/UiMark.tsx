@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
+import type { StatusIcon } from "@/lib/status";
 
 export type MarkName =
   | "talk"
@@ -7,8 +8,8 @@ export type MarkName =
   | "arcana"
   | "sakura"
   | "chevron"
-  | "slash"
   | "rankup"
+  | `status-${StatusIcon}`
   | `time-${"morning" | "daytime" | "lunchtime" | "afternoon" | "nighttime" | "lateatnight"}`;
 
 /**

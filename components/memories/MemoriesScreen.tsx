@@ -58,7 +58,7 @@ export function MemoriesScreen() {
         </div>
 
         {error && (
-          <div className="flex items-center justify-between gap-3 rounded-card bg-panel p-4" role="alert">
+          <div className="p5-panel flex items-center justify-between gap-3 bg-panel p-4" role="alert">
             <span className="text-small text-muted-strong">{error}</span>
             <Button variant="secondary" onClick={() => void load()}>Try again</Button>
           </div>
@@ -67,7 +67,7 @@ export function MemoriesScreen() {
         {memories === null && !error && (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3" aria-busy="true" aria-label="Loading memories">
             {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="aspect-square w-full rounded-card" />
+              <Skeleton key={i} className="aspect-square w-full" />
             ))}
           </div>
         )}
