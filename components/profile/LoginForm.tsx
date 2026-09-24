@@ -5,6 +5,8 @@ import { signIn, type SignInState } from "@/lib/auth/actions";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { DayClock } from "@/components/ui/DayClock";
 import { UiMark } from "@/components/ui/UiMark";
+import { Button } from "@/components/ui/Button";
+import { fieldClass, labelClass } from "@/components/ui/field";
 
 const initial: SignInState = { error: null, email: "" };
 
@@ -12,96 +14,65 @@ export function LoginForm() {
   const [state, action, pending] = useActionState(signIn, initial);
 
   return (
-    <MotionConfig reducedMotion="user">
-      <main className="bg-texture relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10">
-        {/* Big diagonal slab behind the card. */}
-        <motion.div
-          initial={{ x: "-110%" }}
-          animate={{ x: 0 }}
-          transition={{ duration: 0.35, ease: [0.2, 0.9, 0.1, 1] }}
-          className="absolute top-[24%] left-1/2 h-40 w-[160vw] -translate-x-1/2 -translate-y-1/2 -rotate-[14deg] bg-accent sm:top-[30%] sm:h-56"
-          aria-hidden="true"
-        />
-        <motion.div
-          initial={{ x: "110%" }}
-          animate={{ x: 0 }}
-          transition={{ duration: 0.35, delay: 0.05, ease: [0.2, 0.9, 0.1, 1] }}
-          className="absolute top-[calc(24%+5.5rem)] left-1/2 h-3 w-[160vw] -translate-x-1/2 -rotate-[14deg] bg-foreground sm:top-[calc(30%+7.5rem)]"
-          aria-hidden="true"
-        />
-        <DayClock className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 sm:right-6" />
+    <main className="flex min-h-dvh flex-col bg-background px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-10">
+      <div className="flex items-center justify-between gap-4 py-2">
+        <Wordmark />
+        <DayClock className="hidden sm:flex" />
+      </div>
 
-        <motion.section
-          initial={{ opacity: 0, y: 24, rotate: -2 }}
-          animate={{ opacity: 1, y: 0, rotate: 0 }}
-          transition={{ duration: 0.3, delay: 0.15, ease: [0.2, 0.9, 0.1, 1] }}
-          className="cut-corners relative w-full max-w-sm bg-background-raised p-7 shadow-[8px_8px_0_var(--accent-deep)]"
-          aria-labelledby="login-title"
-        >
-          <Wordmark className="mb-6" />
-          <h1 id="login-title" className="text-display text-5xl">
-            Sign in
-          </h1>
-          <p className="mt-2 text-sm text-muted-strong">Private line. Two people. That&apos;s it.</p>
+      <section className="m-auto w-full max-w-sm rounded-card bg-panel p-6 sm:p-7" aria-labelledby="login-title">
+        <h1 id="login-title" className="title-caps flex items-center gap-2 text-display">
+          <UiMark name="slash" className="h-9 w-7 bg-accent" />
+          Sign in
+        </h1>
+        <p className="mt-3 text-body text-muted-strong">A private line for two people.</p>
 
-          <form action={action} className="mt-7 flex flex-col gap-4" noValidate>
-            <div>
-              <label htmlFor="email" className="text-display mb-1.5 block text-xs tracking-[0.25em] text-muted-strong">
-                E-mail
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                inputMode="email"
-                required
-                defaultValue={state.email}
-                className="w-full border border-field-border bg-panel px-3.5 py-3 text-[16px] outline-none focus:border-accent"
-                aria-invalid={state.error ? true : undefined}
-                aria-describedby={state.error ? "login-error" : undefined}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="text-display mb-1.5 block text-xs tracking-[0.25em] text-muted-strong">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="w-full border border-field-border bg-panel px-3.5 py-3 text-[16px] outline-none focus:border-accent"
-                aria-invalid={state.error ? true : undefined}
-                aria-describedby={state.error ? "login-error" : undefined}
-              />
-            </div>
+        <form action={action} className="mt-6 flex flex-col gap-4" noValidate>
+          <div>
+            <label htmlFor="email" className={labelClass}>
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              required
+              defaultValue={state.email}
+              className={fieldClass}
+              aria-invalid={state.error ? true : undefined}
+              aria-describedby={state.error ? "login-error" : undefined}
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className={labelClass}>
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className={fieldClass}
+              aria-invalid={state.error ? true : undefined}
+              aria-describedby={state.error ? "login-error" : undefined}
+            />
+          </div>
 
-            {state.error && (
-              <motion.p
-                id="login-error"
-                role="alert"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-2.5 bg-panel px-3 py-2.5 text-sm"
-              >
-                <UiMark name="alert" className="size-6 bg-danger" />
-                {state.error}
-              </motion.p>
-            )}
+          {state.error && (
+            <p id="login-error" role="alert" className="flex items-center gap-2.5 rounded-control bg-panel-strong px-3 py-2.5 text-small">
+              <UiMark name="alert" className="size-6 bg-danger" />
+              {state.error}
+            </p>
+          )}
 
-            <motion.button
-              type="submit"
-              disabled={pending}
-              whileTap={{ scale: 0.97, x: 2 }}
-              className="shape-slant text-display mt-2 min-h-12 bg-accent text-lg tracking-[0.2em] text-accent-foreground transition-colors hover:bg-accent-strong disabled:opacity-60"
-            >
-              {pending ? "Connecting…" : "Enter"}
-            </motion.button>
-          </form>
-        </motion.section>
-      </main>
-    </MotionConfig>
+          <Button type="submit" disabled={pending} className="mt-2 w-full">
+            {pending ? "Signing in…" : "Sign in"}
+          </Button>
+        </form>
+      </section>
+    </main>
   );
 }

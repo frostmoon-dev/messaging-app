@@ -125,7 +125,7 @@ function MessageBubbleImpl({
                     "rounded-bubble",
                     mine
                       ? "bg-outgoing text-outgoing-foreground"
-                      : "bg-incoming text-incoming-foreground",
+                      : "bg-incoming text-incoming-foreground shadow-[inset_0_0_0_1px_var(--border)]",
                     // The corner nearest the sender flattens on the last bubble of a group.
                     lastInGroup && (mine ? "rounded-br-md" : "rounded-bl-md"),
                     message.message_type === "image" ? "p-1" : "px-3.5 py-2",
@@ -179,7 +179,7 @@ function MessageBubbleImpl({
         {showMeta && (
           <div
             className={cn(
-              "mt-1 flex items-center gap-1.5 px-1 font-mono text-meta text-muted",
+              "mt-1 flex items-center gap-1.5 px-1 font-mono text-meta font-medium text-muted",
               mine ? "flex-row" : "flex-row-reverse",
             )}
           >

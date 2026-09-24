@@ -21,23 +21,19 @@ export function Sidebar() {
   const myStatus = activeStatus(me);
 
   return (
-    <aside className="hidden w-[300px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-background-raised/80 p-5 lg:flex">
-      <section
-        aria-label={`${partner.display_name}'s profile`}
-        className="cut-corners relative bg-panel p-4"
-      >
-        <span className="halftone absolute top-0 right-0 h-16 w-24 opacity-25" aria-hidden="true" />
-        <div className="relative flex items-center gap-3">
+    <aside className="hidden w-[288px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-background-raised p-4 lg:flex">
+      <section aria-label={`${partner.display_name}'s profile`} className="rounded-card bg-background p-4">
+        <div className="flex items-center gap-3">
           <Avatar profile={partner} size="lg" online={partnerOnline} />
           <div className="min-w-0">
-            <p className="text-display truncate text-2xl">{partner.display_name}</p>
-            <p className={cn("text-display text-[11px] tracking-[0.2em]", partnerOnline ? "text-accent-strong" : "text-muted")}>
+            <p className="truncate text-title font-bold">{partner.display_name}</p>
+            <p className={cn("text-small", partnerOnline ? "text-online" : "text-muted")}>
               {partnerOnline ? "Online" : formatLastSeen(partnerLastSeen)}
             </p>
-          )}
+          </div>
         </div>
         {partnerStatus && (
-          <p className="relative mt-3 text-sm text-muted-strong">
+          <p className="mt-3 text-small text-muted-strong">
             <span aria-hidden="true">{partnerStatus.emoji}</span> {partnerStatus.text}
           </p>
         )}
@@ -55,15 +51,15 @@ export function Sidebar() {
                   onClick={() => playSound("navigate")}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex min-h-11 items-center gap-3 rounded-control px-3 transition-colors",
-                    active ? "bg-accent-soft font-bold text-foreground" : "text-muted-strong hover:bg-panel-strong hover:text-foreground",
+                    "flex min-h-12 items-center gap-3 px-4 text-body transition-colors",
+                    active ? "menu-cursor font-bold text-foreground" : "rounded-control text-muted-strong hover:bg-panel-strong hover:text-foreground",
                   )}
                 >
-                  <Icon size={20} className={active ? "text-accent-strong" : undefined} />
+                  <Icon size={20} className={active ? "text-accent" : undefined} />
                   <span>{label}</span>
                   {badge > 0 && (
-                    <span className="ml-auto min-w-6 rounded-full bg-accent px-2 text-center text-meta leading-6 font-bold text-accent-foreground">
-                      {badge}
+                    <span className="ml-auto min-w-6 rounded-full bg-accent px-2 text-center font-mono text-meta leading-6 font-bold text-accent-foreground">
+                      {badge > 99 ? "99+" : badge}
                       <span className="sr-only"> unread</span>
                     </span>
                   )}
@@ -77,11 +73,11 @@ export function Sidebar() {
       {bond && (
         <Link
           href="/bond"
-          className="block rounded-card border border-border p-3 transition-colors hover:bg-panel-strong"
-          aria-label={`Bond level ${bond.level}, ${bond.title}, ${bond.progress}% to the next level`}
+          className="block rounded-card bg-background p-4 transition-colors hover:bg-panel-strong"
+          aria-label={`Bond rank ${bond.level}, ${bond.title}, ${bond.progress}% to the next rank`}
         >
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-small text-muted">Bond level</span>
+            <span className="text-small text-muted-strong">Bond rank</span>
             <span className="font-mono text-title font-bold">{bond.level}</span>
           </div>
           <p className="truncate text-small font-semibold">{bond.title}</p>
@@ -91,14 +87,14 @@ export function Sidebar() {
         </Link>
       )}
 
-      <div className="mt-auto flex items-center gap-3 border-t border-border px-2 pt-4">
+      <div className="mt-auto flex items-center gap-3 border-t border-border px-1 pt-4">
         <Avatar profile={me} size="sm" showStatus />
         <div className="min-w-0 flex-1">
           <p className="truncate text-small font-semibold">{me.display_name}</p>
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="block max-w-full truncate text-left text-meta text-muted underline-offset-2 hover:text-foreground hover:underline"
+            className="block min-h-6 max-w-full truncate text-left text-meta text-muted-strong underline-offset-2 hover:text-foreground hover:underline"
           >
             {myStatus ? `${myStatus.emoji} ${myStatus.text}` : "Set a status"}
           </button>

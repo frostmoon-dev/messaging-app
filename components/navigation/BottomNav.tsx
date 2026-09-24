@@ -28,20 +28,16 @@ export function BottomNav() {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative flex h-16 flex-col items-center justify-center gap-1 transition-colors",
-                  active ? "text-foreground" : "text-muted hover:text-foreground",
+                  active ? "text-foreground" : "text-muted-strong hover:text-foreground",
                 )}
               >
-                <span
-                  className={cn(
-                    "flex h-8 w-14 items-center justify-center rounded-full transition-colors",
-                    active && "bg-accent-soft text-accent-strong",
-                  )}
-                >
+                {/* Selected tab: the game's slanted menu cursor behind the icon. */}
+                <span className={cn("flex h-8 w-14 items-center justify-center", active && "menu-cursor text-accent")}>
                   <Icon size={22} />
                 </span>
                 <span className={cn("text-meta", active && "font-bold")}>{label}</span>
                 {badge > 0 && (
-                  <span className="absolute top-1.5 left-1/2 ml-2 min-w-5 rounded-full bg-accent px-1.5 text-center text-meta leading-5 font-bold text-accent-foreground">
+                  <span className="absolute top-1.5 left-1/2 ml-2 min-w-5 rounded-full bg-accent px-1.5 text-center font-mono text-meta leading-5 font-bold text-accent-foreground">
                     {badge > 99 ? "99+" : badge}
                     <span className="sr-only"> unread</span>
                   </span>

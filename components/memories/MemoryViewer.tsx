@@ -84,7 +84,7 @@ export function MemoryViewer({
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-control px-3 text-small text-muted-strong hover:bg-accent-soft hover:text-danger"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-control px-3 text-small text-muted-strong hover:bg-panel-strong hover:text-danger"
               >
                 <TrashIcon size={16} /> Delete
               </button>

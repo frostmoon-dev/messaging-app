@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { MessageBubble } from "./MessageBubble";
 import { EmptyChat } from "./EmptyChat";
-import { ArrowDownIcon } from "@/components/ui/icons";
+import { UiMark } from "@/components/ui/UiMark";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { formatDayLabel, isSameDay, minutesApart } from "@/lib/time";
@@ -200,12 +200,13 @@ export function MessageList({
             onClick={() => scrollToBottom()}
             className={cn(
               "absolute right-4 bottom-3 flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full border border-border px-3 text-small font-semibold",
-              unseen ? "border-transparent bg-accent text-accent-foreground" : "bg-background-raised text-foreground",
+              unseen ? "border-transparent bg-accent text-accent-foreground" : "border-field-border bg-background-raised text-foreground",
             )}
             aria-label={unseen ? `${unseen} new messages. Scroll to latest.` : "Scroll to latest message"}
           >
             {unseen > 0 && <span>{unseen} new</span>}
-            <ArrowDownIcon size={16} />
+            {/* The dialogue box "next" chevron, pointing down to the latest line. */}
+            <UiMark name="chevron" className="h-2.5 w-7 rotate-180 bg-current" />
           </motion.button>
         )}
       </AnimatePresence>

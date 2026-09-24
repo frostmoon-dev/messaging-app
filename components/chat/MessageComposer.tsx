@@ -224,7 +224,7 @@ export function MessageComposer({
             enterKeyHint={isTouch ? "enter" : "send"}
             autoComplete="off"
             className={cn(
-              "block max-h-36 min-h-11 w-full resize-none border border-field-border bg-panel px-3.5 py-[11px] text-[16px] leading-[1.35]",
+              "block max-h-36 min-h-11 w-full resize-none rounded-[22px] border border-field-border bg-panel px-4 py-[10px] text-body leading-[1.45]",
               "placeholder:text-muted focus:border-accent focus:outline-none",
               tooLong && "border-danger",
             )}

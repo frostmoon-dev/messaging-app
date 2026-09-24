@@ -1,19 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Barlow } from "next/font/google";
+import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from "next/font/google";
 import { cookies } from "next/headers";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app";
 import { ServiceWorker } from "@/components/providers/ServiceWorker";
-import { DEFAULT_THEME, isThemeId, SCHEME_COLORS, THEME_COOKIE, type ThemeId } from "@/lib/themes";
+import { DEFAULT_THEME, isThemeId, SCHEME_COLORS, THEME_COOKIE, themeScheme, type ThemeId } from "@/lib/themes";
 import "./globals.css";
 
-// Anton (SIL OFL) for display type, Barlow (SIL OFL) for reading.
-const anton = Anton({ weight: "400", subsets: ["latin"], variable: "--font-anton", display: "swap" });
-const barlow = Barlow({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-barlow",
-  display: "swap",
-});
+// Atkinson Hyperlegible Next for all text and Atkinson Hyperlegible Mono for
+// numbers (Braille Institute, SIL OFL). Designed so look-alike characters
+// (I l 1, O 0, rn m) stay distinct. Variable weight 200 to 800.
+const atkinson = Atkinson_Hyperlegible_Next({ subsets: ["latin", "latin-ext"], variable: "--font-atkinson", display: "swap" });
+const atkinsonMono = Atkinson_Hyperlegible_Mono({ subsets: ["latin"], variable: "--font-atkinson-mono", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
@@ -42,8 +39,8 @@ export async function generateViewport(): Promise<Viewport> {
             { media: "(prefers-color-scheme: light)", color: SCHEME_COLORS.light },
             { media: "(prefers-color-scheme: dark)", color: SCHEME_COLORS.dark },
           ]
-        : SCHEME_COLORS[theme],
-    colorScheme: theme === "system" ? "light dark" : theme,
+        : SCHEME_COLORS[themeScheme(theme)],
+    colorScheme: theme === "system" ? "light dark" : themeScheme(theme),
   };
 }
 
@@ -51,7 +48,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const theme = await storedTheme();
 
   return (
-    <html lang="en" data-theme={theme} className={`${anton.variable} ${barlow.variable} antialiased`}>
+    <html lang="en" data-theme={theme} className={`${atkinson.variable} ${atkinsonMono.variable} antialiased`}>
       <body>
         {children}
         <ServiceWorker />

@@ -11,8 +11,6 @@ import { todayDateOnly } from "@/lib/time";
 import type { BondRow } from "@/types/app";
 import { fieldClass as inputClass, labelClass } from "@/components/ui/field";
 
-const inputClass = "w-full border border-field-border bg-panel px-3 py-2.5 text-[16px] outline-none focus:border-accent";
-const labelClass = "text-display mb-1.5 block text-xs tracking-[0.2em] text-muted-strong";
 
 /** Everything here is set by hand. The app never judges the relationship. */
 export function BondEditor({ bond, onClose }: { bond: BondRow; onClose: () => void }) {
@@ -66,7 +64,7 @@ export function BondEditor({ bond, onClose }: { bond: BondRow; onClose: () => vo
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="bond-level" className={labelClass}>Level (1–99)</label>
+            <label htmlFor="bond-level" className={labelClass}>Rank (1 to 99)</label>
             <input
               id="bond-level"
               type="number"
@@ -93,7 +91,7 @@ export function BondEditor({ bond, onClose }: { bond: BondRow; onClose: () => vo
 
         <div className="mt-4">
           <label htmlFor="bond-progress" className={labelClass}>
-            Progress to the next level: <span className="font-mono">{progress}%</span>
+            Progress to the next rank: <span className="font-mono">{progress}%</span>
           </label>
           <input
             id="bond-progress"

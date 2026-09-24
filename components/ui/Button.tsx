@@ -11,7 +11,7 @@ const VARIANTS: Record<Variant, string> = {
   primary: "bg-accent text-accent-foreground hover:bg-accent-strong",
   secondary: "bg-panel-strong text-foreground hover:bg-border",
   ghost: "bg-transparent text-foreground hover:bg-panel-strong",
-  danger: "bg-transparent text-danger hover:bg-accent-soft",
+  danger: "bg-transparent text-danger hover:bg-panel-strong",
 };
 
 type ButtonProps = HTMLMotionProps<"button"> & { variant?: Variant };
@@ -28,7 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       whileTap={disabled ? undefined : { scale: 0.97 }}
       transition={{ duration: 0.1 }}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 text-body font-semibold transition-colors",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 text-body font-semibold whitespace-nowrap transition-colors",
         "disabled:cursor-not-allowed disabled:bg-panel-strong disabled:text-muted",
         VARIANTS[variant],
         className,
