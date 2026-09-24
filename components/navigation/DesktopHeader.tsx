@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 
 export function DesktopHeader() {
   const { connection } = usePresence();
-  const live = connection === "online";
+  const text =
+    connection === "online" ? null : connection === "offline" ? "Offline" : connection === "reconnecting" ? "Reconnecting…" : "Connecting…";
   return (
     <header className="relative hidden h-16 shrink-0 items-center gap-8 border-b border-border bg-background px-6 lg:flex">
       <Wordmark />

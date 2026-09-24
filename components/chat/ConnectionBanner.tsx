@@ -29,17 +29,14 @@ export function ConnectionBanner() {
       {text && (
         <motion.div
           key="banner"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ height: 0 }}
+          animate={{ height: "auto" }}
+          exit={{ height: 0 }}
+          transition={{ duration: 0.18 }}
           className="overflow-hidden"
           role="status"
         >
-          <div className="text-display flex items-center justify-center gap-2 bg-foreground px-4 py-1.5 text-[12px] tracking-[0.2em] text-background">
-            <span className="size-2 animate-pulse bg-accent" aria-hidden="true" />
-            {text}
-          </div>
+          <p className="bg-panel-strong px-4 py-2 text-center text-small text-foreground">{text}</p>
         </motion.div>
       )}
     </AnimatePresence>

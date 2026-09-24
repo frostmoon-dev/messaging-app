@@ -7,7 +7,13 @@ import { initials } from "@/lib/text";
 import { activeStatus } from "@/lib/status";
 import type { Profile } from "@/types/app";
 
-const SIZES = { xs: "size-7 text-[11px]", sm: "size-9 text-xs", md: "size-11 text-sm", lg: "size-16 text-lg", xl: "size-28 text-3xl" };
+const SIZES = {
+  xs: "size-7 text-meta",
+  sm: "size-9 text-meta",
+  md: "size-11 text-small",
+  lg: "size-16 text-title",
+  xl: "size-24 text-heading",
+};
 
 type Props = {
   profile: Pick<Profile, "display_name" | "avatar_url" | "status_emoji" | "status_text" | "status_updated_at">;
@@ -17,7 +23,7 @@ type Props = {
   className?: string;
 };
 
-/** Slanted frame avatar. Image comes from the private `avatars` bucket. */
+/** Round avatar. Image comes from the private `avatars` bucket. */
 export function Avatar({ profile, size = "md", online, showStatus = false, className }: Props) {
   const { url } = useSignedUrl("avatars", profile.avatar_url);
   const [broken, setBroken] = useState<string | null>(null);
@@ -26,8 +32,7 @@ export function Avatar({ profile, size = "md", online, showStatus = false, class
 
   return (
     <span className={cn("relative inline-flex shrink-0", SIZES[size], className)}>
-      <span className="shape-tag absolute inset-0 bg-accent" aria-hidden="true" />
-      <span className="shape-tag absolute inset-[2px] overflow-hidden bg-panel-strong">
+      <span className="flex size-full items-center justify-center overflow-hidden rounded-full bg-panel-strong font-bold text-muted-strong">
         {showImage ? (
           // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL from a private bucket
           <img
@@ -38,23 +43,18 @@ export function Avatar({ profile, size = "md", online, showStatus = false, class
             draggable={false}
           />
         ) : (
-          <span className="text-display flex size-full items-center justify-center text-foreground">
-            {initials(profile.display_name)}
-          </span>
+          initials(profile.display_name)
         )}
       </span>
-      {online !== undefined && (
+      {online && (
         <span
-          className={cn(
-            "absolute -right-0.5 -bottom-0.5 h-2.5 w-3.5 -skew-x-12 border-2 border-background",
-            online ? "bg-accent-strong" : "bg-muted",
-          )}
+          className="absolute right-0 bottom-0 size-[28%] min-h-2.5 min-w-2.5 rounded-full border-2 border-background bg-online"
           aria-hidden="true"
         />
       )}
       {status?.emoji && (
         <span
-          className="absolute -top-1.5 -right-2 flex size-5 items-center justify-center rounded-full border border-border bg-background text-[11px] leading-none"
+          className="absolute -top-1 -right-1.5 flex size-5 items-center justify-center rounded-full border border-border bg-background text-[12px] leading-none"
           aria-hidden="true"
         >
           {status.emoji}

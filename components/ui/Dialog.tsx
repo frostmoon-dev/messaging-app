@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 /**
- * Native <dialog> (focus trap, Esc, top layer) with a quick slide-in.
+ * Native <dialog> (focus trap, Esc, top layer). Sheets rise from the
+ * bottom on phones (close to the thumb) and centre on larger screens.
  * Mount it only while open.
  */
 export function Dialog({
@@ -49,8 +50,7 @@ export function Dialog({
       ref={ref}
       aria-label={label}
       className={cn(
-        "m-0 h-full max-h-none w-full max-w-none bg-transparent p-0 text-foreground backdrop:bg-black/80",
-        "backdrop:backdrop-blur-[2px]",
+        "m-0 h-full max-h-none w-full max-w-none bg-transparent p-0 text-foreground backdrop:bg-black/70",
       )}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -63,9 +63,9 @@ export function Dialog({
         )}
       >
         <motion.div
-          initial={{ opacity: 0, y: variant === "sheet" ? 40 : 0, scale: variant === "sheet" ? 1 : 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.22, ease: [0.2, 0.9, 0.1, 1] }}
+          initial={{ opacity: 0, y: variant === "sheet" ? 24 : 0 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
           className={cn("pointer-events-auto", className)}
         >
           {children}

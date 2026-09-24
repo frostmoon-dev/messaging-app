@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { activeStatus, STATUS_PRESETS } from "@/lib/status";
 import { friendlyError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
+import { fieldClass } from "@/components/ui/field";
 
 const MAX_TEXT = 40;
 
@@ -40,12 +41,12 @@ export function StatusPicker({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog onClose={onClose} label="Set your status" className="w-full sm:w-[420px]">
-      <div className="cut-corners bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div className="rounded-t-[20px] bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[20px]">
         <div className="mb-4 flex items-start justify-between">
           <div>
             <h2 className="text-display text-3xl">Status</h2>
           </div>
-          <button type="button" onClick={onClose} className="p-2 text-muted hover:text-foreground" aria-label="Close">
+          <button type="button" onClick={onClose} className="-mt-1 -mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground" aria-label="Close">
             <CloseIcon size={20} />
           </button>
         </div>
@@ -63,8 +64,8 @@ export function StatusPicker({ onClose }: { onClose: () => void }) {
                 }}
                 aria-pressed={active}
                 className={cn(
-                  "shape-tag flex min-h-16 flex-col items-center justify-center gap-1 px-1 text-xs transition-colors",
-                  active ? "bg-accent text-accent-foreground" : "bg-panel-strong hover:bg-border",
+                  "flex min-h-16 flex-col items-center justify-center gap-1 rounded-control border px-1 text-small transition-colors",
+                  active ? "border-accent bg-accent-soft font-semibold" : "border-transparent bg-panel-strong hover:bg-border",
                 )}
               >
                 <span className="text-xl leading-none" aria-hidden="true">{p.emoji}</span>
@@ -82,7 +83,7 @@ export function StatusPicker({ onClose }: { onClose: () => void }) {
             onChange={(e) => setEmoji(e.target.value)}
             maxLength={8}
             placeholder="✨"
-            className="w-14 border border-border bg-panel px-2 py-2.5 text-center text-lg outline-none focus:border-accent"
+            className={cn(fieldClass, "w-14 px-2 text-center")}
           />
           <label className="sr-only" htmlFor="status-text">Status text</label>
           <input
@@ -90,15 +91,14 @@ export function StatusPicker({ onClose }: { onClose: () => void }) {
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
             placeholder="Custom status"
-            className="min-w-0 flex-1 border border-border bg-panel px-3 py-2.5 text-[15px] outline-none focus:border-accent"
+            className={cn(fieldClass, "min-w-0 flex-1")}
           />
         </div>
-        <p className="mt-1.5 text-[11px] text-muted">Clears itself after 24 hours.</p>
 
-        {error && <p className="mt-3 text-sm text-danger" role="alert">{error}</p>}
+        {error && <p className="mt-3 text-small text-danger" role="alert">{error}</p>}
 
         <div className="mt-5 flex items-center justify-between gap-3">
-          <Button variant="ghost" slanted={false} onClick={() => save(null)} disabled={saving}>
+          <Button variant="ghost" onClick={() => save(null)} disabled={saving}>
             Clear
           </Button>
           <Button onClick={() => save({ emoji, text })} disabled={saving || (!emoji.trim() && !text.trim())}>

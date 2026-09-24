@@ -118,16 +118,16 @@ export function MessageComposer({
             transition={{ duration: 0.16 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center gap-3 border-l-4 border-accent bg-panel px-3 py-2 sm:px-5">
-              <ReplyIcon size={16} className="shrink-0 text-accent-strong" />
+            <div className="flex items-center gap-3 px-4 pt-2">
+              <ReplyIcon size={18} className="shrink-0 text-muted" />
               <div className="min-w-0 flex-1">
-                <p className="text-display text-[11px] tracking-[0.2em] text-accent-strong">
+                <p className="text-meta font-bold">
                   Replying to {replySnippet?.sender_id === me.id ? "yourself" : partner.display_name}
                 </p>
-                <p className="truncate text-[13px] text-muted-strong">{snippetText(replySnippet)}</p>
+                <p className="truncate text-small text-muted-strong">{snippetText(replySnippet)}</p>
               </div>
-              <button type="button" onClick={onCancelReply} className="p-2 text-muted hover:text-foreground" aria-label="Cancel reply">
-                <CloseIcon size={16} />
+              <button type="button" onClick={onCancelReply} className="flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground" aria-label="Cancel reply">
+                <CloseIcon size={18} />
               </button>
             </div>
           </motion.div>
@@ -142,18 +142,18 @@ export function MessageComposer({
             transition={{ duration: 0.16 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center gap-3 px-3 pt-3 sm:px-5">
+            <div className="flex items-center gap-3 px-4 pt-3">
               {attachment.state === "ready" && (
                 // eslint-disable-next-line @next/next/no-img-element -- local blob preview
                 <img
                   src={attachment.previewUrl}
                   alt="Selected photo preview"
-                  className="shape-tag h-16 w-auto max-w-28 object-cover"
+                  className="h-16 w-auto max-w-28 rounded-control object-cover"
                 />
               )}
-              {attachment.state === "processing" && <div className="skeleton shape-tag h-16 w-20" aria-hidden="true" />}
+              {attachment.state === "processing" && <div className="skeleton h-16 w-20 rounded-control" aria-hidden="true" />}
               <p
-                className={cn("flex-1 text-[13px]", attachment.state === "error" ? "text-danger" : "text-muted-strong")}
+                className={cn("flex-1 text-small", attachment.state === "error" ? "text-danger" : "text-muted-strong")}
                 role={attachment.state === "error" ? "alert" : "status"}
               >
                 {attachment.state === "processing" && "Preparing photo…"}
@@ -163,10 +163,10 @@ export function MessageComposer({
               <button
                 type="button"
                 onClick={() => setAttachment(null)}
-                className="p-2 text-muted hover:text-foreground"
+                className="flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground"
                 aria-label="Remove photo"
               >
-                <CloseIcon size={16} />
+                <CloseIcon size={18} />
               </button>
             </div>
           </motion.div>
@@ -174,7 +174,7 @@ export function MessageComposer({
       </AnimatePresence>
 
       <form
-        className="flex items-end gap-1 px-2 pt-2 sm:gap-2 sm:px-4"
+        className="flex items-end gap-2 px-2 pt-2 sm:px-4"
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -197,7 +197,7 @@ export function MessageComposer({
           type="button"
           whileTap={{ scale: 0.9 }}
           onClick={() => fileRef.current?.click()}
-          className="flex size-11 shrink-0 items-center justify-center text-muted-strong hover:text-accent-strong"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong hover:text-foreground"
           aria-label="Attach a photo"
         >
           <ImageIcon />
@@ -220,7 +220,7 @@ export function MessageComposer({
             onBlur={stopTyping}
             onKeyDown={onKeyDown}
             onPaste={onPaste}
-            placeholder={attachment?.state === "ready" ? "Add a caption…" : "Say something…"}
+            placeholder={attachment?.state === "ready" ? "Add a caption" : `Message ${partner.display_name}`}
             enterKeyHint={isTouch ? "enter" : "send"}
             autoComplete="off"
             className={cn(
@@ -234,7 +234,7 @@ export function MessageComposer({
           {text.length > MAX_MESSAGE_LENGTH - 400 && (
             <span
               id="composer-count"
-              className={cn("absolute right-2 -top-5 text-[11px] tabular-nums", tooLong ? "text-danger" : "text-muted")}
+              className={cn("absolute right-3 -top-5 font-mono text-meta", tooLong ? "text-danger" : "text-muted")}
             >
               {text.length}/{MAX_MESSAGE_LENGTH}
             </span>
@@ -244,11 +244,11 @@ export function MessageComposer({
         <motion.button
           type="submit"
           disabled={!canSend}
-          whileTap={canSend ? { scale: 0.9, x: 3 } : undefined}
+          whileTap={canSend ? { scale: 0.92 } : undefined}
           // Keep the keyboard open on mobile after tapping send.
           onPointerDown={(e) => e.preventDefault()}
           className={cn(
-            "shape-slant flex h-11 w-14 shrink-0 items-center justify-center transition-colors",
+            "flex size-11 shrink-0 items-center justify-center rounded-full transition-colors",
             canSend ? "bg-accent text-accent-foreground hover:bg-accent-strong" : "bg-panel-strong text-muted",
           )}
           aria-label="Send message"

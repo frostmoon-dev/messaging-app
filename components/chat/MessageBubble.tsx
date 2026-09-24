@@ -63,28 +63,25 @@ function MessageBubbleImpl({
     if (info.offset.x > SWIPE_THRESHOLD) onReply(message.id);
   };
 
-  const entrance = animateIn
-    ? mine
-      ? { opacity: 0, x: 28, skewX: -8 }
-      : { opacity: 0, x: -22, skewX: 6 }
-    : false;
+  // Only new messages move, and only a little: enough to notice, not to wait for.
+  const entrance = animateIn ? { opacity: 0, y: 8 } : false;
 
   return (
     <motion.div
       id={`msg-${message.id}`}
       initial={entrance}
-      animate={{ opacity: 1, x: 0, skewX: 0 }}
-      transition={{ duration: 0.22, ease: [0.2, 0.9, 0.1, 1] }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.16, ease: [0.2, 0.8, 0.2, 1] }}
       className={cn(
-        "group relative flex w-full items-end gap-2 px-3 sm:px-5",
+        "group relative flex w-full items-end gap-2 px-4",
         mine ? "justify-end" : "justify-start",
-        firstInGroup ? "mt-3" : "mt-1",
+        firstInGroup ? "mt-4" : "mt-1",
       )}
     >
       {/* Brief highlight after jumping to a replied message. */}
       {highlighted && (
         <motion.span
-          className="pointer-events-none absolute inset-y-[-4px] inset-x-0 -skew-x-6 bg-accent/25"
+          className="pointer-events-none absolute inset-y-[-4px] inset-x-0 bg-accent-soft"
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
           transition={{ duration: 1.4, ease: "easeOut" }}
@@ -98,7 +95,7 @@ function MessageBubbleImpl({
         </div>
       )}
 
-      <div className={cn("relative flex max-w-[82%] flex-col sm:max-w-[68%]", mine ? "items-end" : "items-start")}>
+      <div className={cn("relative flex max-w-[min(82%,34rem)] flex-col sm:max-w-[min(68%,34rem)]", mine ? "items-end" : "items-start")}>
         {swipeEnabled && (
           <motion.span
             style={{ opacity: hintOpacity }}
@@ -117,7 +114,7 @@ function MessageBubbleImpl({
           dragSnapToOrigin
           onDragEnd={onDragEnd}
           style={{ x, touchAction: "pan-y" }}
-          className={cn("relative min-w-0", mine ? "shadow-outgoing" : "shadow-incoming")}
+          className="relative min-w-0"
         >
           <div
             className={cn(
@@ -125,24 +122,17 @@ function MessageBubbleImpl({
               emojiOnly
                 ? "bg-transparent px-1 py-0.5"
                 : cn(
+                    "rounded-bubble",
                     mine
-                      ? "shape-outgoing bg-outgoing text-outgoing-foreground"
-                      : "shape-incoming bg-incoming text-incoming-foreground",
-                    message.message_type === "image" ? "p-1.5" : "px-3.5 py-2.5",
+                      ? "bg-outgoing text-outgoing-foreground"
+                      : "bg-incoming text-incoming-foreground",
+                    // The corner nearest the sender flattens on the last bubble of a group.
+                    lastInGroup && (mine ? "rounded-br-md" : "rounded-bl-md"),
+                    message.message_type === "image" ? "p-1" : "px-3.5 py-2",
                   ),
               failed && "opacity-70",
             )}
           >
-            {!mine && animateIn && (
-              <motion.span
-                className="pointer-events-none absolute inset-0 bg-accent"
-                initial={{ opacity: 0.55 }}
-                animate={{ opacity: 0 }}
-                transition={{ duration: 0.45, ease: "easeOut" }}
-                aria-hidden="true"
-              />
-            )}
-
             <span className="sr-only">{mine ? "You" : author.display_name}:</span>
 
             {message.reply_to && (
@@ -162,7 +152,7 @@ function MessageBubbleImpl({
               <p
                 className={cn(
                   "whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
-                  emojiOnly ? "text-4xl leading-tight" : "text-[15px] leading-[1.45]",
+                  emojiOnly ? "text-4xl leading-tight" : "text-body leading-[1.45]",
                   message.message_type === "image" && "px-2 pt-1.5 pb-1",
                 )}
               >
@@ -173,7 +163,7 @@ function MessageBubbleImpl({
                       href={t.href}
                       target="_blank"
                       rel="noopener noreferrer nofollow"
-                      className="underline decoration-2 underline-offset-2"
+                      className="underline underline-offset-2"
                     >
                       {t.value}
                     </a>
@@ -189,7 +179,7 @@ function MessageBubbleImpl({
         {showMeta && (
           <div
             className={cn(
-              "mt-1 flex items-center gap-1.5 px-1 text-[11px] tabular-nums text-muted",
+              "mt-1 flex items-center gap-1.5 px-1 font-mono text-meta text-muted",
               mine ? "flex-row" : "flex-row-reverse",
             )}
           >
@@ -200,19 +190,19 @@ function MessageBubbleImpl({
         {!showMeta && <span className="sr-only">{time}</span>}
 
         {failed && (
-          <div className="mt-1 flex items-center gap-1 text-[12px] text-danger" role="alert">
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-small text-danger" role="alert">
             <span>{message.local?.error ?? "Couldn't send message."}</span>
             <button
               type="button"
               onClick={() => onRetry(message.id)}
-              className="text-display inline-flex min-h-8 items-center gap-1 px-2 tracking-wider text-foreground hover:text-accent-strong"
+              className="inline-flex min-h-11 items-center gap-1 rounded-control px-2 font-semibold text-foreground hover:bg-panel-strong"
             >
               <RetryIcon size={14} /> Retry
             </button>
             <button
               type="button"
               onClick={() => onDiscard(message.id)}
-              className="inline-flex min-h-8 items-center px-1.5 text-muted hover:text-foreground"
+              className="inline-flex size-11 items-center justify-center rounded-control text-muted hover:bg-panel-strong hover:text-foreground"
               aria-label="Delete unsent message"
             >
               <TrashIcon size={14} />
@@ -226,7 +216,7 @@ function MessageBubbleImpl({
           type="button"
           onClick={() => onReply(message.id)}
           className={cn(
-            "self-center p-2 text-muted opacity-0 transition-opacity hover:text-accent-strong focus-visible:opacity-100 group-hover:opacity-100",
+            "self-center rounded-full p-2 text-muted opacity-0 hover:bg-panel-strong hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100",
             "[@media(pointer:coarse)]:sr-only",
             mine ? "order-first" : "",
           )}

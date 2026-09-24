@@ -6,7 +6,7 @@ import { CloseIcon } from "@/components/ui/icons";
 import { UiMark } from "@/components/ui/UiMark";
 import { dismissPrompt, requestNotificationPermission } from "@/lib/notifications";
 
-/** Asked only after the user has sent something — never on first load. */
+/** Asked only after the user has sent something, never on first load. */
 export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: () => void }) {
   const { partner } = useChat();
 
@@ -24,11 +24,11 @@ export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: ()
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 16 }}
-          transition={{ duration: 0.2 }}
-          className="mx-3 mb-2 sm:mx-5"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.16 }}
+          className="mx-4 mb-2"
           role="region"
           aria-label="Notification settings"
         >

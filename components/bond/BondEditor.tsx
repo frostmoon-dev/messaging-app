@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { todayDateOnly } from "@/lib/time";
 import type { BondRow } from "@/types/app";
+import { fieldClass as inputClass, labelClass } from "@/components/ui/field";
 
 const inputClass = "w-full border border-field-border bg-panel px-3 py-2.5 text-[16px] outline-none focus:border-accent";
 const labelClass = "text-display mb-1.5 block text-xs tracking-[0.2em] text-muted-strong";
@@ -55,10 +56,10 @@ export function BondEditor({ bond, onClose }: { bond: BondRow; onClose: () => vo
 
   return (
     <Dialog onClose={onClose} label="Edit bond" className="w-full sm:w-[440px]">
-      <form onSubmit={save} className="cut-corners bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <form onSubmit={save} className="rounded-t-[20px] bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[20px]">
         <div className="mb-5 flex items-start justify-between">
-          <h2 className="text-display text-3xl">Edit bond</h2>
-          <button type="button" onClick={onClose} className="p-2 text-muted hover:text-foreground" aria-label="Close">
+          <h2 className="text-title font-bold">Edit bond</h2>
+          <button type="button" onClick={onClose} className="-mt-1 -mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground" aria-label="Close">
             <CloseIcon size={20} />
           </button>
         </div>
@@ -92,7 +93,7 @@ export function BondEditor({ bond, onClose }: { bond: BondRow; onClose: () => vo
 
         <div className="mt-4">
           <label htmlFor="bond-progress" className={labelClass}>
-            Progress to next level · {progress}%
+            Progress to the next level: <span className="font-mono">{progress}%</span>
           </label>
           <input
             id="bond-progress"
@@ -102,7 +103,7 @@ export function BondEditor({ bond, onClose }: { bond: BondRow; onClose: () => vo
             step={5}
             value={progress}
             onChange={(e) => setProgress(Number(e.target.value))}
-            className="w-full accent-[var(--accent)]"
+            className="h-11 w-full accent-[var(--accent)]"
           />
         </div>
 
@@ -118,10 +119,10 @@ export function BondEditor({ bond, onClose }: { bond: BondRow; onClose: () => vo
           />
         </div>
 
-        {error && <p className="mt-3 text-sm text-danger" role="alert">{error}</p>}
+        {error && <p className="mt-3 text-small text-danger" role="alert">{error}</p>}
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button variant="ghost" slanted={false} onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={!valid || saving}>{saving ? "Saving…" : "Save"}</Button>
         </div>
       </form>

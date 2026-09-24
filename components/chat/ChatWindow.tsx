@@ -73,7 +73,7 @@ export function ChatWindow() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="mx-auto mb-1 bg-panel-strong px-3 py-1 text-xs text-muted-strong"
+            className="mx-auto mb-1 rounded-full bg-panel-strong px-3 py-1 text-small"
             role="status"
           >
             {jumpError}

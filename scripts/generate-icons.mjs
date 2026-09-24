@@ -4,28 +4,23 @@
 import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 
-const RED = "#e3162f";
-const BLACK = "#0a0a0b";
-const WHITE = "#f6f3ee";
+const RED = "#d0243a";
+const WHITE = "#ffffff";
 
-// Original mark: a black field, a red slab cut on a diagonal, and a white
-// "H" built from two slanted bars and a crossbar.
+// Mark: a red field with a white "H" drawn as two uprights and a crossbar
+// (two people and the line between them). The OS adds its own corner mask.
 const icon = (padding = 0) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="${BLACK}"/>
+  <rect width="512" height="512" fill="${RED}"/>
   <g transform="translate(${padding} ${padding}) scale(${(512 - padding * 2) / 512})">
-    <polygon points="0,340 512,120 512,330 0,512" fill="${RED}"/>
-    <polygon points="138,96 214,96 176,416 100,416" fill="${WHITE}"/>
-    <polygon points="336,96 412,96 374,416 298,416" fill="${WHITE}"/>
-    <polygon points="150,226 380,208 372,276 142,294" fill="${WHITE}"/>
+    <path d="M150 128v256M362 128v256M150 256h212" stroke="${WHITE}" stroke-width="64" stroke-linecap="round" fill="none"/>
   </g>
 </svg>`;
 
+// Notification badge: monochrome, the OS tints it.
 const badge = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
-  <polygon points="26,14 42,14 34,82 18,82" fill="#fff"/>
-  <polygon points="62,14 78,14 70,82 54,82" fill="#fff"/>
-  <polygon points="28,40 72,36 70,52 26,56" fill="#fff"/>
+  <path d="M28 20v56M68 20v56M28 48h40" stroke="#fff" stroke-width="14" stroke-linecap="round" fill="none"/>
 </svg>`;
 
 await mkdir("public/icons", { recursive: true });

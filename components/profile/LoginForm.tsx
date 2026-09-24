@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState } from "react";
-import { motion, MotionConfig } from "framer-motion";
 import { signIn, type SignInState } from "@/lib/auth/actions";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { DayClock } from "@/components/ui/DayClock";

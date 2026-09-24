@@ -36,7 +36,7 @@ export function MessageImage({
   return (
     <button
       type="button"
-      className="relative block max-w-full overflow-hidden bg-black/20"
+      className="relative block max-w-full overflow-hidden rounded-[14px] bg-black/20"
       style={{ width: box.width, aspectRatio: `${box.width} / ${box.height}` }}
       onClick={() => src && onOpen(src, alt)}
       disabled={!src}
@@ -56,21 +56,21 @@ export function MessageImage({
       )}
       {!loaded && !failed && <span className="skeleton absolute inset-0" aria-hidden="true" />}
       {failed && !src && (
-        <span className="absolute inset-0 flex items-center justify-center text-xs text-muted">Image unavailable</span>
+        <span className="absolute inset-0 flex items-center justify-center text-small text-muted">Photo unavailable</span>
       )}
       {uploading && (
         <span className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-black/70 px-2 py-1.5">
           <span
-            className="h-1.5 flex-1 -skew-x-12 bg-white/20"
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/25"
             role="progressbar"
             aria-label="Upload progress"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progress}
           >
-            <span className="block h-full bg-accent-strong transition-[width] duration-150" style={{ width: `${progress}%` }} />
+            <span className="block h-full rounded-full bg-white transition-[width] duration-150" style={{ width: `${progress}%` }} />
           </span>
-          <span className="text-display text-[11px] tabular-nums text-white">{progress}%</span>
+          <span className="font-mono text-meta text-white">{progress}%</span>
         </span>
       )}
     </button>

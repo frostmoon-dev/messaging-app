@@ -26,7 +26,7 @@ export function AppShell({
         <div className="app-height bg-texture fixed inset-x-0 top-0 flex flex-col overflow-hidden">
           <a
             href="#main"
-            className="sr-only-focusable text-display absolute top-2 left-2 z-50 bg-accent px-3 py-2 text-accent-foreground"
+            className="sr-only-focusable absolute top-2 left-2 z-50 rounded-control bg-accent px-3 py-2 font-semibold text-accent-foreground"
           >
             Skip to content
           </a>

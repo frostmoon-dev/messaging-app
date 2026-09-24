@@ -10,10 +10,10 @@ import { EditIcon } from "@/components/ui/icons";
 import { UiMark } from "@/components/ui/UiMark";
 import { BondEditor } from "./BondEditor";
 import { createClient } from "@/lib/supabase/client";
-import { toRoman } from "@/lib/roman";
+import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { daysSince, formatLongDate } from "@/lib/time";
 import { friendlyError } from "@/lib/errors";
-import { activeStatus } from "@/lib/status";
 
 type Stats = {
   message_count: number;
@@ -21,8 +21,6 @@ type Stats = {
   first_message_at: string | null;
   favorite_emoji: string | null;
 };
-
-const SEGMENTS = 16;
 
 export function BondScreen() {
   const { me, partner, bond, conversationId } = useChat();
@@ -44,7 +42,7 @@ export function BondScreen() {
 
   const level = bond?.level ?? 1;
   const progress = bond?.progress ?? 0;
-  const filled = Math.round((progress / 100) * SEGMENTS);
+  const days = bond?.together_since ? daysSince(bond.together_since) : null;
 
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
@@ -88,20 +86,17 @@ export function BondScreen() {
           <div
             className="relative flex w-full max-w-md gap-1"
             role="progressbar"
-            aria-label="Progress to next level"
+            aria-label={`Progress to level ${level + 1}`}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progress}
           >
-            {Array.from({ length: SEGMENTS }, (_, i) => (
-              <motion.span
-                key={i}
-                initial={{ scaleY: 0 }}
-                animate={{ scaleY: 1 }}
-                transition={{ duration: 0.18, delay: 0.1 + i * 0.02 }}
-                className={i < filled ? "h-4 flex-1 -skew-x-12 bg-accent" : "h-4 flex-1 -skew-x-12 bg-panel-strong"}
-              />
-            ))}
+            <motion.div
+              className="h-full rounded-full bg-accent"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+            />
           </div>
           <p className="text-display relative mt-5 bg-foreground px-4 py-1.5 text-xl tracking-wider text-background -skew-x-6">
             {bond?.title ?? "Partners in Crime"}
@@ -111,19 +106,20 @@ export function BondScreen() {
           </p>
         </section>
 
-        {/* Stats */}
-        <section aria-label="Statistics">
-          <h2 className="text-display mb-3 text-xs tracking-[0.3em] text-muted">Record</h2>
+        <section aria-labelledby="bond-record">
+          <h2 id="bond-record" className="mb-3 text-title font-bold">
+            Your record
+          </h2>
           {statsError ? (
-            <div className="flex items-center justify-between gap-3 bg-panel p-4 text-sm" role="alert">
-              <span className="text-muted-strong">{statsError}</span>
-              <Button variant="outline" onClick={() => void loadStats()}>
-                Retry
+            <div className="flex items-center justify-between gap-3 rounded-card border border-border bg-panel p-4" role="alert">
+              <span className="text-small text-muted-strong">{statsError}</span>
+              <Button variant="secondary" onClick={() => void loadStats()}>
+                Try again
               </Button>
             </div>
           ) : (
             <dl className="grid grid-cols-2 gap-3">
-              <Stat label="Messages exchanged" value={stats ? stats.message_count.toLocaleString() : null} />
+              <Stat label="Messages" value={stats ? stats.message_count.toLocaleString() : null} />
               <Stat
                 label="Days together"
                 value={bond?.together_since ? daysSince(bond.together_since).toLocaleString() : stats ? "Not set" : null}
@@ -131,6 +127,7 @@ export function BondScreen() {
               />
               <Stat label="Favorite emoji" value={stats ? stats.favorite_emoji ?? "None yet" : null} large />
               <Stat label="Photos shared" value={stats ? stats.image_count.toLocaleString() : null} />
+              <Stat label="Most used emoji" value={stats ? stats.favorite_emoji ?? "None yet" : null} />
               <Stat
                 label="First message"
                 value={stats ? (stats.first_message_at ? formatLongDate(stats.first_message_at) : "Not yet") : null}
@@ -146,41 +143,14 @@ export function BondScreen() {
   );
 }
 
-function DuoMember({ name, profile }: { name: string; profile: Parameters<typeof Avatar>[0]["profile"] }) {
-  const status = activeStatus(profile);
+function Stat({ label, value, hint, wide }: { label: string; value: string | null; hint?: string; wide?: boolean }) {
   return (
-    <div className="flex w-[38%] flex-col items-center gap-2 text-center">
-      <Avatar profile={profile} size="xl" />
-      <p className="text-display w-full truncate text-2xl">{name}</p>
-      {status && (
-        <p className="w-full truncate text-xs text-muted-strong">
-          <span aria-hidden="true">{status.emoji}</span> {status.text}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  hint,
-  large,
-  wide,
-}: {
-  label: string;
-  value: string | null;
-  hint?: string;
-  large?: boolean;
-  wide?: boolean;
-}) {
-  return (
-    <div className={`cut-corners-sm bg-panel p-4 ${wide ? "col-span-2" : ""}`}>
-      <dt className="text-display text-[11px] tracking-[0.2em] text-muted">{label}</dt>
-      <dd className={`text-display mt-1 ${large ? "text-4xl" : "text-3xl"}`}>
+    <div className={cn("rounded-card border border-border bg-panel p-4", wide && "col-span-2")}>
+      <dt className="text-small text-muted">{label}</dt>
+      <dd className="mt-1 font-mono text-heading font-bold">
         {value === null ? <Skeleton className="h-8 w-20" /> : value}
       </dd>
-      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+      {hint && <p className="mt-1 text-meta text-muted">{hint}</p>}
     </div>
   );
 }

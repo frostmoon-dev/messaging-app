@@ -53,16 +53,16 @@ export function MemoriesScreen() {
         </div>
 
         {error && (
-          <div className="mb-6 flex items-center justify-between gap-3 bg-panel p-4 text-sm" role="alert">
-            <span className="text-muted-strong">{error}</span>
-            <Button variant="outline" onClick={() => void load()}>Retry</Button>
+          <div className="flex items-center justify-between gap-3 rounded-card border border-border bg-panel p-4" role="alert">
+            <span className="text-small text-muted-strong">{error}</span>
+            <Button variant="secondary" onClick={() => void load()}>Try again</Button>
           </div>
         )}
 
         {memories === null && !error && (
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3" aria-busy="true" aria-label="Loading memories">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3" aria-busy="true" aria-label="Loading memories">
             {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="aspect-[4/5] w-full" />
+              <Skeleton key={i} className="aspect-square w-full rounded-card" />
             ))}
           </div>
         )}
@@ -84,10 +84,10 @@ export function MemoriesScreen() {
         )}
 
         {memories && memories.length > 0 && (
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 sm:gap-x-6">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3">
             <AnimatePresence initial={false}>
-              {memories.map((m, i) => (
-                <MemoryCard key={m.id} memory={m} index={i} onOpen={() => setViewing(m)} />
+              {memories.map((m) => (
+                <MemoryCard key={m.id} memory={m} onOpen={() => setViewing(m)} />
               ))}
             </AnimatePresence>
           </ul>

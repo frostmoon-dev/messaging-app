@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { daysSince, formatDayLabel, formatLastSeen, isSameDay } from "@/lib/time";
-import { toRoman } from "@/lib/roman";
 
 const now = new Date(2026, 8, 24, 18, 0); // 24 Sep 2026, 18:00 local
 
@@ -21,14 +20,5 @@ describe("time helpers", () => {
   it("compares days", () => {
     expect(isSameDay(new Date(2026, 0, 1, 1), new Date(2026, 0, 1, 23))).toBe(true);
     expect(isSameDay(new Date(2026, 0, 1), new Date(2026, 0, 2))).toBe(false);
-  });
-});
-
-describe("toRoman", () => {
-  it("converts levels", () => {
-    expect(toRoman(7)).toBe("VII");
-    expect(toRoman(49)).toBe("XLIX");
-    expect(toRoman(99)).toBe("XCIX");
-    expect(toRoman(0)).toBe("—");
   });
 });

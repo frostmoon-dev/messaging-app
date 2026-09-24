@@ -8,7 +8,7 @@ import { LogoutIcon } from "@/components/ui/icons";
 import { StatusPicker } from "@/components/profile/StatusPicker";
 import { createClient } from "@/lib/supabase/client";
 import { signOut, setTheme } from "@/lib/auth/actions";
-import { THEMES, THEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME } from "@/lib/themes";
+import { THEMES, SCHEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME } from "@/lib/themes";
 import { isSoundEnabled, playSound, setSoundEnabled } from "@/lib/sound";
 import {
   notificationPermission,
@@ -22,6 +22,8 @@ import { clearSignedUrlCache } from "@/lib/storage/signed-urls";
 import { friendlyError, MESSAGES } from "@/lib/errors";
 import { activeStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { fieldClass, labelClass } from "@/components/ui/field";
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
@@ -44,8 +46,8 @@ export function SettingsScreen() {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="cut-corners bg-panel p-5" aria-labelledby={`section-${title}`}>
-      <h2 id={`section-${title}`} className="text-display mb-4 text-xl tracking-wider">
+    <section className="rounded-card border border-border bg-panel p-4 sm:p-5" aria-labelledby={`section-${title}`}>
+      <h2 id={`section-${title}`} className="mb-4 text-title font-bold">
         {title}
       </h2>
       {children}
@@ -122,22 +124,22 @@ function ProfileSection() {
               if (f) void uploadAvatar(f);
             }}
           />
-          <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={uploading}>
             {uploading ? "Uploading…" : "Change avatar"}
           </Button>
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="min-h-9 text-left text-sm text-muted-strong hover:text-foreground"
+            className="min-h-11 text-left text-small text-muted-strong underline-offset-2 hover:text-foreground hover:underline"
           >
-            {status ? `${status.emoji} ${status.text} · change` : "Set today's status"}
+            {status ? `${status.emoji} ${status.text} (change)` : "Set a status"}
           </button>
         </div>
       </div>
 
       <form onSubmit={saveName} className="mt-5 flex items-end gap-3">
         <div className="flex-1">
-          <label htmlFor="display-name" className="text-display mb-1.5 block text-xs tracking-[0.2em] text-muted-strong">
+          <label htmlFor="display-name" className={labelClass}>
             Display name
           </label>
           <input
@@ -145,7 +147,7 @@ function ProfileSection() {
             value={name}
             maxLength={40}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border border-border bg-background px-3 py-2.5 text-[16px] outline-none focus:border-accent"
+            className={fieldClass}
           />
         </div>
         <Button type="submit" disabled={saving || !name.trim() || name.trim() === me.display_name}>
@@ -153,7 +155,7 @@ function ProfileSection() {
         </Button>
       </form>
       {message && (
-        <p className={cn("mt-3 text-sm", message.tone === "error" ? "text-danger" : "text-muted-strong")} role="status">
+        <p className={cn("mt-3 text-small", message.tone === "error" ? "text-danger" : "text-muted-strong")} role="status">
           {message.text}
         </p>
       )}
@@ -168,7 +170,15 @@ const subscribeNoop = () => () => {};
 
 function applyTheme(id: ThemeId) {
   document.documentElement.setAttribute("data-theme", id);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLORS[id]);
+  const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+  const scheme = id === "system" ? (prefersLight ? "light" : "dark") : id;
+  // The server may have rendered one tag or a light/dark pair. Pairs keep
+  // their media query when following the system; otherwise all get one colour.
+  document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+    const media = meta.getAttribute("media");
+    const own = id === "system" && media ? (media.includes("light") ? "light" : "dark") : scheme;
+    meta.setAttribute("content", SCHEME_COLORS[own]);
+  });
 }
 
 function currentTheme(): ThemeId {
@@ -198,19 +208,13 @@ function ThemeSection() {
             role="radio"
             aria-checked={theme === t.id}
             onClick={() => choose(t.id)}
-            data-theme={t.id}
             className={cn(
-              "flex flex-col gap-2 border-2 bg-background p-2 text-left transition-colors",
-              theme === t.id ? "border-accent" : "border-border hover:border-muted",
+              "flex min-h-11 flex-col gap-0.5 rounded-control border-2 p-3 text-left transition-colors",
+              theme === t.id ? "border-accent bg-accent-soft" : "border-border hover:bg-panel-strong",
             )}
           >
-            <span className="flex h-10 gap-1" aria-hidden="true">
-              <span className="w-1/3 bg-incoming" />
-              <span className="w-1/3 bg-outgoing" />
-              <span className="w-1/3 bg-panel-strong" />
-            </span>
-            <span className="text-display text-sm tracking-wider text-foreground">{t.name}</span>
-            <span className="text-[11px] leading-tight text-muted">{t.description}</span>
+            <span className="font-semibold">{t.name}</span>
+            <span className="text-meta text-muted">{t.description}</span>
           </button>
         ))}
       </div>
@@ -232,7 +236,7 @@ function Toggle({ id, label, description, checked, onChange, disabled }: {
     <div className="flex items-center justify-between gap-4 py-2">
       <div>
         <label htmlFor={id} className="font-semibold">{label}</label>
-        <p className="text-sm text-muted">{description}</p>
+        <p className="text-small text-muted">{description}</p>
       </div>
       <button
         id={id}
@@ -242,14 +246,14 @@ function Toggle({ id, label, description, checked, onChange, disabled }: {
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative h-7 w-14 shrink-0 -skew-x-12 border-2 transition-colors disabled:opacity-40",
-          checked ? "border-accent bg-accent" : "border-border bg-background",
+          "relative h-8 w-13 shrink-0 rounded-full border-2 transition-colors disabled:cursor-not-allowed disabled:border-border disabled:bg-panel-strong",
+          checked ? "border-accent bg-accent" : "border-muted bg-muted",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 h-5 w-5 bg-foreground transition-transform duration-150",
-            checked ? "translate-x-7" : "translate-x-0.5",
+            "absolute top-0.5 left-0.5 size-6 rounded-full transition-transform duration-150",
+            checked ? "translate-x-5 bg-white" : "translate-x-0 bg-white",
           )}
           aria-hidden="true"
         />
@@ -343,12 +347,12 @@ function InstallSection() {
           Add to Home Screen
         </Button>
       ) : ios ? (
-        <p className="text-sm text-muted-strong">
+        <p className="text-small text-muted-strong">
           In Safari, tap <strong className="text-foreground">Share</strong>, then{" "}
-          <strong className="text-foreground">Add to Home Screen</strong>. It opens full-screen, like a real app.
+          <strong className="text-foreground">Add to Home Screen</strong>. It then opens full-screen.
         </p>
       ) : (
-        <p className="text-sm text-muted-strong">Use your browser menu → “Install app” to add it to your device.</p>
+        <p className="text-small text-muted-strong">Open your browser menu and choose “Install app”.</p>
       )}
     </Panel>
   );
@@ -381,7 +385,7 @@ function SignOutSection() {
       >
         <LogoutIcon size={18} /> {pending ? "Signing out…" : "Sign out"}
       </Button>
-      {error && <p className="text-sm text-danger" role="alert">{error}</p>}
+      {error && <p className="text-small text-danger" role="alert">{error}</p>}
     </section>
   );
 }
