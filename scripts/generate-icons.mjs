@@ -4,14 +4,14 @@
 import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 
-const RED = "#d0243a";
+const BLUE = "#1c5fe0";
 const WHITE = "#ffffff";
 
-// Mark: a red field with a white "H" drawn as two uprights and a crossbar
+// Mark: a blue field with a white "H" drawn as two uprights and a crossbar
 // (two people and the line between them). The OS adds its own corner mask.
 const icon = (padding = 0) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="${RED}"/>
+  <rect width="512" height="512" fill="${BLUE}"/>
   <g transform="translate(${padding} ${padding}) scale(${(512 - padding * 2) / 512})">
     <path d="M150 128v256M362 128v256M150 256h212" stroke="${WHITE}" stroke-width="64" stroke-linecap="round" fill="none"/>
   </g>

@@ -6,6 +6,9 @@ export type MarkName =
   | "alert"
   | "arcana"
   | "sakura"
+  | "chevron"
+  | "slash"
+  | "rankup"
   | `time-${"morning" | "daytime" | "lunchtime" | "afternoon" | "nighttime" | "lateatnight"}`;
 
 /**

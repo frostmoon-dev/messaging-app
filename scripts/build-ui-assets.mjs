@@ -57,10 +57,16 @@ const JOBS = [
   { src: "T_UI_AccessIcon_Quest_01.png", out: "alert.png", from: "red", height: 128 },
   { src: "T_UI_AccessIcon_Commu_00.png", out: "arcana.png", from: "red", height: 128 },
   { src: "T_UI_SaveLoad_Sakura.png", out: "sakura.png", from: "alpha", height: 128 },
+  // The dialogue box "next" chevron, the menu slash and the Social Link
+  // rank-up brush stroke (top-left cell of the sheet).
+  { src: "T_UI_Message_02_texture.png", out: "chevron.png", from: "alpha", height: 64 },
+  { src: "T_UI_Camp_PartyPanel_01_texture.png", out: "slash.png", from: "alpha", height: 128 },
+  { src: "T_UI_PointUp_Commu_texture.png", crop: { left: 0, top: 0, width: 512, height: 384 }, out: "rankup.png", from: "alpha", height: 128 },
 ];
 
-async function shapeChannel(src, from) {
-  const img = typeof src === "function" ? await src() : sharp(path.join(SRC, src));
+async function shapeChannel(src, from, crop) {
+  let img = typeof src === "function" ? await src() : sharp(path.join(SRC, src));
+  if (crop) img = sharp(await img.extract(crop).png().toBuffer());
   if (from === "alpha") return img.ensureAlpha().extractChannel(3);
   if (from === "red") return img.removeAlpha().extractChannel(0);
   return img.removeAlpha().greyscale();
@@ -69,7 +75,7 @@ async function shapeChannel(src, from) {
 await mkdir(OUT, { recursive: true });
 
 for (const job of JOBS) {
-  const mask = await (await shapeChannel(job.src, job.from)).raw().toBuffer({ resolveWithObject: true });
+  const mask = await (await shapeChannel(job.src, job.from, job.crop)).raw().toBuffer({ resolveWithObject: true });
   const { width, height } = mask.info;
   // White pixels, shape in the alpha channel. Trim empty space, then resize.
   const out = await sharp({ create: { width, height, channels: 3, background: "#ffffff" } })

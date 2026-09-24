@@ -8,7 +8,7 @@ import { LogoutIcon } from "@/components/ui/icons";
 import { StatusPicker } from "@/components/profile/StatusPicker";
 import { createClient } from "@/lib/supabase/client";
 import { signOut, setTheme } from "@/lib/auth/actions";
-import { THEMES, SCHEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME } from "@/lib/themes";
+import { THEMES, SCHEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME, themeScheme } from "@/lib/themes";
 import { isSoundEnabled, playSound, setSoundEnabled } from "@/lib/sound";
 import {
   notificationPermission,
@@ -31,9 +31,7 @@ export function SettingsScreen() {
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex max-w-xl flex-col gap-6 px-5 py-8 sm:px-8">
-        <div>
-          <h1 className="text-display text-5xl">Settings</h1>
-        </div>
+        <PageHeader title="Settings" />
         <ProfileSection />
         <ThemeSection />
         <AlertsSection />
@@ -46,7 +44,7 @@ export function SettingsScreen() {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card border border-border bg-panel p-4 sm:p-5" aria-labelledby={`section-${title}`}>
+    <section className="rounded-card bg-panel p-4 sm:p-5" aria-labelledby={`section-${title}`}>
       <h2 id={`section-${title}`} className="mb-4 text-title font-bold">
         {title}
       </h2>
@@ -171,7 +169,7 @@ const subscribeNoop = () => () => {};
 function applyTheme(id: ThemeId) {
   document.documentElement.setAttribute("data-theme", id);
   const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-  const scheme = id === "system" ? (prefersLight ? "light" : "dark") : id;
+  const scheme = id === "system" ? (prefersLight ? "light" : "dark") : themeScheme(id);
   // The server may have rendered one tag or a light/dark pair. Pairs keep
   // their media query when following the system; otherwise all get one colour.
   document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
@@ -200,7 +198,7 @@ function ThemeSection() {
 
   return (
     <Panel title="Theme">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" role="radiogroup" aria-label="Theme">
+      <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Theme">
         {THEMES.map((t) => (
           <button
             key={t.id}
@@ -210,11 +208,11 @@ function ThemeSection() {
             onClick={() => choose(t.id)}
             className={cn(
               "flex min-h-11 flex-col gap-0.5 rounded-control border-2 p-3 text-left transition-colors",
-              theme === t.id ? "border-accent bg-accent-soft" : "border-border hover:bg-panel-strong",
+              theme === t.id ? "border-accent bg-accent-soft" : "border-field-border hover:bg-panel-strong",
             )}
           >
             <span className="font-semibold">{t.name}</span>
-            <span className="text-meta text-muted">{t.description}</span>
+            <span className="text-small text-muted-strong">{t.description}</span>
           </button>
         ))}
       </div>
@@ -236,7 +234,7 @@ function Toggle({ id, label, description, checked, onChange, disabled }: {
     <div className="flex items-center justify-between gap-4 py-2">
       <div>
         <label htmlFor={id} className="font-semibold">{label}</label>
-        <p className="text-small text-muted">{description}</p>
+        <p className="text-small text-muted-strong">{description}</p>
       </div>
       <button
         id={id}
@@ -247,13 +245,13 @@ function Toggle({ id, label, description, checked, onChange, disabled }: {
         onClick={() => onChange(!checked)}
         className={cn(
           "relative h-8 w-13 shrink-0 rounded-full border-2 transition-colors disabled:cursor-not-allowed disabled:border-border disabled:bg-panel-strong",
-          checked ? "border-accent bg-accent" : "border-muted bg-muted",
+          checked ? "border-accent bg-accent" : "border-field-border bg-panel-strong",
         )}
       >
         <span
           className={cn(
             "absolute top-0.5 left-0.5 size-6 rounded-full transition-transform duration-150",
-            checked ? "translate-x-5 bg-white" : "translate-x-0 bg-white",
+            checked ? "translate-x-5 bg-accent-foreground" : "translate-x-0 bg-muted-strong",
           )}
           aria-hidden="true"
         />
@@ -352,7 +350,7 @@ function InstallSection() {
           <strong className="text-foreground">Add to Home Screen</strong>. It then opens full-screen.
         </p>
       ) : (
-        <p className="text-small text-muted-strong">Open your browser menu and choose “Install app”.</p>
+        <p className="text-small text-muted-strong">Open your browser menu and choose <strong className="text-foreground">Install app</strong>.</p>
       )}
     </Panel>
   );

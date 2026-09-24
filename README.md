@@ -12,7 +12,8 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - Reconnects on its own and fills any gap in messages
 - **Bond** screen (level, title, progress, stats — all set by hand), **Memories** scrapbook, daily status
 - Browser notifications when you're away (asked only after you send something), optional sounds (off by default)
-- Automatic / Dark / Light themes built on CSS variables (`app/globals.css`, WCAG AA contrast), mobile-first layout with keyboard-safe composer
+- Automatic / Dark Hour / Daylight themes built on CSS variables (`app/globals.css`), checked by `npm run contrast`. Mobile-first layout with keyboard-safe composer
+- Persona 3 Reload style HUD: calendar clock with moon phase and time-of-day banner, slanted menu cursor, and game marks (talk bubble, arcana, sakura, rank-up, chevron) built from `public/assets` by `npm run ui-assets`
 
 ## Security model
 
@@ -66,6 +67,8 @@ npm run dev                 # http://127.0.0.1:3000
 | `npm run test:security` | RLS / storage / realtime attack tests against the configured Supabase |
 | `npm run test:e2e` | Two-browser Playwright run against `http://127.0.0.1:3000` (start the app first). Set `PLAYWRIGHT_CHROMIUM_PATH` to use a pre-installed Chromium. |
 | `npm run setup:users` | Create/update the two accounts |
+| `npm run contrast` | Check WCAG contrast of every theme colour pair |
+| `npm run ui-assets` | Rebuild the single-colour marks in `public/ui` from `public/assets` |
 | `npm run db:types` | Regenerate `types/database.ts` from the local database |
 
 ## Notes and limits

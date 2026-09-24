@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PlusIcon } from "@/components/ui/icons";
 import { UiMark } from "@/components/ui/UiMark";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { MemoryCard } from "./MemoryCard";
 import { MemoryForm } from "./MemoryForm";
 import { MemoryViewer } from "./MemoryViewer";
@@ -42,18 +43,22 @@ export function MemoriesScreen() {
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
       <div className="mx-auto max-w-4xl px-5 py-8 sm:px-8">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <h1 className="text-display flex items-center gap-3 text-5xl">
-            <UiMark name="sakura" className="size-10 bg-accent" />
-            Memories
-          </h1>
-          <Button onClick={() => setAdding(true)} aria-label="Add a memory">
-            <PlusIcon size={18} /> Add
-          </Button>
+        <div className="mb-8">
+          <PageHeader
+            title="Memories"
+            description="Photos worth keeping. Only the two of you can see them."
+            action={
+              memories?.length ? (
+                <Button onClick={() => setAdding(true)}>
+                  <PlusIcon size={18} /> Add
+                </Button>
+              ) : undefined
+            }
+          />
         </div>
 
         {error && (
-          <div className="flex items-center justify-between gap-3 rounded-card border border-border bg-panel p-4" role="alert">
+          <div className="flex items-center justify-between gap-3 rounded-card bg-panel p-4" role="alert">
             <span className="text-small text-muted-strong">{error}</span>
             <Button variant="secondary" onClick={() => void load()}>Try again</Button>
           </div>
@@ -69,14 +74,9 @@ export function MemoriesScreen() {
 
         {memories?.length === 0 && (
           <div className="flex flex-col items-center py-16 text-center">
-            <span className="relative mb-4 h-24 w-32" aria-hidden="true">
-              <UiMark name="sakura" className="absolute top-0 left-2 size-20 bg-foreground" />
-              <UiMark name="sakura" className="absolute right-0 bottom-0 size-10 rotate-[24deg] bg-accent" />
-            </span>
-            <p className="text-display text-2xl tracking-wide">No memories yet</p>
-            <p className="mt-2 max-w-xs text-[15px] leading-relaxed text-muted-strong">
-              Keep the good ones here: a photo, a title and a date. Only the two of you can see them.
-            </p>
+            <UiMark name="sakura" className="mb-5 size-20 bg-accent" />
+            <p className="text-title font-bold">No memories yet</p>
+            <p className="mt-2 max-w-xs text-body text-muted-strong">Add a photo, a title and a date.</p>
             <Button className="mt-6" onClick={() => setAdding(true)}>
               <PlusIcon size={18} /> Add the first one
             </Button>

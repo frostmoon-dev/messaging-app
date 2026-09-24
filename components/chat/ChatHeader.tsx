@@ -45,22 +45,13 @@ export function ChatHeader() {
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="flex min-h-11 items-center gap-2 rounded-full border border-border px-3 text-small text-muted-strong transition-colors hover:bg-panel-strong hover:text-foreground"
+          className="flex min-h-11 items-center gap-2 rounded-full border border-field-border px-3 text-small text-muted-strong transition-colors hover:bg-panel-strong hover:text-foreground"
           aria-label={myStatus ? `Your status: ${myStatus.emoji} ${myStatus.text}. Change status` : "Set your status"}
         >
           {myStatus?.emoji && <span className="text-body leading-none" aria-hidden="true">{myStatus.emoji}</span>}
           <span className={cn(myStatus?.emoji && "hidden sm:inline")}>{myStatus ? "My status" : "Set status"}</span>
         </button>
-        <Link
-          href="/settings"
-          className="flex size-11 items-center justify-center text-foreground hover:text-accent-strong lg:hidden"
-          aria-label="Settings"
-        >
-          <SettingsIcon />
-        </Link>
       </div>
-
-      <span className="absolute -bottom-px left-0 h-[2px] w-24 -skew-x-[30deg] bg-accent" aria-hidden="true" />
 
       {pickerOpen && <StatusPicker onClose={() => setPickerOpen(false)} />}
     </header>
