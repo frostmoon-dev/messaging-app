@@ -31,7 +31,7 @@ const PAIRS = [
   ...SURFACES.map((s) => ["muted", s, 4.5]),
   ...SURFACES.map((s) => ["muted-strong", s, 4.5]),
   ...SURFACES.map((s) => ["danger", s, 4.5]),
-  ...SURFACES.map((s) => ["online", s, 3]),
+  ...SURFACES.map((s) => ["online", s, 4.5]), // also used as the "Online" text colour
   ...["background", "panel", "background-raised"].map((s) => ["field-border", s, 3]),
   ["foreground", "accent-soft", 4.5],
   ["accent-foreground", "accent", 4.5],
@@ -47,8 +47,6 @@ let failed = false;
 for (const [name, selector] of [
   ["Ink", '[data-theme="ink"]'],
   ["Paper", '[data-theme="paper"]'],
-  ["Phantom", '[data-theme="phantom"]'],
-  ["Moon Cell", '[data-theme="mooncell"]'],
 ]) {
   const t = tokens(selector);
   console.log(`\n${name}`);

@@ -25,8 +25,7 @@ type Props = {
 };
 
 /**
- * Portrait in a tilted frame, like the character icons on the game's
- * texting screen. Image comes from the private `avatars` bucket.
+ * Round portrait with a thin ring. Image comes from the private `avatars` bucket.
  */
 export function Avatar({ profile, size = "md", online, showStatus = false, className }: Props) {
   const { url } = useSignedUrl("avatars", profile.avatar_url);
@@ -60,10 +59,10 @@ export function Avatar({ profile, size = "md", online, showStatus = false, class
       )}
       {status?.icon && (
         <span
-          className="absolute -top-1.5 -right-2 flex size-6 items-center justify-center rounded-full border-2 border-background bg-incoming"
+          className="absolute -top-1 -right-1.5 flex size-[42%] min-h-4 min-w-4 items-center justify-center rounded-full border-2 border-background bg-incoming"
           aria-hidden="true"
         >
-          <StatusIcon icon={status.icon} className="size-4" />
+          <StatusIcon icon={status.icon} className="size-[70%]" />
         </span>
       )}
     </span>

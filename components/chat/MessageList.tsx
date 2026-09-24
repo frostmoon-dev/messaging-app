@@ -121,7 +121,7 @@ export function MessageList({
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="scroll-area flex min-h-0 flex-1 flex-col-reverse overflow-y-auto overscroll-contain"
+        className="scroll-area relative flex min-h-0 flex-1 flex-col-reverse overflow-y-auto overscroll-contain"
         role="log"
         aria-label={`Conversation with ${partner.display_name}`}
         aria-live="polite"
@@ -133,12 +133,12 @@ export function MessageList({
           {hasMore && (
             <div className="flex justify-center py-3">
               {loadingOlder ? (
-                <span className="text-small text-muted">Loading earlier messages…</span>
+                <span className="chat-meta text-small text-muted">Loading earlier messages…</span>
               ) : (
                 <button
                   type="button"
                   onClick={() => void loadOlder()}
-                  className="min-h-11 rounded-full px-4 text-small text-muted-strong hover:bg-panel-strong hover:text-foreground"
+                  className="chat-meta min-h-11 rounded-full px-4 text-small text-muted-strong hover:bg-panel-strong hover:text-foreground"
                 >
                   Load earlier messages
                 </button>

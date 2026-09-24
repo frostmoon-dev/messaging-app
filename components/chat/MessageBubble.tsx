@@ -114,8 +114,7 @@ function MessageBubbleImpl({
           dragSnapToOrigin
           onDragEnd={onDragEnd}
           style={{ x, touchAction: "pan-y" }}
-          // The hard offset shadow lives here: the bubble's clip-path would cut it off.
-          className={cn("relative min-w-0", !emojiOnly && (mine ? "bubble-out-shadow" : "bubble-in-shadow"))}
+          className="relative min-w-0"
         >
           <div
             className={cn(
@@ -177,7 +176,7 @@ function MessageBubbleImpl({
         {showMeta && (
           <div
             className={cn(
-              "mt-1 flex items-center gap-1.5 px-1 font-mono text-meta font-medium text-muted",
+              "chat-meta mt-1 flex items-center gap-1.5 px-1 font-mono text-meta font-medium text-muted",
               mine ? "flex-row" : "flex-row-reverse",
             )}
           >
@@ -188,7 +187,7 @@ function MessageBubbleImpl({
         {!showMeta && <span className="sr-only">{time}</span>}
 
         {failed && (
-          <div className="mt-1 flex flex-wrap items-center gap-1 text-small text-danger" role="alert">
+          <div className="chat-meta mt-1 flex flex-wrap items-center gap-1 text-small text-danger" role="alert">
             <span>{message.local?.error ?? "Couldn't send message."}</span>
             <button
               type="button"

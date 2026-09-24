@@ -44,7 +44,7 @@ export function MemoryViewer({
 
   return (
     <Dialog onClose={onClose} label={memory.title} variant="fullscreen" className="w-full max-w-lg px-4">
-      <article className="relative overflow-hidden border-t-4 border-accent bg-background-raised pb-5">
+      <article className="relative overflow-hidden rounded-[20px] border-t-4 border-accent bg-background-raised pb-5">
         <button
           type="button"
           onClick={onClose}
@@ -78,7 +78,7 @@ export function MemoryViewer({
                 <Button variant="ghost" onClick={() => setConfirming(false)}>
                   Keep
                 </Button>
-                <Button onClick={remove} disabled={busy}>{busy ? "Deleting…" : "Delete"}</Button>
+                <Button variant="danger" onClick={remove} disabled={busy}>{busy ? "Deleting…" : "Delete"}</Button>
               </div>
             ) : (
               <button

@@ -46,11 +46,10 @@
   --outgoing: #e8e8e8;
   --outgoing-foreground: #121212;
   --outgoing-shadow: #5a5a5a;
-  --online: #e8e8e8;
+  --online: #5bd08a;
   --danger: #ff8e8e;
   --focus: #ececec;
   --frame: #e8e8e8;
-  --grid: transparent;
   --title-shadow: #4d4d4d;
   color-scheme: dark;
 }
@@ -77,78 +76,12 @@
   --outgoing: #1c1c1c;
   --outgoing-foreground: #f5f4f2;
   --outgoing-shadow: #9a9a9a;
-  --online: #171717;
+  --online: #146b39;
   --danger: #a8182c;
   --focus: #171717;
   --frame: #1c1c1c;
-  --grid: transparent;
   --title-shadow: #b3b1ac;
   color-scheme: light;
-}
-
-/* Phantom: Persona 5 Royal's black, white and red. */
-[data-theme="phantom"] {
-  --background: #141416;
-  --background-raised: #1b1b1e;
-  --foreground: #eceaef;
-  --muted: #a9a6ae;
-  --muted-strong: #d3d0d7;
-  --panel: #212125;
-  --panel-strong: #2d2d32;
-  --border: #3b3b42;
-  --field-border: #8a8791;
-  --accent: #d42840;
-  --accent-hover: #b0213a;
-  --accent-text: #ff7384;
-  --accent-foreground: #ffffff;
-  --accent-soft: #42141c;
-  --incoming: #eceaef;
-  --incoming-foreground: #141416;
-  --incoming-shadow: #d42840;
-  --outgoing: #c52539;
-  --outgoing-foreground: #ffffff;
-  --outgoing-shadow: #eceaef;
-  --online: #62d89c;
-  --danger: #ff8e99;
-  --focus: #ffd83d;
-  --frame: #eceaef;
-  --grid: transparent;
-  --title-shadow: #d42840;
-  color-scheme: dark;
-}
-
-/* Moon Cell: after the Moon Cell Automaton and SE.RA.PH, the digital moon
-   of Fate/EXTRA (seen in FGO's SE.RA.PH event). Deep space teal, data
-   green, cut-corner panels instead of Persona slants. Its quirks are in
-   the "Moon Cell" section below. */
-[data-theme="mooncell"] {
-  --background: #0e171b;
-  --background-raised: #132126;
-  --foreground: #e2efec;
-  --muted: #92afab;
-  --muted-strong: #c1d8d4;
-  --panel: #16272e;
-  --panel-strong: #1e343c;
-  --border: #2a4650;
-  --field-border: #6c939f;
-  --accent: #46c99b;
-  --accent-hover: #72dab5;
-  --accent-text: #6fdcb3;
-  --accent-foreground: #07201a;
-  --accent-soft: #173b35;
-  --incoming: #1e343c;
-  --incoming-foreground: #e2efec;
-  --incoming-shadow: #3d6b75;
-  --outgoing: #1c6b56;
-  --outgoing-foreground: #eefaf6;
-  --outgoing-shadow: #46c99b;
-  --online: #46c99b;
-  --danger: #ffa08f;
-  --focus: #ffd83d;
-  --frame: #46c99b;
-  --grid: #1c3038;
-  --title-shadow: transparent;
-  color-scheme: dark;
 }
 
 /* Same values as [data-theme="paper"]. Keep the two blocks in sync
@@ -175,11 +108,10 @@
     --outgoing: #1c1c1c;
     --outgoing-foreground: #f5f4f2;
     --outgoing-shadow: #9a9a9a;
-    --online: #171717;
+    --online: #146b39;
     --danger: #a8182c;
     --focus: #171717;
     --frame: #1c1c1c;
-    --grid: transparent;
     --title-shadow: #b3b1ac;
     color-scheme: light;
   }
@@ -271,8 +203,7 @@ body {
    Soft and sleek by default (Ink, Paper): rounded panels, bubbles, avatars
    and tags, with a Persona 5 edge kept where it helps you find things:
    slanted buttons, a tilted title label and a slanted selection marker.
-   Text is never slanted, italic or stretched. Phantom and Moon Cell swap
-   in their own shapes below.
+   Text is never slanted, italic or stretched.
    ========================================================================== */
 
 @layer components {
@@ -351,120 +282,38 @@ body {
 }
 
 /* ==========================================================================
-   Phantom quirks: the full Persona 5 look
+   Chat background (Settings > Chat background)
+   Patterns use the border colour so they stay quiet behind the bubbles.
    ========================================================================== */
 
-[data-theme="phantom"] .p5-panel {
-  border-radius: 0;
-  clip-path: polygon(0 4px, calc(100% - 10px) 0, 100% calc(100% - 6px), 8px 100%);
+.chat-pattern-dots {
+  background-image: radial-gradient(var(--border) 1.5px, transparent 1.6px);
+  background-size: 22px 22px;
 }
-[data-theme="phantom"] .p5-frame {
-  border-radius: 0;
-  clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 95%);
-}
-[data-theme="phantom"] .bubble-in {
-  border-radius: 0;
-  box-shadow: none;
-  clip-path: polygon(0 3px, 100% 0, calc(100% - 4px) 100%, 5px calc(100% - 2px));
-}
-[data-theme="phantom"] .bubble-out {
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 3px, calc(100% - 5px) calc(100% - 2px), 0 100%);
-}
-/* A hard offset shadow sits on a wrapper because clip-path would cut it. */
-[data-theme="phantom"] .bubble-in-shadow {
-  filter: drop-shadow(-3px 3px 0 var(--incoming-shadow));
-}
-[data-theme="phantom"] .bubble-out-shadow {
-  filter: drop-shadow(3px 3px 0 var(--outgoing-shadow));
-}
-[data-theme="phantom"] .day-tag {
-  rotate: -2deg;
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-}
-
-/* ==========================================================================
-   Moon Cell quirks
-   Same components, different personality. Only decoration changes; every
-   functional label (buttons, presence, errors) stays plain so it reads the
-   same in every theme.
-   ========================================================================== */
-
-/* Cut corners (top-left, bottom-right) instead of Persona slants. */
-[data-theme="mooncell"] .p5-panel,
-[data-theme="mooncell"] .p5-frame {
-  border-radius: 0;
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-}
-[data-theme="mooncell"] .p5-button,
-[data-theme="mooncell"] .p5-cursor::before {
-  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
-}
-[data-theme="mooncell"] .bubble-in,
-[data-theme="mooncell"] .bubble-out {
-  border-radius: 0;
-  box-shadow: none;
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-}
-
-/* A thin data-line outline instead of an offset shadow. */
-[data-theme="mooncell"] .bubble-in-shadow {
-  filter: drop-shadow(0 0 1px var(--incoming-shadow));
-}
-[data-theme="mooncell"] .bubble-out-shadow {
-  filter: drop-shadow(0 0 1px var(--outgoing-shadow));
-}
-
-/* Titles read like a system readout: upright, bracketed, no paper label. */
-[data-theme="mooncell"] .p5-title {
-  transform: none;
-  background: none;
-  box-shadow: none;
-  padding: 0;
-  color: var(--foreground);
-  letter-spacing: 0.06em;
-}
-[data-theme="mooncell"] .p5-title::before {
-  content: "[ ";
-  color: var(--accent-text);
-}
-[data-theme="mooncell"] .p5-title::after {
-  content: " ]";
-  color: var(--accent-text);
-}
-
-/* The page sits on a faint coordinate grid, like SE.RA.PH's digital space.
-   Low contrast on purpose, and only on the page: panels and bubbles are
-   solid, so text never sits on the lines. */
-[data-theme="mooncell"] .app-backdrop {
-  background-color: var(--background);
+.chat-pattern-grid {
   background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.6;
+}
+/* A nod to the Persona 5 slashes: thin diagonal strokes. */
+.chat-pattern-slash {
+  background-image: repeating-linear-gradient(-60deg, transparent 0 26px, var(--border) 26px 28px);
+  opacity: 0.7;
 }
 
-/* Day dividers become log entries. */
-[data-theme="mooncell"] .day-tag {
-  rotate: none;
-  border-radius: 0;
-  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+/* Over a photo, text outside the bubbles (times, ticks, notes) sits on a
+   soft pill so it keeps its contrast whatever the photo looks like. */
+[data-chat-background="photo"] .chat-meta {
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--background) 85%, transparent);
+  padding-inline: 8px;
 }
-[data-theme="mooncell"] .day-tag::before {
-  content: "LOG · ";
-}
-
-/* Theme-specific wording: render both, show one. Hidden text is
-   display:none, so screen readers only hear the visible one. */
-.quirk-mooncell {
-  display: none;
-}
-[data-theme="mooncell"] .quirk-mooncell {
-  display: inline;
-}
-[data-theme="mooncell"] .quirk-default {
-  display: none;
+[data-chat-background="photo"] .chat-note {
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--background) 85%, transparent);
+  padding-block: 20px;
 }
 
 /* ==========================================================================
@@ -478,9 +327,7 @@ body {
 
 /* Dark themes dim and invert the (bright) OpenStreetMap tiles so the map
    doesn't flash white at night. Markers are not affected. */
-[data-theme="ink"] .leaflet-tile-pane,
-[data-theme="phantom"] .leaflet-tile-pane,
-[data-theme="mooncell"] .leaflet-tile-pane {
+[data-theme="ink"] .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);
 }
 @media (prefers-color-scheme: dark) {
@@ -499,14 +346,6 @@ body {
   font-size: 13px;
   border: 3px solid var(--frame);
   border-radius: 9999px;
-}
-[data-theme="phantom"] .map-marker {
-  border-radius: 0;
-  clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 95%);
-}
-[data-theme="mooncell"] .map-marker {
-  border-radius: 0;
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
 }
 .map-me {
   background: var(--accent);

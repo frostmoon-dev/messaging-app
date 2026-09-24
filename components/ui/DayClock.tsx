@@ -53,6 +53,7 @@ export function DayClock({ className }: { className?: string }) {
 }
 
 /** Lit part of the moon, drawn from the phase: a half disc plus an elliptical terminator. */
+// The lit part is always light grey, so the moon reads the same on Ink and Paper.
 function MoonPhase({ age, size = 24 }: { age: number; size?: number }) {
   const r = 10;
   const waxing = age < 0.5;
@@ -65,7 +66,7 @@ function MoonPhase({ age, size = 24 }: { age: number; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
       <circle cx="12" cy="12" r={r} className="fill-panel-strong stroke-muted" strokeWidth="1" />
-      {t > 0.02 && <path d={lit} className="fill-foreground" transform={waxing ? undefined : "matrix(-1 0 0 1 24 0)"} />}
+      {t > 0.02 && <path d={lit} fill="#ececec" transform={waxing ? undefined : "matrix(-1 0 0 1 24 0)"} />}
     </svg>
   );
 }

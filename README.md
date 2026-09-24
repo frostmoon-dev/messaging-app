@@ -10,13 +10,15 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - Receipts: ✓ sent · ✓✓ delivered · red ✓✓ read
 - Typing indicator (Realtime broadcast) and online / last-seen (Realtime presence). No heartbeat rows
 - Reconnects on its own and fills any gap in messages
-- **Bond** screen (rank, title, progress, stats, all set by hand), **Memories** scrapbook, daily status with icons (Free to talk, Busy, Studying, At home, Out, Sleeping, Call me)
+- **Bond** screen (rank, title, progress, stats, all set by hand), **Memories** scrapbook (photos keep their own shape; crop them when adding), daily status with icons (Free to talk, Busy, Studying, At home, Out, Sleeping, Call me)
 - Pop-up notifications through Web Push, even when the app is closed (asked only after you send something). They say who wrote, never what. Optional sounds (off by default)
 - **Plans**: a shared calendar. Either of you adds, edits or deletes; reminders ("1 hour before", "1 day before"…) pop up on both phones
 - **Map**: see each other while sharing is on (live while the app is open), send "I'm here", ask "Where are you?", get directions
 - **SOS**: two taps send an emergency alert with your location. The other phone gets an urgent notification that stays on screen, and a full-screen alarm with a siren if Napyru is open
 - Notifications read like "Rafie ♡ · Sent you a message" and never include message text
-- Themes: **Ink** (default: soft black and white, rounded shapes with Persona 5 slanted buttons and titles), **Paper** (the light version of Ink), Automatic (Ink at night, Paper by day), **Phantom** (Persona 5 Royal: black, white, red), **Moon Cell** (Fate/EXTRA's digital moon: teal space, data green, cut corners, a faint coordinate grid, log-style day tags)
+- Themes: **Ink** (default: soft black and white, rounded shapes with Persona 5 slanted buttons and titles), **Paper** (the light version of Ink), Automatic (Ink at night, Paper by day). The only colours are green for "online" and red for danger
+- **Chat background** (Settings): plain, dots, grid, slash, or your own photo, cropped and dimmed. Saved on the device only; the photo is never uploaded
+- Photo cropper (drag, pinch or slider to zoom) for memories, your avatar and the chat background
 - Colours are checked by `npm run contrast` (WCAG 2.2) and follow eye-comfort rules; see "Colour" below. Mobile-first layout with keyboard-safe composer
 - Game artwork from `public/assets` (Persona 3 Reload textures) turned into single-colour marks by `npm run ui-assets` and recoloured by the theme: status icons, talk bubble, arcana, sakura, rank-up, chevron, time-of-day banners
 
@@ -105,7 +107,7 @@ Each theme follows the same rules (tokens in `app/globals.css`, checked by `npm 
 - **Softer accents on dark backgrounds.** Ink's white accent is off-white, and the reds and greens are slightly desaturated so large areas don't vibrate.
 - **60 / 30 / 10.** About 60% page, 30% panels and bubbles, 10% accent, which is kept for actions, selection and your own messages.
 - **Contrast floors:** body text ≥ 7:1, secondary text and text on buttons ≥ 4.5:1, field borders ≥ 3:1.
-- **Emergency is always red**, in every theme, including Moon Cell's green.
+- **Colour only means something.** Red is for emergencies and green for "online"; everything else is black, white and grey.
 
 ## Scripts
 

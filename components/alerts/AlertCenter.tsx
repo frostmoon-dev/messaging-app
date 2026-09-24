@@ -168,8 +168,8 @@ export function AlertCenter() {
       </AnimatePresence>
 
       {sos && (
-        // Emergency uses a fixed red in every theme: red means danger
-        // everywhere, and Moon Cell's green would read as "all fine".
+        // Emergency uses a fixed red in every theme: it is the only colour
+        // in the app, so it can't be missed.
         <Dialog onClose={silence} label={`SOS from ${partner.display_name}`} variant="fullscreen" className="w-full max-w-md px-4">
           <div role="alertdialog" aria-labelledby="sos-title" aria-describedby="sos-body" className="p5-panel bg-[#a8182c] p-6 text-white">
             <p className="text-small font-bold tracking-wide uppercase">Emergency</p>

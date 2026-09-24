@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { Button } from "@/components/ui/Button";
@@ -8,15 +8,35 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { PlusIcon } from "@/components/ui/icons";
 import { UiMark } from "@/components/ui/UiMark";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { MemoryCard } from "./MemoryCard";
+import { MemoryCard, memoryAspect } from "./MemoryCard";
 import { MemoryForm } from "./MemoryForm";
 import { MemoryViewer } from "./MemoryViewer";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import type { MemoryRow } from "@/types/app";
 
+const WIDE = "(min-width: 640px)";
+
+function subscribeWidth(onChange: () => void) {
+  const query = window.matchMedia(WIDE);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function toColumns(memories: MemoryRow[], count: number) {
+  const columns: MemoryRow[][] = Array.from({ length: count }, () => []);
+  const heights = Array<number>(count).fill(0);
+  for (const m of memories) {
+    const i = heights.indexOf(Math.min(...heights));
+    columns[i].push(m);
+    heights[i] += 1 / memoryAspect(m) + 0.3; // photo + title and date
+  }
+  return columns;
+}
+
 export function MemoriesScreen() {
   const { conversationId } = useChat();
+  const columns = useSyncExternalStore(subscribeWidth, () => (window.matchMedia(WIDE).matches ? 3 : 2), () => 2);
   const [memories, setMemories] = useState<MemoryRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -67,7 +87,7 @@ export function MemoriesScreen() {
         {memories === null && !error && (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3" aria-busy="true" aria-label="Loading memories">
             {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="aspect-square w-full" />
+              <Skeleton key={i} className="aspect-[4/5] w-full rounded-[18px_5px_18px_18px]" />
             ))}
           </div>
         )}
@@ -84,13 +104,19 @@ export function MemoriesScreen() {
         )}
 
         {memories && memories.length > 0 && (
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3">
-            <AnimatePresence initial={false}>
-              {memories.map((m) => (
-                <MemoryCard key={m.id} memory={m} onOpen={() => setViewing(m)} />
-              ))}
-            </AnimatePresence>
-          </ul>
+          // Columns of photos at their own shapes. Each photo goes to the
+          // shortest column, so the newest stay at the top, left to right.
+          <div className="flex items-start gap-4">
+            {toColumns(memories, columns).map((column, i) => (
+              <ul key={i} className="flex min-w-0 flex-1 flex-col gap-6">
+                <AnimatePresence initial={false}>
+                  {column.map((m) => (
+                    <MemoryCard key={m.id} memory={m} onOpen={() => setViewing(m)} />
+                  ))}
+                </AnimatePresence>
+              </ul>
+            ))}
+          </div>
         )}
       </div>
 

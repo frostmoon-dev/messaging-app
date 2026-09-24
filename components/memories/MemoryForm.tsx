@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { CloseIcon, ImageIcon } from "@/components/ui/icons";
 import { useChat } from "@/components/providers/ChatProvider";
 import { createClient } from "@/lib/supabase/client";
-import { ImageValidationError, prepareImage, type PreparedImage } from "@/lib/storage/image";
+import { cropImage, ImageValidationError, prepareImage, type PreparedImage } from "@/lib/storage/image";
+import { CENTERED, cropRect, type Crop } from "@/lib/storage/crop";
+import { ImageCropper, type AspectOption } from "@/components/ui/ImageCropper";
 import { uploadWithProgress } from "@/lib/storage/upload";
 import { friendlyError, MESSAGES } from "@/lib/errors";
 import { todayDateOnly } from "@/lib/time";
@@ -14,6 +16,13 @@ import { uuid } from "@/lib/utils";
 import type { MemoryRow } from "@/types/app";
 import { fieldClass as inputClass, labelClass } from "@/components/ui/field";
 
+const ORIGINAL = "original";
+const SHAPES: { id: string; label: string; value: number | null }[] = [
+  { id: ORIGINAL, label: "Original", value: null },
+  { id: "square", label: "Square", value: 1 },
+  { id: "portrait", label: "Portrait", value: 4 / 5 },
+  { id: "landscape", label: "Landscape", value: 3 / 2 },
+];
 
 export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCreated: (m: MemoryRow) => void }) {
   const { conversationId } = useChat();
@@ -21,18 +30,30 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
   const [image, setImage] = useState<PreparedImage | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
+  const [shape, setShape] = useState(ORIGINAL);
+  const [crop, setCropState] = useState<Crop>(CENTERED);
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(todayDateOnly());
   const [caption, setCaption] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Remember a finished upload so "try again" only re-inserts the row.
-  const uploaded = useRef<{ path: string } | null>(null);
+  const uploaded = useRef<{ path: string; image: PreparedImage } | null>(null);
 
   useEffect(() => {
     if (!preview) return;
     return () => URL.revokeObjectURL(preview);
   }, [preview]);
+
+  const cropping = Boolean(image) && image?.contentType !== "image/gif";
+  const aspect = image ? (SHAPES.find((sh) => sh.id === shape)?.value ?? image.width / image.height) : 1;
+  const aspects: AspectOption[] = image ? SHAPES.map((sh) => ({ id: sh.id, label: sh.label, value: sh.value ?? image.width / image.height })) : [];
+
+  // A new crop means a new file, so a finished upload no longer matches.
+  const setCrop = useCallback((next: Crop | ((prev: Crop) => Crop)) => {
+    uploaded.current = null;
+    setCropState(next);
+  }, []);
 
   const pick = async (file: File) => {
     setError(null);
@@ -42,6 +63,8 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
       const prepared = await prepareImage(file);
       setImage(prepared);
       setPreview(URL.createObjectURL(prepared.blob));
+      setShape(ORIGINAL);
+      setCropState(CENTERED);
     } catch (err) {
       setError(err instanceof ImageValidationError ? err.message : MESSAGES.upload);
     } finally {
@@ -60,14 +83,17 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
 
     const id = uuid();
     let path = uploaded.current?.path;
+    let final = uploaded.current?.image ?? image;
     if (!path) {
-      path = `${conversationId}/${id}.${image.extension}`;
       try {
-        await uploadWithProgress("memories", path, image.blob, image.contentType, setProgress);
-        uploaded.current = { path };
+        const untouched = shape === ORIGINAL && crop.zoom === 1;
+        if (cropping && !untouched) final = await cropImage(image, cropRect(crop, image.width, image.height, aspect));
+        path = `${conversationId}/${id}.${final.extension}`;
+        await uploadWithProgress("memories", path, final.blob, final.contentType, setProgress);
+        uploaded.current = { path, image: final };
       } catch (err) {
         setProgress(null);
-        setError(friendlyError(err, "upload"));
+        setError(err instanceof ImageValidationError ? err.message : friendlyError(err, "upload"));
         return;
       }
     }
@@ -81,8 +107,8 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
         caption: caption.trim() || null,
         memory_date: date,
         image_path: path,
-        image_width: image.width,
-        image_height: image.height,
+        image_width: final.width,
+        image_height: final.height,
       })
       .select("*")
       .single();
@@ -119,25 +145,47 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
             if (f) void pick(f);
           }}
         />
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={busy}
-          className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden border-2 border-dashed border-field-border bg-panel transition-colors hover:bg-panel-strong"
-          aria-label={image ? "Change photo" : "Choose a photo"}
-        >
-          {preview ? (
-            // eslint-disable-next-line @next/next/no-img-element -- local blob preview
-            <img src={preview} alt="Selected photo" className="size-full object-cover" />
-          ) : preparing ? (
-            <span className="skeleton absolute inset-0" />
-          ) : (
-            <span className="flex flex-col items-center gap-2 text-muted-strong">
-              <ImageIcon size={28} />
-              <span className="font-semibold">Choose a photo</span>
-            </span>
-          )}
-        </button>
+        {cropping && image && preview ? (
+          <div>
+            <ImageCropper
+              src={preview}
+              width={image.width}
+              height={image.height}
+              aspect={aspect}
+              crop={crop}
+              onCropChange={setCrop}
+              aspects={aspects}
+              aspectId={shape}
+              onAspectChange={(id) => {
+                setShape(id);
+                setCrop(CENTERED);
+              }}
+            />
+            <Button variant="ghost" className="mt-2 min-h-11 px-3" onClick={() => fileRef.current?.click()} disabled={busy}>
+              <ImageIcon size={18} /> Choose another photo
+            </Button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+            className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-field-border bg-panel transition-colors hover:bg-panel-strong"
+            aria-label={image ? "Change photo" : "Choose a photo"}
+          >
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element -- local blob preview (GIFs aren't cropped so they stay animated)
+              <img src={preview} alt="Selected photo" className="size-full object-contain" />
+            ) : preparing ? (
+              <span className="skeleton absolute inset-0" />
+            ) : (
+              <span className="flex flex-col items-center gap-2 text-muted-strong">
+                <ImageIcon size={28} />
+                <span className="font-semibold">Choose a photo</span>
+              </span>
+            )}
+          </button>
+        )}
 
         <div className="mt-4">
           <label htmlFor="memory-title" className={labelClass}>Title</label>

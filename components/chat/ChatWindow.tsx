@@ -6,6 +6,7 @@ import { useChat } from "@/components/providers/ChatProvider";
 import { ChatHeader } from "./ChatHeader";
 import { ConnectionBanner } from "./ConnectionBanner";
 import { MessageList } from "./MessageList";
+import { ChatBackdrop, useChatBackground } from "./ChatBackdrop";
 import { TypingIndicator } from "./TypingIndicator";
 import { MessageComposer } from "./MessageComposer";
 import { NotificationPrompt } from "./NotificationPrompt";
@@ -57,30 +58,36 @@ export function ChatWindow() {
     if (notificationPermission() === "default" && !promptDismissed()) setAskNotify(true);
   }, []);
 
+  const background = useChatBackground();
+
   return (
     <section className="relative flex h-full min-h-0 flex-col" aria-label="Chat">
       <ChatHeader />
       <ConnectionBanner />
-      <MessageList
-        highlightedId={highlighted}
-        onReply={setReplyTo}
-        onJump={jumpTo}
-        onOpenImage={(src, alt) => setViewer({ src, alt })}
-      />
-      <AnimatePresence>
-        {jumpError && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="mx-auto mb-1 rounded-full bg-panel-strong px-3 py-1 text-small"
-            role="status"
-          >
-            {jumpError}
-          </motion.p>
-        )}
-      </AnimatePresence>
-      <TypingIndicator />
+      {/* Messages and the typing row share the chat background. */}
+      <div className="relative flex min-h-0 flex-1 flex-col" data-chat-background={background.kind}>
+        <ChatBackdrop background={background} />
+        <MessageList
+          highlightedId={highlighted}
+          onReply={setReplyTo}
+          onJump={jumpTo}
+          onOpenImage={(src, alt) => setViewer({ src, alt })}
+        />
+        <AnimatePresence>
+          {jumpError && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="relative mx-auto mb-1 rounded-full bg-panel-strong px-3 py-1 text-small"
+              role="status"
+            >
+              {jumpError}
+            </motion.p>
+          )}
+        </AnimatePresence>
+        <TypingIndicator />
+      </div>
       <NotificationPrompt open={askNotify} onDone={() => setAskNotify(false)} />
       <MessageComposer replyTo={replyTo} onCancelReply={() => setReplyTo(null)} onSent={onSent} />
       {viewer && <ImageViewer src={viewer.src} alt={viewer.alt} onClose={() => setViewer(null)} />}
