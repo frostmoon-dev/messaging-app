@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { usePresence, useChat } from "@/components/providers/ChatProvider";
-import { UiMark } from "@/components/ui/UiMark";
 
 /**
  * The game's "talk" speech bubble with three dots, where the reply will
@@ -13,7 +12,7 @@ export function TypingIndicator() {
   const { partner } = useChat();
 
   return (
-    <div className="pointer-events-none h-10 px-4" aria-live="polite">
+    <div className="pointer-events-none relative h-10 px-4" aria-live="polite">
       <AnimatePresence>
         {partnerTyping && (
           <motion.div
@@ -22,10 +21,10 @@ export function TypingIndicator() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="bubble-in-shadow relative ml-11 inline-flex h-10 w-12 items-center justify-center"
+            // Same shape as an incoming bubble, holding three dots.
+            className="bubble-in ml-11 inline-flex h-9 items-center gap-1 bg-incoming px-3.5"
           >
-            <UiMark name="talk" className="absolute inset-0 size-full bg-incoming" />
-            <span className="relative -mt-1.5 flex gap-1">
+            <span className="flex gap-1">
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}

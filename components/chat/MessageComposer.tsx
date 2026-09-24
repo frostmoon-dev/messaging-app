@@ -3,7 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat, usePresence } from "@/components/providers/ChatProvider";
-import { CloseIcon, ImageIcon, ReplyIcon, SendIcon } from "@/components/ui/icons";
+import { CloseIcon, ImageIcon, ReplyIcon, SendIcon, StickerIcon } from "@/components/ui/icons";
+import { StickerPicker } from "./StickerPicker";
 import { snippetText } from "./ReplyQuote";
 import { MAX_MESSAGE_LENGTH } from "@/lib/messages/validation";
 import { ImageValidationError, prepareImage, type PreparedImage } from "@/lib/storage/image";
@@ -27,7 +28,8 @@ export function MessageComposer({
   onCancelReply: () => void;
   onSent: () => void;
 }) {
-  const { sendText, sendImage, getSnippet, me, partner } = useChat();
+  const { sendText, sendImage, sendMedia, getSnippet, me, partner } = useChat();
+  const [picking, setPicking] = useState(false);
   const { notifyTyping, stopTyping } = usePresence();
   const isTouch = useIsTouch();
   const [text, setText] = useState("");
@@ -126,7 +128,7 @@ export function MessageComposer({
                 </p>
                 <p className="truncate text-small text-muted-strong">{snippetText(replySnippet)}</p>
               </div>
-              <button type="button" onClick={onCancelReply} className="flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground" aria-label="Cancel reply">
+              <button type="button" onClick={onCancelReply} className="-mr-2.5 flex size-11 items-center rounded-full justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground" aria-label="Cancel reply">
                 <CloseIcon size={18} />
               </button>
             </div>
@@ -163,7 +165,7 @@ export function MessageComposer({
               <button
                 type="button"
                 onClick={() => setAttachment(null)}
-                className="flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
+                className="rounded-full flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
                 aria-label="Remove photo"
               >
                 <CloseIcon size={18} />
@@ -174,7 +176,7 @@ export function MessageComposer({
       </AnimatePresence>
 
       <form
-        className="flex items-end gap-2 px-2 pt-2 sm:px-4"
+        className="flex items-end gap-2 px-4 pt-2"
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -197,10 +199,21 @@ export function MessageComposer({
           type="button"
           whileTap={{ scale: 0.9 }}
           onClick={() => fileRef.current?.click()}
-          className="flex size-11 shrink-0 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
+          // Pulled left so the icon lines up with the 16px edge the messages use.
+          className="-ml-2.5 flex size-11 shrink-0 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong hover:text-foreground"
           aria-label="Attach a photo"
         >
           <ImageIcon />
+        </motion.button>
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setPicking(true)}
+          className="rounded-full -ml-2 flex size-11 shrink-0 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
+          aria-label="Stickers and GIFs"
+          aria-haspopup="dialog"
+        >
+          <StickerIcon />
         </motion.button>
 
         <div className="relative min-w-0 flex-1">
@@ -224,7 +237,7 @@ export function MessageComposer({
             enterKeyHint={isTouch ? "enter" : "send"}
             autoComplete="off"
             className={cn(
-              "block max-h-36 min-h-11 w-full resize-none border-2 border-field-border bg-panel px-4 py-[10px] text-body leading-[1.45]",
+              "block max-h-36 min-h-11 w-full resize-none rounded-[22px] border-2 border-field-border bg-panel px-4 py-[10px] text-body leading-[1.45]",
               "placeholder:text-muted focus:border-accent focus:outline-none",
               tooLong && "border-danger",
             )}
@@ -248,7 +261,7 @@ export function MessageComposer({
           // Keep the keyboard open on mobile after tapping send.
           onPointerDown={(e) => e.preventDefault()}
           className={cn(
-            "p5-button flex h-11 w-13 shrink-0 items-center justify-center transition-colors",
+            "pill flex h-11 w-13 shrink-0 items-center justify-center transition-colors",
             canSend ? "bg-accent text-accent-foreground hover:bg-accent-hover" : "bg-panel-strong text-muted",
           )}
           aria-label="Send message"
@@ -256,6 +269,17 @@ export function MessageComposer({
           <SendIcon size={20} />
         </motion.button>
       </form>
+      {picking && (
+        <StickerPicker
+          onClose={() => setPicking(false)}
+          onPick={(media) => {
+            sendMedia(media, replyTo);
+            setPicking(false);
+            onCancelReply();
+            onSent();
+          }}
+        />
+      )}
     </div>
   );
 }

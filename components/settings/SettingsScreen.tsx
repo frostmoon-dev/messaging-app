@@ -17,7 +17,10 @@ import {
   requestNotificationPermission,
   setNotificationsMuted,
 } from "@/lib/notifications";
-import { ImageValidationError, prepareImage } from "@/lib/storage/image";
+import { cropImage, ImageValidationError, prepareImage, type PreparedImage } from "@/lib/storage/image";
+import { CENTERED, cropRect, type Crop } from "@/lib/storage/crop";
+import { ImageCropper } from "@/components/ui/ImageCropper";
+import { Dialog } from "@/components/ui/Dialog";
 import { uploadWithProgress } from "@/lib/storage/upload";
 import { clearSignedUrlCache } from "@/lib/storage/signed-urls";
 import { friendlyError, MESSAGES } from "@/lib/errors";
@@ -26,16 +29,19 @@ import { cn, devLog } from "@/lib/utils";
 import { disablePush, enablePush, pushSupported } from "@/lib/push";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { fieldClass, labelClass } from "@/components/ui/field";
+import { Panel } from "./Panel";
+import { ChatBackgroundSection } from "./ChatBackgroundSection";
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
 export function SettingsScreen() {
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex max-w-xl flex-col gap-6 px-5 py-8 sm:px-8">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-8">
         <PageHeader title="Settings" />
         <ProfileSection />
         <ThemeSection />
+        <ChatBackgroundSection />
         <AlertsSection />
         <InstallSection />
         <SignOutSection />
@@ -44,17 +50,6 @@ export function SettingsScreen() {
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="p5-panel bg-panel p-4 sm:p-5" aria-labelledby={`section-${title}`}>
-      <h2 id={`section-${title}`} className="mb-4 flex items-center gap-2.5 text-title font-bold">
-        <span className="p5-button h-5 w-2.5 bg-accent" aria-hidden="true" />
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
 
 // ---------------------------------------------------------------------------
 
@@ -82,12 +77,34 @@ function ProfileSection() {
     }
   };
 
-  const uploadAvatar = async (file: File) => {
-    setUploading(true);
+  // Picking a photo opens the cropper; saving crops, uploads and swaps it in.
+  const [pending, setPending] = useState<{ image: PreparedImage; url: string } | null>(null);
+  const [crop, setCrop] = useState<Crop>(CENTERED);
+
+  const closeCropper = () => {
+    if (pending) URL.revokeObjectURL(pending.url);
+    setPending(null);
+  };
+
+  const pickAvatar = async (file: File) => {
     setMessage(null);
     try {
       const image = await prepareImage(file);
       if (image.contentType === "image/gif") throw new ImageValidationError("Use a JPG, PNG or WebP for your avatar.");
+      setCrop(CENTERED);
+      setPending({ image, url: URL.createObjectURL(image.blob) });
+    } catch (error) {
+      setMessage({ tone: "error", text: error instanceof ImageValidationError ? error.message : MESSAGES.upload });
+    }
+  };
+
+  const saveAvatar = async () => {
+    if (!pending) return;
+    setUploading(true);
+    setMessage(null);
+    try {
+      const { image: source } = pending;
+      const image = await cropImage(source, cropRect(crop, source.width, source.height, 1), 512);
       const path = `${me.id}/avatar-${Date.now()}.${image.extension}`;
       await uploadWithProgress("avatars", path, image.blob, image.contentType);
       const supabase = createClient();
@@ -96,6 +113,7 @@ function ProfileSection() {
       const previous = me.avatar_url;
       updateMe({ avatar_url: path });
       if (previous && previous.startsWith(`${me.id}/`)) await supabase.storage.from("avatars").remove([previous]);
+      closeCropper();
       setMessage({ tone: "ok", text: "Avatar updated." });
     } catch (error) {
       setMessage({
@@ -122,7 +140,7 @@ function ProfileSection() {
             onChange={(e) => {
               const f = e.target.files?.[0];
               e.target.value = "";
-              if (f) void uploadAvatar(f);
+              if (f) void pickAvatar(f);
             }}
           />
           <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={uploading}>
@@ -162,6 +180,36 @@ function ProfileSection() {
         </p>
       )}
       {pickerOpen && <StatusPicker onClose={() => setPickerOpen(false)} />}
+      {pending && (
+        <Dialog onClose={uploading ? () => {} : closeCropper} label="Crop your avatar" className="w-full sm:w-[420px]">
+          <div className="bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <h2 className="mb-4 text-title font-bold">Crop your avatar</h2>
+            <ImageCropper
+              src={pending.url}
+              width={pending.image.width}
+              height={pending.image.height}
+              aspect={1}
+              crop={crop}
+              onCropChange={setCrop}
+              round
+              label="Crop avatar"
+            />
+            {message?.tone === "error" && (
+              <p className="mt-3 text-small text-danger" role="alert">
+                {message.text}
+              </p>
+            )}
+            <div className="mt-5 flex justify-end gap-3">
+              <Button variant="ghost" onClick={closeCropper} disabled={uploading}>
+                Cancel
+              </Button>
+              <Button onClick={() => void saveAvatar()} disabled={uploading}>
+                {uploading ? "Saving…" : "Save avatar"}
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
     </Panel>
   );
 }
@@ -211,7 +259,7 @@ function ThemeSection() {
             aria-checked={theme === t.id}
             onClick={() => choose(t.id)}
             className={cn(
-              "flex min-h-11 flex-col gap-0.5 border-2 p-3 text-left transition-colors",
+              "flex min-h-11 flex-col gap-0.5 rounded-xl border-2 p-3 text-left transition-colors",
               theme === t.id ? "border-accent bg-accent-soft" : "border-field-border hover:bg-panel-strong",
             )}
           >

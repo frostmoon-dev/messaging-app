@@ -7,13 +7,16 @@ const supabaseWs = supabaseOrigin.replace(/^http/, "ws");
 
 // Pattern from the Next.js "CSP without nonces" guide, narrowed to the one
 // backend this app talks to (Supabase REST, Realtime and Storage), plus
-// OpenStreetMap tiles for the map screen (images only).
+// OpenStreetMap tiles for the map screen and GIPHY media (images and video only).
 const mapTiles = "https://tile.openstreetmap.org";
+// GIFs and stickers from GIPHY (media hosts only; searches go through /api/giphy).
+const giphyMedia = "https://*.giphy.com";
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' blob: data: ${supabaseOrigin} ${mapTiles}`,
+  `img-src 'self' blob: data: ${supabaseOrigin} ${mapTiles} ${giphyMedia}`,
+  `media-src 'self' blob: ${giphyMedia}`,
   "font-src 'self'",
   `connect-src 'self' ${supabaseOrigin} ${supabaseWs}`,
   "worker-src 'self'",

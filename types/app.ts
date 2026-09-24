@@ -9,8 +9,9 @@ export type MemoryRow = Tables["memories"]["Row"];
 export type EventRow = Tables["events"]["Row"];
 export type LocationRow = Tables["locations"]["Row"];
 export type AlertRow = Tables["alerts"]["Row"];
+export type StickerRow = Tables["stickers"]["Row"];
 
-export type MessageType = "text" | "image";
+export type MessageType = "text" | "image" | "sticker" | "gif";
 
 /** Client-only state layered on top of a stored message. */
 export type LocalState = {

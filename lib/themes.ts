@@ -2,8 +2,6 @@ export const THEMES = [
   { id: "system", name: "Automatic", description: "Follows your device: Ink at night, Paper by day." },
   { id: "ink", name: "Ink", description: "Soft black and white, like the icon." },
   { id: "paper", name: "Paper", description: "Warm paper and ink." },
-  { id: "phantom", name: "Phantom", description: "Persona 5: black, white and red." },
-  { id: "mooncell", name: "Moon Cell", description: "The digital moon. Teal space, data green." },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
@@ -20,8 +18,6 @@ export function isThemeId(value: unknown): value is ThemeId {
 export const THEME_COLORS: Record<FixedThemeId, string> = {
   ink: "#121212",
   paper: "#f1f0ed",
-  phantom: "#141416",
-  mooncell: "#0e171b",
 };
 
 /** What "Automatic" picks for each device setting. */

@@ -66,7 +66,8 @@ export function Dialog({
           initial={{ opacity: 0, y: variant === "sheet" ? 24 : 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-          className={cn("pointer-events-auto", className)}
+          // Sheets are rounded like the panels: top corners on phones, all corners once centred.
+          className={cn("pointer-events-auto", variant === "sheet" && "overflow-hidden rounded-t-[20px] sm:rounded-[20px]", className)}
         >
           {children}
         </motion.div>

@@ -54,13 +54,13 @@ export function StatusPicker({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog onClose={onClose} label="Set your status" className="w-full sm:w-[440px]">
-      <div className="border-t-4 border-accent bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div className="bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div className="mb-4 flex items-start justify-between">
           <h2 className="text-title font-bold">Your status</h2>
           <button
             type="button"
             onClick={onClose}
-            className="-mt-1 -mr-2 flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
+            className="rounded-full -mt-1 -mr-2 flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
             aria-label="Close"
           >
             <CloseIcon size={20} />
@@ -79,7 +79,7 @@ export function StatusPicker({ onClose }: { onClose: () => void }) {
                 onClick={() => choose(p.icon)}
                 className={cn(
                   "flex min-h-20 flex-col items-center justify-center gap-1.5 px-1 text-small transition-colors",
-                  active ? "p5-panel bg-accent font-bold text-accent-foreground" : "p5-panel bg-panel-strong hover:bg-border",
+                  active ? "card bg-accent font-bold text-accent-foreground" : "card bg-panel-strong hover:bg-border",
                 )}
               >
                 <StatusIcon icon={p.icon} className={cn("size-8", active && "bg-accent-foreground")} />

@@ -1,3 +1,5 @@
+import type { Rect } from "./crop";
+
 export const MAX_INPUT_BYTES = 25 * 1024 * 1024; // what we accept from the picker
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // matches the bucket limit
 const MAX_DIMENSION = 1920;
@@ -52,6 +54,40 @@ function toBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
   return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
 }
 
+/** True when any pixel is see-through (PNG cut-outs, stickers). */
+function hasTransparency(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return false;
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 3; i < data.length; i += 4) if (data[i] < 255) return true;
+  return false;
+}
+
+/**
+ * WebP where the browser can write it. Safari on iPhone can't, so it falls
+ * back to JPEG, or PNG when the image has transparency: JPEG has none and
+ * would turn see-through areas black.
+ */
+async function encode(canvas: HTMLCanvasElement) {
+  let blob = await toBlob(canvas, "image/webp", 0.82);
+  let contentType = "image/webp";
+  let extension = "webp";
+  if (!blob || blob.type !== "image/webp") {
+    if (hasTransparency(canvas)) {
+      blob = await toBlob(canvas, "image/png", 1);
+      contentType = "image/png";
+      extension = "png";
+    } else {
+      blob = await toBlob(canvas, "image/jpeg", 0.85);
+      contentType = "image/jpeg";
+      extension = "jpg";
+    }
+  }
+  if (!blob) throw new ImageValidationError("Couldn't process that image.");
+  if (blob.size > MAX_UPLOAD_BYTES) throw new ImageValidationError("That image is still too large after compression.");
+  return { blob, contentType, extension };
+}
+
 /**
  * Resizes to ≤1920px and re-encodes (WebP, JPEG fallback). Re-encoding also
  * strips EXIF metadata such as GPS location. GIFs are kept as-is so they stay
@@ -79,18 +115,31 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(decoded.source, 0, 0, width, height);
 
-    let blob = await toBlob(canvas, "image/webp", 0.82);
-    let contentType = "image/webp";
-    let extension = "webp";
-    if (!blob || blob.type !== "image/webp") {
-      blob = await toBlob(canvas, "image/jpeg", 0.85);
-      contentType = "image/jpeg";
-      extension = "jpg";
-    }
-    if (!blob) throw new ImageValidationError("Couldn't process that image.");
-    if (blob.size > MAX_UPLOAD_BYTES) throw new ImageValidationError("That image is still too large after compression.");
-
+    const { blob, contentType, extension } = await encode(canvas);
     return { blob, width, height, contentType, extension };
+  } finally {
+    decoded.close();
+  }
+}
+
+/**
+ * Cuts `rect` (in the prepared image's pixels) out of a prepared image and
+ * re-encodes it, scaled down so the longer side is at most `maxSide`.
+ */
+export async function cropImage(image: PreparedImage, rect: Rect, maxSide = MAX_DIMENSION): Promise<PreparedImage> {
+  const decoded = await decode(image.blob);
+  try {
+    const scale = Math.min(1, maxSide / Math.max(rect.width, rect.height));
+    const width = Math.max(1, Math.round(rect.width * scale));
+    const height = Math.max(1, Math.round(rect.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new ImageValidationError("Couldn't process that image.");
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(decoded.source, rect.x, rect.y, rect.width, rect.height, 0, 0, width, height);
+    return { ...(await encode(canvas)), width, height };
   } finally {
     decoded.close();
   }

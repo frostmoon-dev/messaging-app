@@ -39,6 +39,16 @@ import type { BondRow, ChatMessage, MessageRow, Profile, ReplySnippet, Session }
 // Context shapes
 // ---------------------------------------------------------------------------
 
+export type MediaToSend = {
+  type: "sticker" | "gif";
+  /** Own sticker: path in the `stickers` bucket. GIPHY: https media link. */
+  url: string;
+  width: number;
+  height: number;
+  /** GIPHY title, used as the description for screen readers. */
+  title?: string;
+};
+
 type ChatData = {
   me: Profile;
   partner: Profile;
@@ -54,6 +64,8 @@ type ChatData = {
   reload: () => Promise<void>;
   sendText: (text: string, replyTo: string | null) => boolean;
   sendImage: (image: PreparedImage, caption: string, replyTo: string | null) => void;
+  /** A sticker (own pack path or GIPHY link) or a GIPHY GIF, already stored or hosted, so it sends like text. */
+  sendMedia: (media: MediaToSend, replyTo: string | null) => void;
   retry: (id: string) => void;
   discard: (id: string) => void;
   getSnippet: (id: string) => ReplySnippet | undefined;
@@ -433,6 +445,37 @@ export function ChatProvider({
     [conversationId, session.me.id, persist, stopTyping],
   );
 
+  const sendMedia = useCallback(
+    (media: MediaToSend, replyTo: string | null) => {
+      const id = uuid();
+      const row: NewMessage = {
+        id,
+        conversation_id: conversationId,
+        content: media.title?.trim().slice(0, 120) || null,
+        message_type: media.type,
+        image_url: media.url,
+        image_width: media.width,
+        image_height: media.height,
+        reply_to: replyTo,
+      };
+      outbox.current.set(id, { row });
+      dispatch({
+        type: "addLocal",
+        message: {
+          ...row,
+          sender_id: session.me.id,
+          created_at: new Date().toISOString(),
+          delivered_at: null,
+          read_at: null,
+          local: { status: "sending" },
+        },
+      });
+      stopTyping();
+      void persist(id);
+    },
+    [conversationId, session.me.id, persist, stopTyping],
+  );
+
   const retry = useCallback((id: string) => void persist(id), [persist]);
 
   const discard = useCallback(
@@ -666,6 +709,7 @@ export function ChatProvider({
       reload,
       sendText,
       sendImage,
+      sendMedia,
       retry,
       discard,
       getSnippet,
@@ -677,7 +721,7 @@ export function ChatProvider({
     }),
     [
       me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, sendImage,
-      retry, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
+      sendMedia, retry, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
     ],
   );
 

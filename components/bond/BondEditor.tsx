@@ -54,10 +54,10 @@ export function BondEditor({ bond, onClose }: { bond: BondRow; onClose: () => vo
 
   return (
     <Dialog onClose={onClose} label="Edit bond" className="w-full sm:w-[440px]">
-      <form onSubmit={save} className="border-t-4 border-accent bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <form onSubmit={save} className="bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div className="mb-5 flex items-start justify-between">
           <h2 className="text-title font-bold">Edit bond</h2>
-          <button type="button" onClick={onClose} className="-mt-1 -mr-2 flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground" aria-label="Close">
+          <button type="button" onClick={onClose} className="rounded-full -mt-1 -mr-2 flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground" aria-label="Close">
             <CloseIcon size={20} />
           </button>
         </div>

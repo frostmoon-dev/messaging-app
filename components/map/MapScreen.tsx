@@ -174,10 +174,10 @@ export function MapScreen() {
 
   return (
     <div className="scroll-area flex h-full flex-col overflow-y-auto pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-5 py-6 sm:px-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 py-6 sm:px-8 sm:py-8">
         <PageHeader title="Map" description="Only the two of you can see this." />
 
-        <div className="p5-panel relative h-[45dvh] min-h-72 overflow-hidden bg-panel">
+        <div className="card relative h-[45dvh] min-h-72 overflow-hidden bg-panel">
           <LeafletMap points={points} focusId={focusAlert?.id ?? null} />
         </div>
 
@@ -197,12 +197,12 @@ export function MapScreen() {
         </p>
 
         {notice && (
-          <p className={cn("p5-panel bg-panel-strong p-3 text-small", notice.tone === "error" ? "text-danger" : "text-foreground")} role={notice.tone === "error" ? "alert" : "status"}>
+          <p className={cn("card bg-panel-strong p-3 text-small", notice.tone === "error" ? "text-danger" : "text-foreground")} role={notice.tone === "error" ? "alert" : "status"}>
             {notice.text}
           </p>
         )}
 
-        <section className="p5-panel bg-panel p-4" aria-labelledby="share-heading">
+        <section className="card bg-panel p-4" aria-labelledby="share-heading">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 id="share-heading" className="font-semibold">
@@ -246,7 +246,7 @@ export function MapScreen() {
           type="button"
           onClick={() => setConfirmSos(true)}
           disabled={busy === "sos"}
-          className="p5-button mt-2 min-h-14 bg-[#d02a40] px-5 text-title font-extrabold tracking-wide text-white uppercase hover:bg-[#b02238]"
+          className="pill mt-2 min-h-14 bg-[#d02a40] px-5 text-title font-extrabold text-white hover:bg-[#b02238]"
         >
           {busy === "sos" ? "Sending SOS…" : "SOS"}
         </button>
@@ -257,7 +257,7 @@ export function MapScreen() {
 
       {confirmSos && (
         <Dialog onClose={() => setConfirmSos(false)} label="Send SOS?" className="w-full sm:w-[420px]">
-          <div className="border-t-4 border-[#a8182c] bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             <h2 className="text-title font-bold">Send SOS to {partner.display_name}?</h2>
             <p className="mt-2 text-body text-muted-strong">They get an emergency alert with your location right away.</p>
             <div className="mt-5 flex flex-col gap-3">
@@ -265,7 +265,7 @@ export function MapScreen() {
                 type="button"
                 onClick={() => void sendSos()}
                 autoFocus
-                className="p5-button min-h-14 bg-[#d02a40] px-5 text-title font-extrabold text-white uppercase hover:bg-[#b02238]"
+                className="pill min-h-14 bg-[#d02a40] px-5 text-title font-extrabold text-white hover:bg-[#b02238]"
               >
                 Send SOS now
               </button>

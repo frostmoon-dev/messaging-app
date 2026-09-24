@@ -14,7 +14,7 @@ export function NotLinked({ email }: { email: string | null }) {
       <form action={signOut}>
         <button
           type="submit"
-          className="p5-button min-h-11 bg-accent px-5 font-semibold text-accent-foreground hover:bg-accent-hover"
+          className="pill min-h-11 bg-accent px-5 font-semibold text-accent-foreground hover:bg-accent-hover"
         >
           Sign out
         </button>

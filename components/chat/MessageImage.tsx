@@ -18,10 +18,12 @@ export function MessageImage({
   message,
   localPreview,
   onOpen,
+  className,
 }: {
   message: ChatMessage;
   localPreview?: string;
   onOpen: (src: string, alt: string) => void;
+  className?: string;
 }) {
   const preview = message.local?.previewUrl ?? localPreview;
   // Use the local blob while it exists; avoids a flash after upload.
@@ -36,7 +38,8 @@ export function MessageImage({
   return (
     <button
       type="button"
-      className="relative block max-w-full overflow-hidden bg-black/20"
+      // No backing colour once loaded: photos with transparency show the bubble behind them.
+      className={cn("relative block max-w-full overflow-hidden", !loaded && "bg-panel-strong", className)}
       style={{ width: box.width, aspectRatio: `${box.width} / ${box.height}` }}
       onClick={() => src && onOpen(src, alt)}
       disabled={!src}
