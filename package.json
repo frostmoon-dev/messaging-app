@@ -15,7 +15,8 @@
     "db:types": "supabase gen types typescript --local > types/database.ts",
     "icons": "node scripts/generate-icons.mjs",
     "ui-assets": "node scripts/build-ui-assets.mjs",
-    "contrast": "node scripts/check-contrast.mjs"
+    "contrast": "node scripts/check-contrast.mjs",
+    "push:keys": "npx --yes web-push@3.6.7 generate-vapid-keys"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

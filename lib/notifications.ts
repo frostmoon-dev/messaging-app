@@ -1,5 +1,6 @@
 import { readPref, writePref } from "./prefs";
 import { devLog } from "./utils";
+import { pushActive } from "./push";
 
 export function notificationsSupported() {
   return typeof window !== "undefined" && "Notification" in window;
@@ -43,6 +44,8 @@ export async function requestNotificationPermission() {
  */
 export async function showMessageNotification(senderName: string) {
   if (!notificationsEnabled()) return;
+  // The server already sends a push to this device; showing both would buzz twice.
+  if (pushActive()) return;
   const title = "NEW MESSAGE";
   const options: NotificationOptions = {
     body: `${senderName} sent you a message`,

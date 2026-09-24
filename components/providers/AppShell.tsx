@@ -1,12 +1,15 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { MotionConfig } from "framer-motion";
 import { ChatProvider } from "./ChatProvider";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { DesktopHeader } from "@/components/navigation/DesktopHeader";
 import { useViewportHeight } from "@/lib/hooks/useViewportHeight";
+import { notificationsEnabled } from "@/lib/notifications";
+import { enablePush } from "@/lib/push";
+import { devLog } from "@/lib/utils";
 import type { BondRow, Session } from "@/types/app";
 
 export function AppShell({
@@ -19,6 +22,12 @@ export function AppShell({
   children: ReactNode;
 }) {
   useViewportHeight();
+
+  // Push addresses can change (browser updates, a new server key). Refresh
+  // this device's address on every start while alerts are on.
+  useEffect(() => {
+    if (notificationsEnabled()) void enablePush().catch((error) => devLog("push refresh failed", error));
+  }, []);
 
   return (
     <MotionConfig reducedMotion="user">

@@ -5,13 +5,16 @@ import { useChat } from "@/components/providers/ChatProvider";
 import { CloseIcon } from "@/components/ui/icons";
 import { UiMark } from "@/components/ui/UiMark";
 import { dismissPrompt, requestNotificationPermission } from "@/lib/notifications";
+import { enablePush } from "@/lib/push";
+import { devLog } from "@/lib/utils";
 
 /** Asked only after the user has sent something, never on first load. */
 export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: () => void }) {
   const { partner } = useChat();
 
   const enable = async () => {
-    await requestNotificationPermission();
+    const result = await requestNotificationPermission();
+    if (result === "granted") await enablePush().catch((error) => devLog("push subscribe failed", error));
     dismissPrompt();
     onDone();
   };
