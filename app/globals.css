@@ -140,6 +140,8 @@
 
   --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   --font-mono: var(--font-atkinson-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* Names only, at 18px and up; falls back to the normal font if it can't load. */
+  --font-script: var(--font-kaushan), var(--font-atkinson), ui-sans-serif, sans-serif;
 
   /* Type scale on a 16px base. Nothing smaller than 13px. */
   --text-meta: 0.8125rem;
@@ -253,6 +255,15 @@ select:focus-visible {
     border-radius: 9999px;
     background: var(--accent-soft);
     color: var(--foreground);
+  }
+
+  /* Names in the brush script. Its strokes reach past the letter box (the
+     slant and the tails), so give them room before any "…" clipping cuts in. */
+  .script-name {
+    font-family: var(--font-script);
+    font-weight: 400;
+    padding: 0.05em 0.3em 0.12em 0.08em;
+    margin-left: -0.08em;
   }
 
   /* Portraits are round, like the app icon. */

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from "next/font/google";
+import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next, Kaushan_Script } from "next/font/google";
 import { cookies } from "next/headers";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app";
 import { ServiceWorker } from "@/components/providers/ServiceWorker";
@@ -12,6 +12,9 @@ import "./globals.css";
 // (I l 1, O 0, rn m) stay distinct. Variable weight 200 to 800.
 const atkinson = Atkinson_Hyperlegible_Next({ subsets: ["latin", "latin-ext"], variable: "--font-atkinson", display: "swap" });
 const atkinsonMono = Atkinson_Hyperlegible_Mono({ subsets: ["latin"], variable: "--font-atkinson-mono", display: "swap" });
+// Your two names only, large (header, sidebar, Bond): a brush script that
+// matches the ink drawing. Everything else stays in Atkinson.
+const kaushan = Kaushan_Script({ subsets: ["latin", "latin-ext"], weight: "400", variable: "--font-kaushan", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
@@ -49,7 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const theme = await storedTheme();
 
   return (
-    <html lang="en" data-theme={theme} className={`${atkinson.variable} ${atkinsonMono.variable} antialiased`}>
+    <html lang="en" data-theme={theme} className={`${atkinson.variable} ${atkinsonMono.variable} ${kaushan.variable} antialiased`}>
       <body>
         <Preloader />
         {children}

@@ -106,7 +106,7 @@ export function MessageList({
 
   if (!loaded && loadError) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center" role="alert">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 pt-[calc(var(--chat-header-h,0px)+1.5rem)] text-center" role="alert">
         <p className="text-title font-bold">Messages didn&apos;t load</p>
         <p className="text-small text-muted-strong">{loadError}</p>
         <Button onClick={() => void reload()}>Try again</Button>
@@ -129,7 +129,8 @@ export function MessageList({
         tabIndex={0}
       >
         {/* pb-12: room at the end for the typing bubble that floats there. */}
-        <div className="flex flex-col pt-4 pb-12">
+        {/* The header floats over the top (frosted), so the list starts below it. */}
+        <div className="flex flex-col pt-[calc(var(--chat-header-h,0px)+1rem)] pb-12">
           <div ref={topRef} aria-hidden="true" />
           {hasMore && (
             <div className="flex justify-center py-3">
@@ -235,7 +236,7 @@ function ChatSkeleton() {
     { mine: true, w: "w-32" },
   ];
   return (
-    <div className="flex flex-1 flex-col justify-end gap-3 px-4 pb-4" aria-busy="true" aria-label="Loading messages">
+    <div className="flex flex-1 flex-col justify-end gap-3 px-4 pt-[var(--chat-header-h,0px)] pb-4" aria-busy="true" aria-label="Loading messages">
       {rows.map((r, i) => (
         <div key={i} className={cn("flex items-end gap-2", r.mine ? "justify-end" : "justify-start")}>
           {!r.mine && <Skeleton className="size-9 rounded-full" />}

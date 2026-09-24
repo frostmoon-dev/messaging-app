@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { ChatHeader } from "./ChatHeader";
-import { ConnectionBanner } from "./ConnectionBanner";
 import { MessageList } from "./MessageList";
 import { ChatBackdrop, useChatBackground } from "./ChatBackdrop";
 import { TypingIndicator } from "./TypingIndicator";
@@ -63,7 +62,6 @@ export function ChatWindow() {
   return (
     <section className="relative flex h-full min-h-0 flex-col" aria-label="Chat">
       <ChatHeader />
-      <ConnectionBanner />
       {/* Messages and the typing row share the chat background. */}
       <div className="relative flex min-h-0 flex-1 flex-col" data-chat-background={background.kind}>
         <ChatBackdrop background={background} />

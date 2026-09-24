@@ -36,7 +36,7 @@ export function ConnectionBanner() {
           className="overflow-hidden"
           role="status"
         >
-          <p className="bg-panel-strong px-4 py-2 text-center text-small text-foreground">{text}</p>
+          <p className="px-4 pb-2 text-center text-small font-semibold text-muted-strong">{text}</p>
         </motion.div>
       )}
     </AnimatePresence>

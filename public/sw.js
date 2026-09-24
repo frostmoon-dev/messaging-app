@@ -5,7 +5,7 @@
  * - Focuses the chat when a notification is clicked.
  * Private data is never cached: only the offline page and icons are stored.
  */
-const CACHE = "napyru-shell-v11";
+const CACHE = "napyru-shell-v12";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/badge-96.png"];
 
 self.addEventListener("install", (event) => {
