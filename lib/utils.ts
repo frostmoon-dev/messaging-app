@@ -22,6 +22,6 @@ export function uuid(): string {
 /** Logs only in development. Never shown to users. */
 export function devLog(label: string, detail?: unknown) {
   if (process.env.NODE_ENV !== "production") {
-    console.warn(`[heartline] ${label}`, detail ?? "");
+    console.warn(`[napyru] ${label}`, detail ?? "");
   }
 }

@@ -132,3 +132,31 @@ export const LogoutIcon = (p: IconProps) => (
     <path d="M10 12h10.5M17 8l4 4-4 4" />
   </Svg>
 );
+export const CalendarIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 6.5h16v13.5H4z" />
+    <path d="M4 10.5h16M8.5 4v4M15.5 4v4" />
+  </Svg>
+);
+export const MapPinIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21Z" />
+    <path d="M12 7.3a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" />
+  </Svg>
+);
+export const ChevronLeftIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m14.5 5.5-6.5 6.5 6.5 6.5" />
+  </Svg>
+);
+export const ChevronRightIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />
+  </Svg>
+);
+export const LocateIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 5.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Z" />
+    <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
+  </Svg>
+);

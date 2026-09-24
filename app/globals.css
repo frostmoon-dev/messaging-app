@@ -11,93 +11,139 @@
    Run it after changing any value.
    ========================================================================== */
 
-/* Phantom: Persona 5 Royal's black, white and red. Flat colours only; no
-   gradients, glow, blur or texture. Red is for action and selection. */
+/* Eye comfort rules for every theme (see README "Colour"):
+   - No pure black (#000) or pure white (#fff) as the page or body text:
+     that pairing makes letters glow ("halation"), worst for the ~30% of
+     people with astigmatism. Dark themes use a dark grey page and
+     off-white text; the light theme uses warm paper, not white.
+   - Accents are slightly desaturated so large red or green areas don't
+     vibrate against the background.
+   - 60/30/10: ~60% page, ~30% panels and bubbles, ~10% accent (actions,
+     selection, your own bubbles). */
+
+/* Phantom: Persona 5 Royal's black, white and red. */
 :root,
 [data-theme="phantom"] {
-  --background: #0a0a0b;
-  --background-raised: #141416;
-  --foreground: #ffffff;
+  --background: #141416;
+  --background-raised: #1b1b1e;
+  --foreground: #eceaef;
   --muted: #a9a6ae;
-  --muted-strong: #d9d6dc;
-  --panel: #19191c;
-  --panel-strong: #26262b;
-  --border: #36363d;
-  --field-border: #86838c;
-  --accent: #e5102b;
-  --accent-hover: #bf0c22;
-  --accent-text: #ff5c6c;
+  --muted-strong: #d3d0d7;
+  --panel: #212125;
+  --panel-strong: #2d2d32;
+  --border: #3b3b42;
+  --field-border: #8a8791;
+  --accent: #d42840;
+  --accent-hover: #b0213a;
+  --accent-text: #ff7384;
   --accent-foreground: #ffffff;
-  --accent-soft: #3b0c13;
-  --incoming: #ffffff;
-  --incoming-foreground: #0a0a0b;
-  --incoming-shadow: #e5102b;
-  --outgoing: #e5102b;
+  --accent-soft: #42141c;
+  --incoming: #eceaef;
+  --incoming-foreground: #141416;
+  --incoming-shadow: #d42840;
+  --outgoing: #c52539;
   --outgoing-foreground: #ffffff;
-  --outgoing-shadow: #ffffff;
-  --online: #5fe39a;
-  --danger: #ff8591;
+  --outgoing-shadow: #eceaef;
+  --online: #62d89c;
+  --danger: #ff8e99;
   --focus: #ffd83d;
-  --frame: #ffffff;
+  --frame: #eceaef;
+  --grid: transparent;
   color-scheme: dark;
 }
 
 [data-theme="paper"] {
-  --background: #f3f1ee;
-  --background-raised: #ffffff;
-  --foreground: #0a0a0b;
-  --muted: #5b5862;
-  --muted-strong: #37353c;
-  --panel: #ffffff;
-  --panel-strong: #e7e4e0;
-  --border: #d4d0cb;
+  --background: #f2f0ec;
+  --background-raised: #faf9f6;
+  --foreground: #1b1a1e;
+  --muted: #5a5761;
+  --muted-strong: #3a383f;
+  --panel: #faf9f6;
+  --panel-strong: #e6e3de;
+  --border: #d3cfc9;
   --field-border: #78747e;
-  --accent: #d10f27;
-  --accent-hover: #a80c1f;
-  --accent-text: #b30d22;
+  --accent: #c42238;
+  --accent-hover: #a01b2e;
+  --accent-text: #ad1e32;
   --accent-foreground: #ffffff;
-  --accent-soft: #fbe0e3;
-  --incoming: #ffffff;
-  --incoming-foreground: #0a0a0b;
-  --incoming-shadow: #0a0a0b;
-  --outgoing: #d10f27;
+  --accent-soft: #f8dfe2;
+  --incoming: #faf9f6;
+  --incoming-foreground: #1b1a1e;
+  --incoming-shadow: #1b1a1e;
+  --outgoing: #c42238;
   --outgoing-foreground: #ffffff;
-  --outgoing-shadow: #0a0a0b;
+  --outgoing-shadow: #1b1a1e;
   --online: #0b7a44;
-  --danger: #b3122c;
+  --danger: #a8182c;
   --focus: #1a4fd6;
-  --frame: #0a0a0b;
+  --frame: #1b1a1e;
+  --grid: transparent;
   color-scheme: light;
 }
 
-/* Same values as [data-theme="paper"]. Keep the two blocks in sync. */
+/* Moon Cell: after the Moon Cell Automaton and SE.RA.PH, the digital moon
+   of Fate/EXTRA (seen in FGO's SE.RA.PH event). Deep space teal, data
+   green, cut-corner panels instead of Persona slants. Its quirks are in
+   the "Moon Cell" section below. */
+[data-theme="mooncell"] {
+  --background: #0e171b;
+  --background-raised: #132126;
+  --foreground: #e2efec;
+  --muted: #92afab;
+  --muted-strong: #c1d8d4;
+  --panel: #16272e;
+  --panel-strong: #1e343c;
+  --border: #2a4650;
+  --field-border: #6c939f;
+  --accent: #46c99b;
+  --accent-hover: #72dab5;
+  --accent-text: #6fdcb3;
+  --accent-foreground: #07201a;
+  --accent-soft: #173b35;
+  --incoming: #1e343c;
+  --incoming-foreground: #e2efec;
+  --incoming-shadow: #3d6b75;
+  --outgoing: #1c6b56;
+  --outgoing-foreground: #eefaf6;
+  --outgoing-shadow: #46c99b;
+  --online: #46c99b;
+  --danger: #ffa08f;
+  --focus: #ffd83d;
+  --frame: #46c99b;
+  --grid: #1c3038;
+  color-scheme: dark;
+}
+
+/* Same values as [data-theme="paper"]. Keep the two blocks in sync
+   (npm run contrast checks this). */
 @media (prefers-color-scheme: light) {
   [data-theme="system"] {
-    --background: #f3f1ee;
-    --background-raised: #ffffff;
-    --foreground: #0a0a0b;
-    --muted: #5b5862;
-    --muted-strong: #37353c;
-    --panel: #ffffff;
-    --panel-strong: #e7e4e0;
-    --border: #d4d0cb;
-    --field-border: #78747e;
-    --accent: #d10f27;
-    --accent-hover: #a80c1f;
-    --accent-text: #b30d22;
-    --accent-foreground: #ffffff;
-    --accent-soft: #fbe0e3;
-    --incoming: #ffffff;
-    --incoming-foreground: #0a0a0b;
-    --incoming-shadow: #0a0a0b;
-    --outgoing: #d10f27;
-    --outgoing-foreground: #ffffff;
-    --outgoing-shadow: #0a0a0b;
-    --online: #0b7a44;
-    --danger: #b3122c;
-    --focus: #1a4fd6;
-    --frame: #0a0a0b;
-    color-scheme: light;
+    SYS--background: #f2f0ec;
+  --background-raised: #faf9f6;
+  --foreground: #1b1a1e;
+  --muted: #5a5761;
+  --muted-strong: #3a383f;
+  --panel: #faf9f6;
+  --panel-strong: #e6e3de;
+  --border: #d3cfc9;
+  --field-border: #78747e;
+  --accent: #c42238;
+  --accent-hover: #a01b2e;
+  --accent-text: #ad1e32;
+  --accent-foreground: #ffffff;
+  --accent-soft: #f8dfe2;
+  --incoming: #faf9f6;
+  --incoming-foreground: #1b1a1e;
+  --incoming-shadow: #1b1a1e;
+  --outgoing: #c42238;
+  --outgoing-foreground: #ffffff;
+  --outgoing-shadow: #1b1a1e;
+  --online: #0b7a44;
+  --danger: #a8182c;
+  --focus: #1a4fd6;
+  --frame: #1b1a1e;
+  --grid: transparent;
+  color-scheme: light;
   }
 }
 
@@ -261,6 +307,145 @@ body {
   .bubble-out-shadow {
     filter: drop-shadow(3px 3px 0 var(--outgoing-shadow));
   }
+}
+
+/* ==========================================================================
+   Moon Cell quirks
+   Same components, different personality. Only decoration changes; every
+   functional label (buttons, presence, errors) stays plain so it reads the
+   same in every theme.
+   ========================================================================== */
+
+/* Cut corners (top-left, bottom-right) instead of Persona slants. */
+[data-theme="mooncell"] .p5-panel,
+[data-theme="mooncell"] .p5-frame {
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+[data-theme="mooncell"] .p5-button,
+[data-theme="mooncell"] .p5-cursor::before {
+  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+}
+[data-theme="mooncell"] .bubble-in,
+[data-theme="mooncell"] .bubble-out {
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+/* A thin data-line outline instead of an offset shadow. */
+[data-theme="mooncell"] .bubble-in-shadow {
+  filter: drop-shadow(0 0 1px var(--incoming-shadow));
+}
+[data-theme="mooncell"] .bubble-out-shadow {
+  filter: drop-shadow(0 0 1px var(--outgoing-shadow));
+}
+
+/* Titles read like a system readout: upright, bracketed, no paper label. */
+[data-theme="mooncell"] .p5-title {
+  transform: none;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  color: var(--foreground);
+  letter-spacing: 0.06em;
+}
+[data-theme="mooncell"] .p5-title::before {
+  content: "[ ";
+  color: var(--accent-text);
+}
+[data-theme="mooncell"] .p5-title::after {
+  content: " ]";
+  color: var(--accent-text);
+}
+
+/* The page sits on a faint coordinate grid, like SE.RA.PH's digital space.
+   Low contrast on purpose, and only on the page: panels and bubbles are
+   solid, so text never sits on the lines. */
+[data-theme="mooncell"] .app-backdrop {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Day dividers become log entries. */
+[data-theme="mooncell"] .day-tag {
+  rotate: none;
+}
+[data-theme="mooncell"] .day-tag::before {
+  content: "LOG · ";
+}
+
+/* Theme-specific wording: render both, show one. Hidden text is
+   display:none, so screen readers only hear the visible one. */
+.quirk-mooncell {
+  display: none;
+}
+[data-theme="mooncell"] .quirk-mooncell {
+  display: inline;
+}
+[data-theme="mooncell"] .quirk-default {
+  display: none;
+}
+
+/* ==========================================================================
+   Map (Leaflet)
+   ========================================================================== */
+
+.leaflet-container {
+  background: var(--panel-strong);
+  font-family: var(--font-sans);
+}
+
+/* Dark themes dim and invert the (bright) OpenStreetMap tiles so the map
+   doesn't flash white at night. Markers are not affected. */
+[data-theme="phantom"] .leaflet-tile-pane,
+[data-theme="mooncell"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);
+}
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);
+  }
+}
+
+.map-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-weight: 800;
+  font-size: 13px;
+  border: 3px solid var(--frame);
+  clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 95%);
+}
+[data-theme="mooncell"] .map-marker {
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.map-me {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.map-partner {
+  background: var(--incoming);
+  color: var(--incoming-foreground);
+}
+.map-sos {
+  background: #a8182c;
+  color: #ffffff;
+}
+.map-stale {
+  filter: grayscale(1);
+  opacity: 0.75;
+}
+.map-accuracy {
+  fill: var(--accent);
+  fill-opacity: 0.12;
+  stroke: var(--accent);
+}
+.map-accuracy.map-sos {
+  fill: #a8182c;
+  stroke: #a8182c;
 }
 
 /* ==========================================================================

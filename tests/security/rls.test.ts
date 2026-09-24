@@ -289,6 +289,35 @@ describe.skipIf(!enabled)("row level security", () => {
     expect((await save(users.b.client, "http://push.example.test/plain")).error).not.toBeNull();
   });
 
+  it("the calendar, locations and alerts are private to the two members", async () => {
+    const soon = new Date(Date.now() + 3_600_000).toISOString();
+    const ev = await users.a.client
+      .from("events")
+      .insert({ conversation_id: conversationId, title: "Dinner", starts_at: soon, remind_minutes: 60 })
+      .select("id, created_by")
+      .single();
+    expect(ev.error).toBeNull();
+    expect(ev.data?.created_by).toBe(users.a.id);
+    expect((await users.b.client.from("events").select("id").eq("id", ev.data!.id)).data).toHaveLength(1);
+    expect((await users.outsider.client.from("events").select("id")).data).toHaveLength(0);
+    expect(
+      (await users.outsider.client.from("events").insert({ conversation_id: conversationId, title: "x", starts_at: soon })).error,
+    ).not.toBeNull();
+
+    expect((await users.a.client.rpc("share_location", { conv: conversationId, lat: 3.14, lng: 101.69, accuracy: 10 })).error).toBeNull();
+    expect((await users.b.client.from("locations").select("user_id")).data).toHaveLength(1);
+    expect((await users.outsider.client.from("locations").select("user_id")).data).toHaveLength(0);
+    expect((await users.outsider.client.rpc("share_location", { conv: conversationId, lat: 0, lng: 0, accuracy: 1 })).error).not.toBeNull();
+    await users.a.client.rpc("stop_sharing_location");
+    expect((await users.b.client.from("locations").select("user_id")).data).toHaveLength(0);
+
+    const sos = await users.a.client.from("alerts").insert({ conversation_id: conversationId, kind: "sos" }).select("id, sender_id").single();
+    expect(sos.error).toBeNull();
+    expect(sos.data?.sender_id).toBe(users.a.id);
+    expect((await users.outsider.client.from("alerts").select("id")).data).toHaveLength(0);
+    expect((await users.outsider.client.from("alerts").insert({ conversation_id: conversationId, kind: "sos" })).error).not.toBeNull();
+  });
+
   it("rate limits message floods", async () => {
     const results = await Promise.all(
       Array.from({ length: 40 }, (_, i) =>

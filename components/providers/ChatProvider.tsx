@@ -75,13 +75,34 @@ type Presence = {
   stopTyping: () => void;
 };
 
+export type LiveTable = "events" | "locations" | "alerts";
+export type LiveChange = { type: "INSERT" | "UPDATE" | "DELETE"; row: Record<string, unknown> };
+type Live = { subscribe: (table: LiveTable, listener: (change: LiveChange) => void) => () => void };
+
 const ChatDataContext = createContext<ChatData | null>(null);
 const PresenceContext = createContext<Presence | null>(null);
+const LiveContext = createContext<Live | null>(null);
 
 export function useChat() {
   const ctx = useContext(ChatDataContext);
   if (!ctx) throw new Error("useChat must be used inside <ChatProvider>");
   return ctx;
+}
+
+/**
+ * Calls `listener` for every insert/update on a shared table (calendar,
+ * locations, alerts) while the component is mounted. Uses the app's one
+ * realtime connection. Deletes are not delivered with a filter, so screens
+ * also refetch when they open.
+ */
+export function useLiveTable(table: LiveTable, listener: (change: LiveChange) => void) {
+  const ctx = useContext(LiveContext);
+  if (!ctx) throw new Error("useLiveTable must be used inside <ChatProvider>");
+  const latest = useRef(listener);
+  useEffect(() => {
+    latest.current = listener;
+  });
+  useEffect(() => ctx.subscribe(table, (change) => latest.current(change)), [ctx, table]);
 }
 
 export function usePresence() {
@@ -133,6 +154,18 @@ export function ChatProvider({
   const lastTypingSent = useRef(0);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const receiptTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveListeners = useRef(new Map<LiveTable, Set<(change: LiveChange) => void>>());
+  const live = useMemo<Live>(
+    () => ({
+      subscribe(table, listener) {
+        const set = liveListeners.current.get(table) ?? new Set();
+        set.add(listener);
+        liveListeners.current.set(table, set);
+        return () => void set.delete(listener);
+      },
+    }),
+    [],
+  );
   const partnerRef = useRef(partner);
   const partnerOnlineRef = useRef(false);
 
@@ -439,6 +472,12 @@ export function ChatProvider({
     });
     channelRef.current = channel;
 
+    const emitLive = (table: LiveTable, payload: { eventType: string; new: unknown; old: unknown }) => {
+      const type = payload.eventType as LiveChange["type"];
+      const row = (type === "DELETE" ? payload.old : payload.new) as Record<string, unknown>;
+      liveListeners.current.get(table)?.forEach((listener) => listener({ type, row }));
+    };
+
     const onInsert = (row: MessageRow) => {
       dispatch({ type: "upsert", rows: [row] });
       void resolveSnippets([row]);
@@ -489,6 +528,15 @@ export function ChatProvider({
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "bond", filter: `conversation_id=eq.${conversationId}` },
         (payload) => setBond(payload.new as BondRow),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "events", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
+        emitLive("events", payload),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "locations", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
+        emitLive("locations", payload),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "alerts", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
+        emitLive("alerts", payload),
       )
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         if (payload?.user_id !== partnerRef.current.id) return;
@@ -654,7 +702,9 @@ export function ChatProvider({
 
   return (
     <ChatDataContext.Provider value={data}>
-      <PresenceContext.Provider value={presence}>{children}</PresenceContext.Provider>
+      <PresenceContext.Provider value={presence}>
+        <LiveContext.Provider value={live}>{children}</LiveContext.Provider>
+      </PresenceContext.Provider>
     </ChatDataContext.Provider>
   );
 }

@@ -1,4 +1,4 @@
-# HEARTLINE
+# Napyru
 
 A private messenger for exactly two people. Calm, readable, and built around the conversation.
 
@@ -12,8 +12,12 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - Reconnects on its own and fills any gap in messages
 - **Bond** screen (rank, title, progress, stats, all set by hand), **Memories** scrapbook, daily status with icons (Free to talk, Busy, Studying, At home, Out, Sleeping, Call me)
 - Pop-up notifications through Web Push, even when the app is closed (asked only after you send something). They say who wrote, never what. Optional sounds (off by default)
-- Persona 5 Royal look: black, white and red, uneven panels, texting-screen bubbles, tilted portrait frames. Text itself is never slanted or italic.
-- Automatic / Phantom / Paper themes built on CSS variables (`app/globals.css`), checked by `npm run contrast`. Mobile-first layout with keyboard-safe composer
+- **Plans**: a shared calendar. Either of you adds, edits or deletes; reminders ("1 hour before", "1 day before"…) pop up on both phones
+- **Map**: see each other while sharing is on (live while the app is open), send "I'm here", ask "Where are you?", get directions
+- **SOS**: two taps send an emergency alert with your location. The other phone gets an urgent notification that stays on screen, and a full-screen alarm with a siren if Napyru is open
+- Notifications read like "Rafie ♡ · Sent you a message" and never include message text
+- Themes: Automatic, **Phantom** (Persona 5 Royal: black, white, red), **Paper** (light), **Moon Cell** (Fate/EXTRA's digital moon: teal space, data green, cut corners, a faint coordinate grid, log-style day tags)
+- Colours are checked by `npm run contrast` (WCAG 2.2) and follow eye-comfort rules; see "Colour" below. Mobile-first layout with keyboard-safe composer
 - Game artwork from `public/assets` (Persona 3 Reload textures) turned into single-colour marks by `npm run ui-assets` and recoloured by the theme: status icons, talk bubble, arcana, sakura, rank-up, chevron, time-of-day banners
 
 ## Security model
@@ -80,9 +84,28 @@ How it works: a new message → a database trigger (`pg_net`) → the `send-push
    ```
    Until both secrets exist, the trigger does nothing and messaging works as before.
 7. **On each phone:** open the installed app (iPhone: from the Home Screen icon) and turn **Notifications** on in Settings. If it was already on, opening the app registers the phone.
-8. **Pop-up style is a phone setting.** iPhone: Settings → Notifications → HEARTLINE → Banners, Banner Style "Persistent" if you want it to stay. Android: app notification settings → "Pop on screen" (the name varies by manufacturer).
+8. **Pop-up style is a phone setting.** iPhone: Settings → Notifications → Napyru → Banners, Banner Style "Persistent" if you want it to stay. Android: app notification settings → "Pop on screen" (the name varies by manufacturer).
 
 **Test:** lock phone B, send a message from phone A. **Not arriving?** Check Edge Functions → `send-push` → Logs in the Dashboard, and the database side with `select status_code, content, created from net._http_response order by created desc limit 5;`. A 401 there means the two webhook secrets differ.
+
+### Plans, Map and SOS (after the Web Push steps)
+
+1. `npx supabase db push` applies `20260926000000_calendar_location.sql`. If it says `pg_cron` is missing, enable it in the Dashboard (Database → Extensions → **pg_cron**) and push again.
+2. Redeploy the function so it knows reminders and alerts: `npx supabase functions deploy send-push`.
+3. Check that the reminder job exists: `select jobname, schedule from cron.job;` shows `napyru-reminders` every minute.
+4. On each phone, open **Map** once and allow location when asked.
+
+**Limits, honestly:** a web app can only read location while it's open, so live sharing pauses when Napyru is closed ("I'm here" and SOS send the location at that moment). The SOS siren plays only when Napyru is open; when it's closed, the phone shows the urgent notification with its normal sound, and silent mode can mute it. SOS is not a replacement for calling emergency services.
+
+## Colour
+
+Each theme follows the same rules (tokens in `app/globals.css`, checked by `npm run contrast`):
+
+- **No pure black page and no pure white text.** That pairing makes letters glow and blur ("halation"), worst for people with astigmatism. Dark themes use a dark grey page and off-white text; the light theme is warm paper.
+- **Softer accents on dark backgrounds.** The reds and greens are slightly desaturated so large areas don't vibrate.
+- **60 / 30 / 10.** About 60% page, 30% panels and bubbles, 10% accent, which is kept for actions, selection and your own messages.
+- **Contrast floors:** body text ≥ 7:1, secondary text and text on buttons ≥ 4.5:1, field borders ≥ 3:1.
+- **Emergency is always red**, in every theme, including Moon Cell's green.
 
 ## Scripts
 

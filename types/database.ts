@@ -34,6 +34,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          accuracy: number | null
+          conversation_id: string
+          created_at: string
+          id: string
+          kind: string
+          lat: number | null
+          lng: number | null
+          resolved_at: string | null
+          resolved_by: string | null
+          sender_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          lat?: number | null
+          lng?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sender_id?: string
+        }
+        Update: {
+          accuracy?: number | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bond: {
         Row: {
           conversation_id: string
@@ -116,6 +177,105 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      events: {
+        Row: {
+          all_day: boolean
+          conversation_id: string
+          created_at: string
+          created_by: string
+          id: string
+          note: string | null
+          remind_at: string | null
+          remind_minutes: number | null
+          reminded_at: string | null
+          starts_at: string
+          title: string
+        }
+        Insert: {
+          all_day?: boolean
+          conversation_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          note?: string | null
+          remind_at?: string | null
+          remind_minutes?: number | null
+          reminded_at?: string | null
+          starts_at: string
+          title: string
+        }
+        Update: {
+          all_day?: boolean
+          conversation_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          note?: string | null
+          remind_at?: string | null
+          remind_minutes?: number | null
+          reminded_at?: string | null
+          starts_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          accuracy: number | null
+          conversation_id: string
+          lat: number
+          lng: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          conversation_id: string
+          lat: number
+          lng: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          conversation_id?: string
+          lat?: number
+          lng?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "locations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       memories: {
         Row: {
@@ -332,11 +492,17 @@ export type Database = {
       is_conversation_member: { Args: { conv: string }; Returns: boolean }
       mark_messages_delivered: { Args: { conv: string }; Returns: number }
       mark_messages_read: { Args: { conv: string }; Returns: number }
+      resolve_alert: { Args: { alert: string }; Returns: undefined }
       save_push_subscription: {
         Args: { sub_auth: string; sub_endpoint: string; sub_p256dh: string }
         Returns: undefined
       }
+      share_location: {
+        Args: { accuracy: number; conv: string; lat: number; lng: number }
+        Returns: string
+      }
       shares_conversation_with: { Args: { other: string }; Returns: boolean }
+      stop_sharing_location: { Args: never; Returns: undefined }
       touch_last_seen: { Args: never; Returns: string }
     }
     Enums: {

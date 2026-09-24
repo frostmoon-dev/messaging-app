@@ -1,11 +1,11 @@
-/* HEARTLINE service worker.
+/* Napyru service worker.
  * - Makes the app installable.
  * - Shows an offline page when navigation fails.
  * - Shows Web Push notifications (sent by the send-push Edge Function).
  * - Focuses the chat when a notification is clicked.
  * Private data is never cached: only the offline page and icons are stored.
  */
-const CACHE = "heartline-shell-v5";
+const CACHE = "napyru-shell-v7";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/badge-96.png"];
 
 self.addEventListener("install", (event) => {
@@ -40,22 +40,31 @@ self.addEventListener("push", (event) => {
   } catch {
     // Unreadable payload: fall back to a generic notification.
   }
-  const title = typeof data.title === "string" ? data.title : "NEW MESSAGE";
+  const kind = typeof data.kind === "string" ? data.kind : "message";
+  const sos = kind === "sos";
+  const title = typeof data.title === "string" ? data.title : "Napyru \u2661";
   const body = typeof data.body === "string" ? data.body : "You have a new message";
-  const url = typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/chat";
+  const url = typeof data.url === "string" && data.url.startsWith("/") && !data.url.startsWith("//") ? data.url : "/chat";
+  const tag = typeof data.tag === "string" ? data.tag : "new-message";
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       const looking = clients.some((c) => c.focused && c.visibilityState === "visible");
-      if (looking && CAN_SKIP_WHEN_FOCUSED) return;
+      // Only new-message pops are skipped while you're looking at the app;
+      // reminders, alerts and SOS always show.
+      if (looking && CAN_SKIP_WHEN_FOCUSED && kind === "message") return;
       return self.registration.showNotification(title, {
         body,
-        tag: "new-message",
+        tag,
         renotify: true,
         icon: "/icons/icon-192.png",
         badge: "/icons/badge-96.png",
-        vibrate: [80, 40, 80],
-        data: { url },
+        // SOS stays on screen until dismissed and buzzes hard; everything
+        // else is a short double tap.
+        requireInteraction: sos,
+        vibrate: sos ? [600, 200, 600, 200, 600, 200, 600] : [80, 40, 80],
+        timestamp: Date.now(),
+        data: { url, kind },
       });
     }),
   );

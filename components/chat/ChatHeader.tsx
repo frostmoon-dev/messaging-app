@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useChat, usePresence } from "@/components/providers/ChatProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusPicker } from "@/components/profile/StatusPicker";
@@ -22,7 +23,9 @@ export function ChatHeader() {
   return (
     <header className="relative z-10 shrink-0 border-b-2 border-accent bg-background-raised pt-[env(safe-area-inset-top)]">
       <div className="flex min-h-16 items-center gap-3 px-3 sm:px-5">
-        <Avatar profile={partner} size="md" online={partnerOnline} />
+        <Link href="/bond" className="shrink-0" aria-label={`Bond with ${partner.display_name}`}>
+          <Avatar profile={partner} size="md" online={partnerOnline} />
+        </Link>
 
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-title font-bold">{partner.display_name}</h1>

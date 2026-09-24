@@ -1,21 +1,58 @@
 import { describe, expect, it } from "vitest";
-import { buildPayload, isGone, isUuid, pickSecretKey, safeEqual } from "@/supabase/functions/send-push/push";
+import {
+  buildAlertPayload,
+  buildPayload,
+  buildReminderPayload,
+  isGone,
+  isUuid,
+  parseRequest,
+  pickSecretKey,
+  safeEqual,
+} from "@/supabase/functions/send-push/push";
 import { urlBase64ToUint8Array } from "@/lib/push";
 
-describe("send-push helpers", () => {
-  it("never puts message text in the notification", () => {
-    expect(buildPayload("Ann")).toEqual({
-      title: "NEW MESSAGE",
-      body: "Ann sent you a message",
-      url: "/chat",
-      tag: "new-message",
-    });
+const ID = "11111111-1111-4111-8111-111111111111";
+
+describe("notification wording", () => {
+  it("messages show the name with ♡ and never the message text", () => {
+    expect(buildPayload("Ann")).toEqual({ kind: "message", title: "Ann ♡", body: "Sent you a message", url: "/chat", tag: "new-message" });
   });
 
   it("falls back and trims long names", () => {
-    expect(buildPayload(null).body).toBe("Someone sent you a message");
-    expect(buildPayload("   ").body).toBe("Someone sent you a message");
-    expect(buildPayload("x".repeat(80)).body).toBe(`${"x".repeat(40)} sent you a message`);
+    expect(buildPayload(null).title).toBe("Someone ♡");
+    expect(buildPayload("   ").title).toBe("Someone ♡");
+    expect(buildPayload("x".repeat(80)).title).toBe(`${"x".repeat(40)} ♡`);
+  });
+
+  it("reminders say how soon, without needing a time zone", () => {
+    const p = buildReminderPayload({ id: ID, title: "Dinner", remind_minutes: 60 });
+    expect(p).toMatchObject({ kind: "reminder", title: "♡ Reminder", body: "Dinner starts in 1 hour", url: `/plans?event=${ID}` });
+    expect(buildReminderPayload({ id: ID, title: "Trip", remind_minutes: 1440 }).body).toBe("Trip is tomorrow");
+    expect(buildReminderPayload({ id: ID, title: "Call", remind_minutes: 0 }).body).toBe("Call is starting now");
+  });
+
+  it("SOS is urgent and opens the map at that alert", () => {
+    const p = buildAlertPayload({ id: ID, kind: "sos" }, "Ann");
+    expect(p.kind).toBe("sos");
+    expect(p.title).toBe("SOS · Ann");
+    expect(p.url).toBe(`/map?alert=${ID}`);
+    expect(p.tag).toBe(`sos-${ID}`);
+  });
+
+  it("'Where are you?' opens the share flow", () => {
+    expect(buildAlertPayload({ id: ID, kind: "where" }, "Ann")).toMatchObject({ title: "Ann ♡", url: "/map?share=1" });
+    expect(buildAlertPayload({ id: ID, kind: "here" }, "Ann")).toMatchObject({ body: "Shared where they are" });
+  });
+});
+
+describe("send-push request parsing", () => {
+  it("accepts exactly one known id", () => {
+    expect(parseRequest({ message_id: ID })).toEqual({ kind: "message", id: ID });
+    expect(parseRequest({ event_id: ID })).toEqual({ kind: "event", id: ID });
+    expect(parseRequest({ alert_id: ID })).toEqual({ kind: "alert", id: ID });
+    expect(parseRequest({ message_id: ID, alert_id: ID })).toBeNull();
+    expect(parseRequest({ message_id: "x" })).toBeNull();
+    expect(parseRequest(null)).toBeNull();
   });
 
   it("compares secrets exactly", () => {
@@ -26,7 +63,7 @@ describe("send-push helpers", () => {
   });
 
   it("accepts only uuids", () => {
-    expect(isUuid("11111111-1111-4111-8111-111111111111")).toBe(true);
+    expect(isUuid(ID)).toBe(true);
     expect(isUuid("x")).toBe(false);
     expect(isUuid(42)).toBe(false);
   });

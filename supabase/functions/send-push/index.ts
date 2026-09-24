@@ -1,5 +1,6 @@
-// send-push: called by the database (pg_net) after a message is inserted.
-// Sends a Web Push notification to every device of the other member.
+// send-push: called by the database (pg_net) for a new message, a due
+// calendar reminder or an alert (SOS, "I'm here", "Where are you?").
+// Sends a Web Push notification to the right people's devices.
 //
 // Secrets (supabase secrets set ...):
 //   PUSH_WEBHOOK_SECRET  shared with the database (Vault: push_webhook_secret)
@@ -11,7 +12,17 @@
 
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
-import { buildPayload, isGone, isUuid, pickSecretKey, safeEqual } from "./push.ts";
+import {
+  buildAlertPayload,
+  buildPayload,
+  buildReminderPayload,
+  isGone,
+  parseRequest,
+  pickSecretKey,
+  safeEqual,
+  type PushPayload,
+  type PushRequest,
+} from "./push.ts";
 
 const env = (name: string) => Deno.env.get(name) ?? "";
 
@@ -28,6 +39,33 @@ const db = createClient(env("SUPABASE_URL"), pickSecretKey(env("SUPABASE_SECRET_
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+type Target = { conversationId: string; exclude: string | null; payload: PushPayload } | { status: number; error: string };
+
+async function senderName(userId: string) {
+  const { data } = await db.from("profiles").select("display_name").eq("id", userId).maybeSingle();
+  return data?.display_name ?? null;
+}
+
+/** Finds who the notification is about and what it should say. */
+async function resolve(request: PushRequest): Promise<Target> {
+  if (request.kind === "message") {
+    const { data, error } = await db.from("messages").select("sender_id, conversation_id").eq("id", request.id).maybeSingle();
+    if (error) return { status: 500, error: "lookup failed" };
+    if (!data) return { status: 404, error: "message not found" };
+    return { conversationId: data.conversation_id, exclude: data.sender_id, payload: buildPayload(await senderName(data.sender_id)) };
+  }
+  if (request.kind === "event") {
+    const { data, error } = await db.from("events").select("id, conversation_id, title, remind_minutes").eq("id", request.id).maybeSingle();
+    if (error) return { status: 500, error: "lookup failed" };
+    if (!data) return { status: 404, error: "event not found" };
+    return { conversationId: data.conversation_id, exclude: null, payload: buildReminderPayload(data) };
+  }
+  const { data, error } = await db.from("alerts").select("id, conversation_id, sender_id, kind").eq("id", request.id).maybeSingle();
+  if (error) return { status: 500, error: "lookup failed" };
+  if (!data) return { status: 404, error: "alert not found" };
+  return { conversationId: data.conversation_id, exclude: data.sender_id, payload: buildAlertPayload(data, await senderName(data.sender_id)) };
+}
+
 const reply = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
@@ -38,27 +76,17 @@ Deno.serve(async (req) => {
   }
   if (!vapidReady) return reply(500, { error: "VAPID secrets are not set" });
 
-  const body = await req.json().catch(() => null);
-  const messageId = body?.message_id;
-  if (!isUuid(messageId)) return reply(400, { error: "message_id must be a uuid" });
+  const request = parseRequest(await req.json().catch(() => null));
+  if (!request) return reply(400, { error: "send exactly one of message_id, event_id, alert_id" });
 
-  const { data: message, error: messageError } = await db
-    .from("messages")
-    .select("sender_id, conversation_id")
-    .eq("id", messageId)
-    .maybeSingle();
-  if (messageError) return reply(500, { error: "lookup failed" });
-  if (!message) return reply(404, { error: "message not found" });
+  const target = await resolve(request);
+  if ("error" in target) return reply(target.status, { error: target.error });
 
-  const [members, sender] = await Promise.all([
-    db
-      .from("conversation_members")
-      .select("user_id")
-      .eq("conversation_id", message.conversation_id)
-      .neq("user_id", message.sender_id),
-    db.from("profiles").select("display_name").eq("id", message.sender_id).maybeSingle(),
-  ]);
-  if (members.error || sender.error) return reply(500, { error: "lookup failed" });
+  // Messages and alerts go to the other person; reminders go to both of you.
+  let membersQuery = db.from("conversation_members").select("user_id").eq("conversation_id", target.conversationId);
+  if (target.exclude) membersQuery = membersQuery.neq("user_id", target.exclude);
+  const members = await membersQuery;
+  if (members.error) return reply(500, { error: "lookup failed" });
 
   const recipients = (members.data ?? []).map((m) => m.user_id);
   if (recipients.length === 0) return reply(200, { sent: 0, removed: 0 });
@@ -69,7 +97,7 @@ Deno.serve(async (req) => {
     .in("user_id", recipients);
   if (subsError) return reply(500, { error: "lookup failed" });
 
-  const payload = JSON.stringify(buildPayload(sender.data?.display_name));
+  const payload = JSON.stringify(target.payload);
   const gone: string[] = [];
   let sent = 0;
 
@@ -85,8 +113,9 @@ Deno.serve(async (req) => {
             TTL: 60 * 60 * 24,
             // High urgency lets a sleeping phone wake up and show it straight away.
             urgency: "high",
-            // Several unseen pushes collapse into one while the phone is offline.
-            topic: "new-message",
+            // Unseen pushes with the same topic collapse into one while the
+            // phone is offline. Every SOS keeps its own topic.
+            topic: target.payload.tag.slice(0, 32).replace(/[^A-Za-z0-9_-]/g, "-"),
           },
         );
         const res = await fetch(request.endpoint, {
