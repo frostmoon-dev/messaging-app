@@ -17,7 +17,8 @@ export type ChatAction =
   | { type: "addLocal"; message: ChatMessage }
   | { type: "patchLocal"; id: string; local: Partial<LocalState> }
   | { type: "remove"; id: string }
-  | { type: "markPartnerRead"; partnerId: string; at: string };
+  | { type: "markPartnerRead"; partnerId: string; at: string }
+  | { type: "cleared" };
 
 export const initialChatState: ChatState = {
   messages: [],
@@ -89,6 +90,9 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       };
     case "remove":
       return { ...state, messages: state.messages.filter((m) => m.id !== action.id) };
+    case "cleared":
+      // History hidden for you; keep only messages still on their way out.
+      return { ...state, messages: state.messages.filter((m) => m.local), hasMore: false };
     case "markPartnerRead":
       return {
         ...state,

@@ -20,6 +20,12 @@ import {
   fetchRange,
   fetchSince,
   fetchSnippets,
+  clearChat,
+  deleteMessage as deleteMessageRpc,
+  fetchPinned,
+  fetchStarIds,
+  pinMessage as pinMessageRpc,
+  setStar,
   insertMessage,
   markDelivered,
   markRead,
@@ -67,6 +73,16 @@ type ChatData = {
   /** A sticker (own pack path or GIPHY link) or a GIPHY GIF, already stored or hosted, so it sends like text. */
   sendMedia: (media: MediaToSend, replyTo: string | null) => void;
   retry: (id: string) => void;
+  /** Your own message, for both of you. Throws if the server refuses. */
+  deleteMessage: (id: string) => Promise<void>;
+  /** Hides the whole history for you only. */
+  clearHistory: () => Promise<void>;
+  /** Shared pins, newest first (at most 5). */
+  pinned: MessageRow[];
+  setPinned: (id: string, pinned: boolean) => Promise<void>;
+  /** Messages you starred (only you see these). */
+  starred: ReadonlySet<string>;
+  toggleStar: (id: string) => Promise<void>;
   discard: (id: string) => void;
   getSnippet: (id: string) => ReplySnippet | undefined;
   ensureLoaded: (id: string) => Promise<boolean>;
@@ -478,6 +494,91 @@ export function ChatProvider({
 
   const retry = useCallback((id: string) => void persist(id), [persist]);
 
+  const deleteMessage = useCallback(
+    async (id: string) => {
+      const original = messagesRef.current.find((m) => m.id === id);
+      if (!original || original.local) return;
+      // Show it gone straight away; put it back if the server says no.
+      dispatch({
+        type: "upsert",
+        rows: [{ ...original, deleted_at: new Date().toISOString(), content: null, image_url: null, image_width: null, image_height: null }],
+      });
+      try {
+        const photo = await deleteMessageRpc(supabase, id);
+        if (photo) await supabase.storage.from("chat-images").remove([photo]);
+      } catch (error) {
+        dispatch({ type: "upsert", rows: [{ ...original, deleted_at: null }] });
+        throw error;
+      }
+    },
+    [supabase],
+  );
+
+  // Pins and stars load on their own, so a database that hasn't had the
+  // pin/star update yet just shows none instead of breaking the chat.
+  const [pinned, setPinnedRows] = useState<MessageRow[]>([]);
+  const [starred, setStarred] = useState<ReadonlySet<string>>(() => new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPinned(supabase, conversationId)
+      .then((rows) => !cancelled && setPinnedRows(rows))
+      .catch((error) => devLog("pins unavailable", error));
+    fetchStarIds(supabase)
+      .then((ids) => !cancelled && setStarred(new Set(ids)))
+      .catch((error) => devLog("stars unavailable", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, conversationId]);
+
+  const trackPin = useCallback((row: MessageRow) => {
+    setPinnedRows((prev) => {
+      const rest = prev.filter((p) => p.id !== row.id);
+      if (!row.pinned_at || row.deleted_at) return rest;
+      return [row, ...rest].sort((a, b) => ((a.pinned_at ?? "") < (b.pinned_at ?? "") ? 1 : -1));
+    });
+  }, []);
+  const trackPinRef = useRef(trackPin);
+
+  const setPinned = useCallback(
+    async (id: string, pin: boolean) => {
+      await pinMessageRpc(supabase, id, pin);
+      const row = messagesRef.current.find((m) => m.id === id);
+      if (row) trackPin({ ...row, pinned_at: pin ? new Date().toISOString() : null });
+    },
+    [supabase, trackPin],
+  );
+
+  const toggleStar = useCallback(
+    async (id: string) => {
+      const next = !starred.has(id);
+      setStarred((prev) => {
+        const s = new Set(prev);
+        if (next) s.add(id);
+        else s.delete(id);
+        return s;
+      });
+      try {
+        await setStar(supabase, id, next);
+      } catch (error) {
+        setStarred((prev) => {
+          const s = new Set(prev);
+          if (next) s.delete(id);
+          else s.add(id);
+          return s;
+        });
+        throw error;
+      }
+    },
+    [supabase, starred],
+  );
+
+  const clearHistory = useCallback(async () => {
+    await clearChat(supabase, conversationId);
+    dispatch({ type: "cleared" });
+  }, [supabase, conversationId]);
+
   const discard = useCallback(
     (id: string) => {
       const item = outbox.current.get(id);
@@ -534,6 +635,7 @@ export function ChatProvider({
     };
 
     const onUpdate = (row: MessageRow) => {
+      trackPinRef.current(row);
       // Only refresh rows we already show; never pull random old rows into view.
       if (messagesRef.current.some((m) => m.id === row.id)) dispatch({ type: "upsert", rows: [row] });
     };
@@ -711,6 +813,12 @@ export function ChatProvider({
       sendImage,
       sendMedia,
       retry,
+      deleteMessage,
+      clearHistory,
+      pinned,
+      setPinned,
+      starred,
+      toggleStar,
       discard,
       getSnippet,
       ensureLoaded,
@@ -721,7 +829,7 @@ export function ChatProvider({
     }),
     [
       me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, sendImage,
-      sendMedia, retry, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
+      sendMedia, retry, deleteMessage, clearHistory, pinned, setPinned, starred, toggleStar, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
     ],
   );
 

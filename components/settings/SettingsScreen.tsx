@@ -31,6 +31,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { fieldClass, labelClass } from "@/components/ui/field";
 import { Panel } from "./Panel";
 import { ChatBackgroundSection } from "./ChatBackgroundSection";
+import { ChatHistorySection } from "./ChatHistorySection";
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
@@ -42,6 +43,7 @@ export function SettingsScreen() {
         <ProfileSection />
         <ThemeSection />
         <ChatBackgroundSection />
+        <ChatHistorySection />
         <AlertsSection />
         <InstallSection />
         <SignOutSection />

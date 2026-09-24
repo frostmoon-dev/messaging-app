@@ -47,3 +47,28 @@ export async function removeSticker(id: string) {
   const { error } = await createClient().from("stickers").delete().eq("id", id);
   if (error) throw error;
 }
+
+/** Adds a sticker file as it is (no re-encoding, so animation survives). Used by imports. */
+export async function addStickerFile(conversationId: string, file: { blob: Blob; contentType: string }, size: { width: number; height: number }) {
+  const id = uuid();
+  const ext = file.contentType === "image/png" ? "png" : file.contentType === "image/gif" ? "gif" : "webp";
+  const path = `${conversationId}/${id}.${ext}`;
+  await uploadWithProgress("stickers", path, file.blob, file.contentType);
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("stickers")
+    .insert({
+      id,
+      conversation_id: conversationId,
+      image_path: path,
+      image_width: Math.min(2000, Math.max(1, size.width)),
+      image_height: Math.min(2000, Math.max(1, size.height)),
+    })
+    .select("*")
+    .single();
+  if (error) {
+    await supabase.storage.from("stickers").remove([path]);
+    throw error;
+  }
+  return data;
+}

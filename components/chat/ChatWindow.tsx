@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
+import { MessageActions } from "./MessageActions";
 import { ChatBackdrop, useChatBackground } from "./ChatBackdrop";
 import { TypingIndicator } from "./TypingIndicator";
 import { MessageComposer } from "./MessageComposer";
@@ -13,7 +14,10 @@ import { ImageViewer } from "@/components/ui/ImageViewer";
 import { notificationPermission, promptDismissed } from "@/lib/notifications";
 
 export function ChatWindow() {
-  const { setChatActive, ensureLoaded } = useChat();
+  const { setChatActive, ensureLoaded, messages } = useChat();
+  const [actionsFor, setActionsFor] = useState<string | null>(null);
+  // Looked up live, so the sheet closes itself if the message goes away.
+  const actionsMessage = actionsFor ? messages.find((m) => m.id === actionsFor && !m.deleted_at) : undefined;
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [viewer, setViewer] = useState<{ src: string; alt: string } | null>(null);
@@ -53,6 +57,16 @@ export function ChatWindow() {
     [ensureLoaded],
   );
 
+  // /chat?m=<id> (from Favourites) opens the chat at that message.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("m");
+    if (!id) return;
+    window.history.replaceState(null, "", "/chat");
+    // Give the first page of messages a moment to arrive before jumping.
+    const t = setTimeout(() => void jumpTo(id), 400);
+    return () => clearTimeout(t);
+  }, [jumpTo]);
+
   const onSent = useCallback(() => {
     if (notificationPermission() === "default" && !promptDismissed()) setAskNotify(true);
   }, []);
@@ -61,7 +75,7 @@ export function ChatWindow() {
 
   return (
     <section className="relative flex h-full min-h-0 flex-col" aria-label="Chat">
-      <ChatHeader />
+      <ChatHeader onJump={(id) => void jumpTo(id)} />
       {/* Messages and the typing row share the chat background. */}
       <div className="relative flex min-h-0 flex-1 flex-col" data-chat-background={background.kind}>
         <ChatBackdrop background={background} />
@@ -70,6 +84,7 @@ export function ChatWindow() {
           onReply={setReplyTo}
           onJump={jumpTo}
           onOpenImage={(src, alt) => setViewer({ src, alt })}
+          onActions={setActionsFor}
         />
         <AnimatePresence>
           {jumpError && (
@@ -88,6 +103,9 @@ export function ChatWindow() {
       </div>
       <NotificationPrompt open={askNotify} onDone={() => setAskNotify(false)} />
       <MessageComposer replyTo={replyTo} onCancelReply={() => setReplyTo(null)} onSent={onSent} />
+      {actionsMessage && (
+        <MessageActions message={actionsMessage} onReply={setReplyTo} onClose={() => setActionsFor(null)} />
+      )}
       {viewer && <ImageViewer src={viewer.src} alt={viewer.alt} onClose={() => setViewer(null)} />}
     </section>
   );

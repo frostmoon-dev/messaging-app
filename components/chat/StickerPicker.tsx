@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { ChevronLeftIcon, CloseIcon, PlusIcon } from "@/components/ui/icons";
+import { ArrowDownIcon, ChevronLeftIcon, CloseIcon, PlusIcon } from "@/components/ui/icons";
 import { ImageCropper } from "@/components/ui/ImageCropper";
 import { useChat, type MediaToSend } from "@/components/providers/ChatProvider";
 import { useSignedUrl } from "@/lib/hooks/useSignedUrl";
 import { CENTERED, cropRect, type Crop } from "@/lib/storage/crop";
 import { ImageValidationError, prepareImage, type PreparedImage } from "@/lib/storage/image";
-import { addSticker, listStickers, removeSticker } from "@/lib/stickers";
+import { addSticker, addStickerFile, listStickers, removeSticker } from "@/lib/stickers";
+import { readStickerFiles, stickerSize } from "@/lib/sticker-import";
 import { friendlyError, MESSAGES } from "@/lib/errors";
 import type { GiphyItem, GiphyKind, GiphyPage } from "@/lib/giphy";
-import { cn } from "@/lib/utils";
+import { cn, devLog } from "@/lib/utils";
 import type { StickerRow } from "@/types/app";
 
 type Tab = "ours" | GiphyKind;
@@ -86,6 +87,36 @@ function OurStickers({ onPick }: { onPick: (media: MediaToSend) => void }) {
   const [pending, setPending] = useState<{ image: PreparedImage; url: string } | null>(null);
   const [crop, setCrop] = useState<Crop>(CENTERED);
   const [saving, setSaving] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState<{ done: number; total: number } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // Many files at once: loose stickers, a WhatsApp chat export (.zip) or a sticker pack (.wastickers).
+  const importFiles = async (files: File[]) => {
+    setError(null);
+    setNotice(null);
+    const { stickers: found, skipped } = await readStickerFiles(files);
+    if (!found.length) {
+      setError("No stickers found. Choose .webp stickers, a WhatsApp chat export (.zip) or a .wastickers pack.");
+      return;
+    }
+    setImporting({ done: 0, total: found.length });
+    const added: StickerRow[] = [];
+    let failed = 0;
+    for (const file of found) {
+      try {
+        added.push(await addStickerFile(conversationId, file, await stickerSize(file.blob)));
+      } catch (err) {
+        devLog("sticker import failed", err);
+        failed++;
+      }
+      setImporting({ done: added.length + failed, total: found.length });
+    }
+    setStickers((prev) => [...added.reverse(), ...(prev ?? [])]);
+    setImporting(null);
+    const left = skipped + failed;
+    setNotice(`Added ${added.length} sticker${added.length === 1 ? "" : "s"}${left ? ` · ${left} skipped` : ""}.`);
+  };
 
   const load = useCallback(async () => {
     try {
@@ -220,6 +251,20 @@ function OurStickers({ onPick }: { onPick: (media: MediaToSend) => void }) {
           if (f) void pick(f);
         }}
       />
+      {/* No accept filter: iPhone greys out .wastickers files it doesn't know. The app checks each file. */}
+      <input
+        ref={importRef}
+        type="file"
+        multiple
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          e.target.value = "";
+          if (files.length) void importFiles(files);
+        }}
+      />
       <div className="flex items-center justify-between px-4 pb-2">
         <p className="text-small text-muted-strong">Shared by the two of you.</p>
         {mine > 0 && (
@@ -238,6 +283,11 @@ function OurStickers({ onPick }: { onPick: (media: MediaToSend) => void }) {
           {error}
         </p>
       )}
+      {(importing || notice) && (
+        <p className="px-4 pb-2 text-small text-muted-strong" role="status">
+          {importing ? `Adding ${importing.done + 1 > importing.total ? importing.total : importing.done + 1} of ${importing.total}…` : notice}
+        </p>
+      )}
       <div className="scroll-area min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <ul className="grid grid-cols-4 gap-2">
           <li>
@@ -248,6 +298,18 @@ function OurStickers({ onPick }: { onPick: (media: MediaToSend) => void }) {
             >
               <PlusIcon size={20} />
               <span className="text-meta font-semibold">Add</span>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => importRef.current?.click()}
+              disabled={importing !== null}
+              className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-field-border text-center text-muted-strong hover:bg-panel-strong hover:text-foreground disabled:cursor-wait"
+              aria-label="Import stickers from WhatsApp or a sticker pack"
+            >
+              <ArrowDownIcon size={20} />
+              <span className="text-meta leading-tight font-semibold">Import</span>
             </button>
           </li>
           {stickers === null && !error
@@ -267,7 +329,10 @@ function OurStickers({ onPick }: { onPick: (media: MediaToSend) => void }) {
               ))}
         </ul>
         {stickers?.length === 0 && (
-          <p className="mt-6 text-center text-small text-muted-strong">Make stickers from your photos. Transparent PNGs work best.</p>
+          <p className="mt-6 text-center text-small text-muted-strong">
+            Make stickers from your photos, or import them: on iPhone, send your WhatsApp stickers to yourself, then Export
+            chat → Attach media, and pick the .zip here. Sticker packs (.wastickers) work too.
+          </p>
         )}
       </div>
     </div>

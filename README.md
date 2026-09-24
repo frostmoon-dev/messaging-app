@@ -21,7 +21,9 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - **Chat background** (Settings): plain, dots, grid, slash, or your own photo, cropped and dimmed. Saved on the device only; the photo is never uploaded
 - Photo cropper (drag, pinch or slider to zoom) for memories, your avatar and the chat background
 - Colours are checked by `npm run contrast` (WCAG 2.2) and follow eye-comfort rules; see "Colour" below. Mobile-first layout with keyboard-safe composer
-- **Stickers and GIFs** (the sticker button next to the photo button): your own shared sticker pack made from photos (cropped, transparent PNGs keep their transparency), plus GIF and sticker search from GIPHY. GIFs play as small looping videos you can pause, and wait for a tap when the phone asks for reduced motion
+- **Message actions** (long-press on phones, right-click or “…” on desktop): reply, copy, **pin** for both of you (up to 5, shown in a bar under the header), **favourite** (only you see them; list in Settings → Chat history), and **delete for everyone** on your own messages (shows “Message deleted” on both phones and removes the photo file)
+- **Clear chat** (Settings → Chat history): hides the history up to now for you only; your partner keeps theirs
+- **Stickers and GIFs** (the sticker button next to the photo button): your own shared sticker pack made from photos (cropped, transparent PNGs keep their transparency) or **imported from WhatsApp** (a chat export .zip — on iPhone send the stickers to yourself, then Export chat → Attach media — loose .webp stickers, or a .wastickers pack; animated stickers keep moving), plus GIF and sticker search from GIPHY. GIFs play as small looping videos you can pause, and wait for a tap when the phone asks for reduced motion
 - Status icons come from `public/assets` (Persona 3 Reload textures), turned into single-colour marks by `npm run ui-assets`
 
 ## Security model
@@ -106,6 +108,10 @@ How it works: a new message → a database trigger (`pg_net`) → the `send-push
 2. Optional, for GIF search: create an app at [developers.giphy.com](https://developers.giphy.com), copy its API key, and set `GIPHY_API_KEY` where the app runs (Vercel → Settings → Environment Variables, then redeploy). It is server-only: never prefix it with `NEXT_PUBLIC_`. A free beta key allows 100 searches an hour; the app caches results for 10 minutes. Without a key, the GIF tabs say so and your own stickers still work.
 
 Tenor isn't an option: Google shut its API down on 30 June 2026.
+
+### Delete, clear, pin and favourites
+
+`npx supabase db push` applies `20260928000000_delete_and_clear.sql`: `delete_message`, `clear_chat`, `pin_message`, the `message_stars` table, and a read policy that hides what you cleared. Until it runs, the chat works as before and those actions say the database needs the update.
 
 **Limits, honestly:** a web app can only read location while it's open, so live sharing pauses when Napyru is closed ("I'm here" and SOS send the location at that moment). The SOS siren plays only when Napyru is open; when it's closed, the phone shows the urgent notification with its normal sound, and silent mode can mute it. SOS is not a replacement for calling emergency services.
 
