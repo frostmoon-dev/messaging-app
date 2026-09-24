@@ -11,6 +11,8 @@ import { formatLastSeen } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { ConnectionBanner } from "./ConnectionBanner";
 import { PinnedBar } from "./PinnedBar";
+import { StarIcon } from "@/components/ui/icons";
+import { FavouritesSheet } from "@/components/settings/FavouritesSheet";
 
 /**
  * Frosted glass over the top of the chat: messages (and a photo background)
@@ -21,6 +23,7 @@ export function ChatHeader({ onJump }: { onJump: (id: string) => void }) {
   const { partner, me } = useChat();
   const { partnerOnline, partnerTyping, partnerLastSeen } = usePresence();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [favouritesOpen, setFavouritesOpen] = useState(false);
   const ref = useRef<HTMLElement>(null);
   const status = activeStatus(partner);
   const myStatus = activeStatus(me);
@@ -77,6 +80,17 @@ export function ChatHeader({ onJump }: { onJump: (id: string) => void }) {
           </p>
         </div>
 
+        {/* Your favourites (only you see them). */}
+        <button
+          type="button"
+          onClick={() => setFavouritesOpen(true)}
+          className="flex size-11 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-panel-strong/60"
+          aria-label="Favourites"
+          aria-haspopup="dialog"
+        >
+          <StarIcon size={22} />
+        </button>
+
         {/* Your own status: just its icon (still a 44px target), or "Set status". */}
         <button
           type="button"
@@ -94,6 +108,7 @@ export function ChatHeader({ onJump }: { onJump: (id: string) => void }) {
       <PinnedBar onJump={onJump} />
       <ConnectionBanner />
       {pickerOpen && <StatusPicker onClose={() => setPickerOpen(false)} />}
+      {favouritesOpen && <FavouritesSheet onClose={() => setFavouritesOpen(false)} onPick={onJump} />}
     </header>
   );
 }

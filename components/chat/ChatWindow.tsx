@@ -17,7 +17,7 @@ export function ChatWindow() {
   const { setChatActive, ensureLoaded, messages } = useChat();
   const [actionsFor, setActionsFor] = useState<string | null>(null);
   // Looked up live, so the sheet closes itself if the message goes away.
-  const actionsMessage = actionsFor ? messages.find((m) => m.id === actionsFor && !m.deleted_at) : undefined;
+  const actionsMessage = actionsFor ? messages.find((m) => m.id === actionsFor) : undefined;
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [viewer, setViewer] = useState<{ src: string; alt: string } | null>(null);

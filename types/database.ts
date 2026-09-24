@@ -470,6 +470,24 @@ export type Database = {
           },
         ]
       }
+      message_hides: {
+        Row: {
+          created_at: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       message_stars: {
         Row: {
           created_at: string

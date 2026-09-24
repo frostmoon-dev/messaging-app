@@ -155,3 +155,9 @@ export async function fetchStarred(supabase: BrowserSupabase) {
   if (error) throw error;
   return (data ?? []).flatMap((r) => (r.message && !r.message.deleted_at ? [r.message] : []));
 }
+
+/** Hides one message from your own view (theirs or yours); the other person keeps it. */
+export async function hideMessage(supabase: BrowserSupabase, id: string) {
+  const { error } = await supabase.from("message_hides").insert({ message_id: id });
+  if (error) throw error;
+}

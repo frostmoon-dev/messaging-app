@@ -23,6 +23,7 @@ import {
   clearChat,
   deleteMessage as deleteMessageRpc,
   fetchPinned,
+  hideMessage as hideMessageRpc,
   fetchStarIds,
   pinMessage as pinMessageRpc,
   setStar,
@@ -77,6 +78,8 @@ type ChatData = {
   deleteMessage: (id: string) => Promise<void>;
   /** Hides the whole history for you only. */
   clearHistory: () => Promise<void>;
+  /** Hides one message (anyone's) for you only. */
+  hideMessage: (id: string) => Promise<void>;
   /** Shared pins, newest first (at most 5). */
   pinned: MessageRow[];
   setPinned: (id: string, pinned: boolean) => Promise<void>;
@@ -574,6 +577,21 @@ export function ChatProvider({
     [supabase, starred],
   );
 
+  const hideMessage = useCallback(
+    async (id: string) => {
+      const original = messagesRef.current.find((m) => m.id === id);
+      if (!original || original.local) return;
+      dispatch({ type: "remove", id });
+      try {
+        await hideMessageRpc(supabase, id);
+      } catch (error) {
+        dispatch({ type: "upsert", rows: [original] });
+        throw error;
+      }
+    },
+    [supabase],
+  );
+
   const clearHistory = useCallback(async () => {
     await clearChat(supabase, conversationId);
     dispatch({ type: "cleared" });
@@ -815,6 +833,7 @@ export function ChatProvider({
       retry,
       deleteMessage,
       clearHistory,
+      hideMessage,
       pinned,
       setPinned,
       starred,
@@ -829,7 +848,7 @@ export function ChatProvider({
     }),
     [
       me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, sendImage,
-      sendMedia, retry, deleteMessage, clearHistory, pinned, setPinned, starred, toggleStar, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
+      sendMedia, retry, deleteMessage, clearHistory, hideMessage, pinned, setPinned, starred, toggleStar, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
     ],
   );
 
