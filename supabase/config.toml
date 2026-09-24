@@ -385,6 +385,11 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Web Push sender. Called by the database (pg_net), not by a signed-in user,
+# so the platform JWT check is off; the function checks x-push-secret itself.
+[functions.send-push]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

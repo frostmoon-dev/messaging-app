@@ -256,6 +256,39 @@ describe.skipIf(!enabled)("row level security", () => {
     expect(status).toBe("SUBSCRIBED");
   });
 
+  it("push addresses are private and only change through the RPCs", async () => {
+    const endpoint = `https://push.example.test/${randomUUID()}`;
+    const save = (client: Client, ep = endpoint) =>
+      client.rpc("save_push_subscription", { sub_endpoint: ep, sub_p256dh: "key", sub_auth: "auth" });
+
+    // Nobody reads or writes the table directly, not even the owner.
+    expect((await users.a.client.from("push_subscriptions").select("*")).error).not.toBeNull();
+    const direct = await users.outsider.client
+      .from("push_subscriptions")
+      .insert({ endpoint, user_id: users.b.id, p256dh: "k", auth: "a" });
+    expect(direct.error).not.toBeNull();
+
+    // Anonymous callers cannot save.
+    const anon = createClient<Database>(url!, publishable!, opts);
+    expect((await save(anon)).error).not.toBeNull();
+
+    // Saving works and is owned by the caller.
+    expect((await save(users.b.client)).error).toBeNull();
+    const owned = await admin.from("push_subscriptions").select("user_id").eq("endpoint", endpoint).single();
+    expect(owned.data?.user_id).toBe(users.b.id);
+
+    // Someone else cannot delete it.
+    await users.outsider.client.rpc("delete_push_subscription", { sub_endpoint: endpoint });
+    expect((await admin.from("push_subscriptions").select("endpoint").eq("endpoint", endpoint)).data).toHaveLength(1);
+
+    // The owner can.
+    await users.b.client.rpc("delete_push_subscription", { sub_endpoint: endpoint });
+    expect((await admin.from("push_subscriptions").select("endpoint").eq("endpoint", endpoint)).data).toHaveLength(0);
+
+    // Only https push endpoints are accepted.
+    expect((await save(users.b.client, "http://push.example.test/plain")).error).not.toBeNull();
+  });
+
   it("rate limits message floods", async () => {
     const results = await Promise.all(
       Array.from({ length: 40 }, (_, i) =>

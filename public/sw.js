@@ -1,10 +1,11 @@
 /* HEARTLINE service worker.
  * - Makes the app installable.
  * - Shows an offline page when navigation fails.
+ * - Shows Web Push notifications (sent by the send-push Edge Function).
  * - Focuses the chat when a notification is clicked.
  * Private data is never cached: only the offline page and icons are stored.
  */
-const CACHE = "heartline-shell-v4";
+const CACHE = "heartline-shell-v5";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/badge-96.png"];
 
 self.addEventListener("install", (event) => {
@@ -25,6 +26,39 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.mode !== "navigate") return; // leave API, Supabase and assets alone
   event.respondWith(fetch(request).catch(() => caches.match("/offline.html")));
+});
+
+// Chromium browsers let a push go without a notification while the app is
+// open and focused. Safari and Firefox count that against the site and can
+// stop sending pushes, so there we always show it.
+const CAN_SKIP_WHEN_FOCUSED = /Chrome\//.test(self.navigator.userAgent) && !/CriOS|EdgiOS|FxiOS/.test(self.navigator.userAgent);
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    // Unreadable payload: fall back to a generic notification.
+  }
+  const title = typeof data.title === "string" ? data.title : "NEW MESSAGE";
+  const body = typeof data.body === "string" ? data.body : "You have a new message";
+  const url = typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/chat";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const looking = clients.some((c) => c.focused && c.visibilityState === "visible");
+      if (looking && CAN_SKIP_WHEN_FOCUSED) return;
+      return self.registration.showNotification(title, {
+        body,
+        tag: "new-message",
+        renotify: true,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/badge-96.png",
+        vibrate: [80, 40, 80],
+        data: { url },
+      });
+    }),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {

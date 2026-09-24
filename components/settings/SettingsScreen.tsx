@@ -22,7 +22,8 @@ import { uploadWithProgress } from "@/lib/storage/upload";
 import { clearSignedUrlCache } from "@/lib/storage/signed-urls";
 import { friendlyError, MESSAGES } from "@/lib/errors";
 import { activeStatus } from "@/lib/status";
-import { cn } from "@/lib/utils";
+import { cn, devLog } from "@/lib/utils";
+import { disablePush, enablePush, pushSupported } from "@/lib/push";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { fieldClass, labelClass } from "@/components/ui/field";
 
@@ -275,15 +276,30 @@ function AlertsSection() {
   const permissionValue = permission ?? (hydrated ? notificationPermission() : "default");
   const notifyValue = notifyOn ?? (hydrated && notificationsEnabled());
 
+  const [pushError, setPushError] = useState<string | null>(null);
+
   const toggleNotifications = async (next: boolean) => {
+    setPushError(null);
     if (next && permissionValue !== "granted") {
       const result = await requestNotificationPermission();
       setPermission(result);
       setNotifyOn(result === "granted");
+      if (result !== "granted") return;
+    } else {
+      setNotificationsMuted(!next);
+      setNotifyOn(next);
+    }
+    if (!next) {
+      await disablePush();
       return;
     }
-    setNotificationsMuted(!next);
-    setNotifyOn(next);
+    // Ask the server to wake this device too, so alerts arrive when the app is closed.
+    try {
+      await enablePush();
+    } catch (error) {
+      devLog("push subscribe failed", error);
+      setPushError("Alerts work while the app is open. Alerts when it's closed couldn't be turned on. Try again later.");
+    }
   };
 
   return (
@@ -296,12 +312,19 @@ function AlertsSection() {
             ? "Not available here. On iPhone, add the app to your Home Screen first."
             : permissionValue === "denied"
               ? "Blocked in your browser settings."
-              : `A quiet ping when ${partner.display_name} writes while you're away. No message text is shown.`
+              : hydrated && pushSupported()
+                ? `A pop-up when ${partner.display_name} writes, even when the app is closed. No message text is shown.`
+                : `A pop-up when ${partner.display_name} writes while the app is open in the background. No message text is shown.`
         }
         checked={Boolean(notifyValue)}
         disabled={permissionValue === "unsupported" || permissionValue === "denied"}
         onChange={(next) => void toggleNotifications(next)}
       />
+      {pushError && (
+        <p className="text-small text-danger" role="alert">
+          {pushError}
+        </p>
+      )}
       <Toggle
         id="toggle-sound"
         label="Sounds"
@@ -373,6 +396,8 @@ function SignOutSection() {
         onClick={() =>
           startTransition(async () => {
             try {
+              // Stop pushes to this device before the session ends.
+              await disablePush();
               await createClient().rpc("touch_last_seen");
               clearSignedUrlCache();
               await signOut();
