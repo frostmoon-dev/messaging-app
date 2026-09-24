@@ -46,9 +46,10 @@ export async function showMessageNotification(senderName: string) {
   if (!notificationsEnabled()) return;
   // The server already sends a push to this device; showing both would buzz twice.
   if (pushActive()) return;
-  const title = "NEW MESSAGE";
+  // Same wording as the push version (supabase/functions/send-push/push.ts).
+  const title = `${senderName.trim().slice(0, 40) || "Someone"} \u2661`;
   const options: NotificationOptions = {
-    body: `${senderName} sent you a message`,
+    body: "Sent you a message",
     tag: "new-message",
     icon: "/icons/icon-192.png",
     badge: "/icons/badge-96.png",

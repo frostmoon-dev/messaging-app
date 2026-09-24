@@ -3,7 +3,7 @@ import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from "next/fon
 import { cookies } from "next/headers";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app";
 import { ServiceWorker } from "@/components/providers/ServiceWorker";
-import { DEFAULT_THEME, isThemeId, SCHEME_COLORS, THEME_COOKIE, themeScheme, type ThemeId } from "@/lib/themes";
+import { DEFAULT_THEME, isThemeId, SCHEME_COLORS, THEME_COLORS, THEME_COOKIE, themeScheme, type ThemeId } from "@/lib/themes";
 import "./globals.css";
 
 // Atkinson Hyperlegible Next for all text and Atkinson Hyperlegible Mono for
@@ -39,7 +39,7 @@ export async function generateViewport(): Promise<Viewport> {
             { media: "(prefers-color-scheme: light)", color: SCHEME_COLORS.light },
             { media: "(prefers-color-scheme: dark)", color: SCHEME_COLORS.dark },
           ]
-        : SCHEME_COLORS[themeScheme(theme)],
+        : THEME_COLORS[theme],
     colorScheme: theme === "system" ? "light dark" : themeScheme(theme),
   };
 }

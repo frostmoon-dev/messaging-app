@@ -6,6 +6,9 @@ export type Profile = Tables["profiles"]["Row"];
 export type MessageRow = Tables["messages"]["Row"];
 export type BondRow = Tables["bond"]["Row"];
 export type MemoryRow = Tables["memories"]["Row"];
+export type EventRow = Tables["events"]["Row"];
+export type LocationRow = Tables["locations"]["Row"];
+export type AlertRow = Tables["alerts"]["Row"];
 
 export type MessageType = "text" | "image";
 

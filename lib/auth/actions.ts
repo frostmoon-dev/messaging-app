@@ -19,7 +19,7 @@ export async function signIn(_prev: SignInState, formData: FormData): Promise<Si
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    if (process.env.NODE_ENV !== "production") console.warn("[heartline] sign-in failed", error.message);
+    if (process.env.NODE_ENV !== "production") console.warn("[napyru] sign-in failed", error.message);
     const rateLimited = error.status === 429;
     return { error: rateLimited ? "Too many attempts. Wait a minute and try again." : MESSAGES.signIn, email };
   }

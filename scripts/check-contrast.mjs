@@ -47,6 +47,7 @@ let failed = false;
 for (const [name, selector] of [
   ["Phantom", '[data-theme="phantom"]'],
   ["Paper", '[data-theme="paper"]'],
+  ["Moon Cell", '[data-theme="mooncell"]'],
 ]) {
   const t = tokens(selector);
   console.log(`\n${name}`);
@@ -55,6 +56,13 @@ for (const [name, selector] of [
     const ok = r >= min;
     if (!ok) failed = true;
     console.log(`${ok ? "ok  " : "FAIL"} ${fg.padEnd(20)} on ${bg.padEnd(18)} ${r.toFixed(2)} (min ${min})`);
+  }
+  // Eye comfort: pure black pages and pure white body text cause halation.
+  for (const [token, banned] of [["background", "#000000"], ["foreground", "#ffffff"], ["background", "#ffffff"], ["foreground", "#000000"]]) {
+    if (t[token].toLowerCase() === banned) {
+      failed = true;
+      console.log(`FAIL ${token} is ${banned}; use an off-white / dark grey instead`);
+    }
   }
 }
 // "Automatic" repeats the Paper values inside a media query; they must match.

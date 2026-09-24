@@ -16,8 +16,8 @@ export function BottomNav() {
       aria-label="Main"
       className="bottom-nav relative z-20 shrink-0 border-t border-border bg-background-raised pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid grid-cols-4">
-        {NAV_ITEMS.map(({ href, label, Icon }) => {
+      <ul className="grid grid-cols-5">
+        {NAV_ITEMS.filter((item) => item.phone).map(({ href, label, Icon }) => {
           const active = isActive(pathname, href);
           const badge = href === "/chat" && !active && unreadCount > 0 ? unreadCount : 0;
           return (
@@ -27,7 +27,7 @@ export function BottomNav() {
                 onClick={() => playSound("navigate")}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex h-16 flex-col items-center justify-center gap-1 transition-colors",
+                  "relative flex h-16 flex-col items-center justify-center gap-1 px-0.5 transition-colors",
                   active ? "text-foreground" : "text-muted-strong hover:text-foreground",
                 )}
               >

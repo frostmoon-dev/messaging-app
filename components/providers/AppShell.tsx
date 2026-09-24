@@ -4,6 +4,8 @@ import { useEffect, type ReactNode } from "react";
 import { MotionConfig } from "framer-motion";
 import { ChatProvider } from "./ChatProvider";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { AlertCenter } from "@/components/alerts/AlertCenter";
+import { LocationSharer } from "@/components/map/LocationSharer";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { DesktopHeader } from "@/components/navigation/DesktopHeader";
 import { useViewportHeight } from "@/lib/hooks/useViewportHeight";
@@ -32,7 +34,7 @@ export function AppShell({
   return (
     <MotionConfig reducedMotion="user">
       <ChatProvider session={session} initialBond={bond}>
-        <div className="app-height fixed bg-background inset-x-0 top-0 flex flex-col overflow-hidden">
+        <div className="app-height app-backdrop fixed bg-background inset-x-0 top-0 flex flex-col overflow-hidden">
           <a
             href="#main"
             className="sr-only-focusable absolute top-2 left-2 z-50 bg-accent px-3 py-2 font-semibold text-accent-foreground"
@@ -47,6 +49,8 @@ export function AppShell({
             </main>
           </div>
           <BottomNav />
+          <AlertCenter />
+          <LocationSharer />
         </div>
       </ChatProvider>
     </MotionConfig>

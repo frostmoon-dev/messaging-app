@@ -9,7 +9,7 @@ import { StatusPicker } from "@/components/profile/StatusPicker";
 import { StatusIcon } from "@/components/ui/StatusIcon";
 import { createClient } from "@/lib/supabase/client";
 import { signOut, setTheme } from "@/lib/auth/actions";
-import { THEMES, SCHEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME, themeScheme } from "@/lib/themes";
+import { THEMES, SCHEME_COLORS, THEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME } from "@/lib/themes";
 import { isSoundEnabled, playSound, setSoundEnabled } from "@/lib/sound";
 import {
   notificationPermission,
@@ -173,13 +173,13 @@ const subscribeNoop = () => () => {};
 function applyTheme(id: ThemeId) {
   document.documentElement.setAttribute("data-theme", id);
   const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-  const scheme = id === "system" ? (prefersLight ? "light" : "dark") : themeScheme(id);
+  const fixed = id === "system" ? SCHEME_COLORS[prefersLight ? "light" : "dark"] : THEME_COLORS[id];
   // The server may have rendered one tag or a light/dark pair. Pairs keep
   // their media query when following the system; otherwise all get one colour.
   document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
     const media = meta.getAttribute("media");
-    const own = id === "system" && media ? (media.includes("light") ? "light" : "dark") : scheme;
-    meta.setAttribute("content", SCHEME_COLORS[own]);
+    const own = id === "system" && media ? SCHEME_COLORS[media.includes("light") ? "light" : "dark"] : fixed;
+    meta.setAttribute("content", own);
   });
 }
 
@@ -202,7 +202,7 @@ function ThemeSection() {
 
   return (
     <Panel title="Theme">
-      <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Theme">
+      <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Theme">
         {THEMES.map((t) => (
           <button
             key={t.id}

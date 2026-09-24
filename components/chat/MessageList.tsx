@@ -218,7 +218,7 @@ function DayDivider({ iso }: { iso: string }) {
   return (
     <div className="my-4 flex justify-center px-4" role="separator" aria-label={formatDayLabel(iso)}>
       {/* A small paper tag, like the game's date labels. */}
-      <span className="p5-button -rotate-2 bg-foreground px-3 py-0.5 text-meta font-bold text-background">
+      <span className="day-tag p5-button -rotate-2 bg-foreground px-3 py-0.5 text-meta font-bold text-background">
         {formatDayLabel(iso)}
       </span>
     </div>

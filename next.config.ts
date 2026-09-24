@@ -6,12 +6,14 @@ const supabaseOrigin = supabaseUrl ? new URL(supabaseUrl).origin : "";
 const supabaseWs = supabaseOrigin.replace(/^http/, "ws");
 
 // Pattern from the Next.js "CSP without nonces" guide, narrowed to the one
-// backend this app talks to (Supabase REST, Realtime and Storage).
+// backend this app talks to (Supabase REST, Realtime and Storage), plus
+// OpenStreetMap tiles for the map screen (images only).
+const mapTiles = "https://tile.openstreetmap.org";
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' blob: data: ${supabaseOrigin}`,
+  `img-src 'self' blob: data: ${supabaseOrigin} ${mapTiles}`,
   "font-src 'self'",
   `connect-src 'self' ${supabaseOrigin} ${supabaseWs}`,
   "worker-src 'self'",
@@ -28,7 +30,8 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Frame-Options", value: "DENY" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+  // Location is allowed for this site only (map + SOS); everything else stays off.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), payment=(), usb=()" },
 ];
 
 const nextConfig: NextConfig = {
