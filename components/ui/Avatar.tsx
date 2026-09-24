@@ -5,6 +5,7 @@ import { useSignedUrl } from "@/lib/hooks/useSignedUrl";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/text";
 import { activeStatus } from "@/lib/status";
+import { StatusIcon } from "./StatusIcon";
 import type { Profile } from "@/types/app";
 
 const SIZES = {
@@ -23,7 +24,10 @@ type Props = {
   className?: string;
 };
 
-/** Round avatar. Image comes from the private `avatars` bucket. */
+/**
+ * Portrait in a tilted frame, like the character icons on the game's
+ * texting screen. Image comes from the private `avatars` bucket.
+ */
 export function Avatar({ profile, size = "md", online, showStatus = false, className }: Props) {
   const { url } = useSignedUrl("avatars", profile.avatar_url);
   const [broken, setBroken] = useState<string | null>(null);
@@ -32,32 +36,34 @@ export function Avatar({ profile, size = "md", online, showStatus = false, class
 
   return (
     <span className={cn("relative inline-flex shrink-0", SIZES[size], className)}>
-      <span className="flex size-full items-center justify-center overflow-hidden rounded-full bg-panel-strong font-bold text-muted-strong">
-        {showImage ? (
-          // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL from a private bucket
-          <img
-            src={url}
-            alt=""
-            className="size-full object-cover"
-            onError={() => setBroken(url)}
-            draggable={false}
-          />
-        ) : (
-          initials(profile.display_name)
-        )}
+      <span className="p5-frame flex size-full bg-frame p-[2px]">
+        <span className="p5-frame flex size-full items-center justify-center overflow-hidden bg-panel-strong font-bold text-foreground">
+          {showImage ? (
+            // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL from a private bucket
+            <img
+              src={url}
+              alt=""
+              className="size-full object-cover"
+              onError={() => setBroken(url)}
+              draggable={false}
+            />
+          ) : (
+            initials(profile.display_name)
+          )}
+        </span>
       </span>
       {online && (
         <span
-          className="absolute right-0 bottom-0 size-[28%] min-h-2.5 min-w-2.5 rounded-full border-2 border-background bg-online"
+          className="absolute -right-0.5 -bottom-0.5 size-[30%] min-h-3 min-w-3 rounded-full border-2 border-background bg-online"
           aria-hidden="true"
         />
       )}
-      {status?.emoji && (
+      {status?.icon && (
         <span
-          className="absolute -top-1 -right-1.5 flex size-5 items-center justify-center rounded-full border border-border bg-background text-[12px] leading-none"
+          className="absolute -top-1.5 -right-2 flex size-6 items-center justify-center rounded-full border-2 border-background bg-incoming"
           aria-hidden="true"
         >
-          {status.emoji}
+          <StatusIcon icon={status.icon} className="size-4" />
         </span>
       )}
     </span>

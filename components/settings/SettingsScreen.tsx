@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { LogoutIcon } from "@/components/ui/icons";
 import { StatusPicker } from "@/components/profile/StatusPicker";
+import { StatusIcon } from "@/components/ui/StatusIcon";
 import { createClient } from "@/lib/supabase/client";
 import { signOut, setTheme } from "@/lib/auth/actions";
 import { THEMES, SCHEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME, themeScheme } from "@/lib/themes";
@@ -44,8 +45,9 @@ export function SettingsScreen() {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card bg-panel p-4 sm:p-5" aria-labelledby={`section-${title}`}>
-      <h2 id={`section-${title}`} className="mb-4 text-title font-bold">
+    <section className="p5-panel bg-panel p-4 sm:p-5" aria-labelledby={`section-${title}`}>
+      <h2 id={`section-${title}`} className="mb-4 flex items-center gap-2.5 text-title font-bold">
+        <span className="p5-button h-5 w-2.5 bg-accent" aria-hidden="true" />
         {title}
       </h2>
       {children}
@@ -128,9 +130,10 @@ function ProfileSection() {
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="min-h-11 text-left text-small text-muted-strong underline-offset-2 hover:text-foreground hover:underline"
+            className="flex min-h-11 items-center gap-2 text-left text-small text-muted-strong underline-offset-2 hover:text-foreground hover:underline"
           >
-            {status ? `${status.emoji} ${status.text} (change)` : "Set a status"}
+            {status?.icon && <StatusIcon icon={status.icon} />}
+            {status ? `${status.text} (change)` : "Set a status"}
           </button>
         </div>
       </div>
@@ -207,7 +210,7 @@ function ThemeSection() {
             aria-checked={theme === t.id}
             onClick={() => choose(t.id)}
             className={cn(
-              "flex min-h-11 flex-col gap-0.5 rounded-control border-2 p-3 text-left transition-colors",
+              "flex min-h-11 flex-col gap-0.5 border-2 p-3 text-left transition-colors",
               theme === t.id ? "border-accent bg-accent-soft" : "border-field-border hover:bg-panel-strong",
             )}
           >

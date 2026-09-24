@@ -36,7 +36,7 @@ export function MessageImage({
   return (
     <button
       type="button"
-      className="relative block max-w-full overflow-hidden rounded-[14px] bg-black/20"
+      className="relative block max-w-full overflow-hidden bg-black/20"
       style={{ width: box.width, aspectRatio: `${box.width} / ${box.height}` }}
       onClick={() => src && onOpen(src, alt)}
       disabled={!src}

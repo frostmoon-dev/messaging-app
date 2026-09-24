@@ -26,13 +26,15 @@ export function ReplyQuote({
       type="button"
       onClick={onClick}
       className={cn(
-        "mb-1.5 block w-full rounded-[10px] px-3 py-1.5 text-left text-small transition-colors",
-        tone === "outgoing" ? "bg-black/20 hover:bg-black/30" : "bg-black/[0.08] hover:bg-black/[0.12]",
+        "mb-1.5 block w-full px-3 py-1.5 text-left text-small transition-colors",
+        tone === "outgoing"
+          ? "border-l-4 border-white bg-black/25 hover:bg-black/35"
+          : "border-l-4 border-accent bg-black/[0.07] hover:bg-black/[0.12]",
       )}
       aria-label={`Replying to ${authorName}: ${snippetText(snippet)}. Jump to message.`}
     >
       <span className="block text-meta font-bold">{authorName}</span>
-      <span className="line-clamp-2 break-words opacity-90 [overflow-wrap:anywhere]">{snippetText(snippet)}</span>
+      <span className="line-clamp-2 break-words [overflow-wrap:anywhere]">{snippetText(snippet)}</span>
     </button>
   );
 }

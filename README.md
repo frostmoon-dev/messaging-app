@@ -8,12 +8,13 @@ A private messenger for exactly two people. Calm, readable, and built around the
 
 - Realtime 1:1 chat: text, emoji, photos, replies (tap the quote to jump back), optimistic sending, retry on failure
 - Receipts: ✓ sent · ✓✓ delivered · red ✓✓ read
-- Typing indicator (Realtime broadcast) and online / last-seen (Realtime presence) — no heartbeat rows
+- Typing indicator (Realtime broadcast) and online / last-seen (Realtime presence). No heartbeat rows
 - Reconnects on its own and fills any gap in messages
-- **Bond** screen (level, title, progress, stats — all set by hand), **Memories** scrapbook, daily status
+- **Bond** screen (rank, title, progress, stats, all set by hand), **Memories** scrapbook, daily status with icons (Free to talk, Busy, Studying, At home, Out, Sleeping, Call me)
 - Browser notifications when you're away (asked only after you send something), optional sounds (off by default)
-- Automatic / Dark Hour / Daylight themes built on CSS variables (`app/globals.css`), checked by `npm run contrast`. Mobile-first layout with keyboard-safe composer
-- Persona 3 Reload style HUD: calendar clock with moon phase and time-of-day banner, slanted menu cursor, and game marks (talk bubble, arcana, sakura, rank-up, chevron) built from `public/assets` by `npm run ui-assets`
+- Persona 5 Royal look: black, white and red, uneven panels, texting-screen bubbles, tilted portrait frames. Text itself is never slanted or italic.
+- Automatic / Phantom / Paper themes built on CSS variables (`app/globals.css`), checked by `npm run contrast`. Mobile-first layout with keyboard-safe composer
+- Game artwork from `public/assets` (Persona 3 Reload textures) turned into single-colour marks by `npm run ui-assets` and recoloured by the theme: status icons, talk bubble, arcana, sakura, rank-up, chevron, time-of-day banners
 
 ## Security model
 

@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg viewBox="0 0 512 512" className="size-8 rounded-[6px]" aria-hidden="true" focusable="false">
-        <rect width="512" height="512" fill="#1c5fe0" />
-        <path d="M150 128v256M362 128v256M150 256h212" stroke="#fff" strokeWidth="64" strokeLinecap="round" fill="none" />
+      <svg viewBox="0 0 512 512" className="p5-frame size-8" aria-hidden="true" focusable="false">
+        <rect width="512" height="512" fill="#e5102b" />
+        <path d="M150 128v256M362 128v256M150 256h212" stroke="#fff" strokeWidth="64" strokeLinecap="square" fill="none" />
       </svg>
-      <span className="title-caps text-title">{APP_NAME}</span>
+      <span className="text-title font-extrabold tracking-wide uppercase">{APP_NAME}</span>
     </span>
   );
 }

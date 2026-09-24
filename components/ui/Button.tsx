@@ -8,8 +8,8 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 // Hover changes colour, never opacity: faded buttons read as disabled.
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-accent text-accent-foreground hover:bg-accent-strong",
-  secondary: "bg-panel-strong text-foreground hover:bg-border",
+  primary: "p5-button bg-accent px-5 font-bold text-accent-foreground hover:bg-accent-hover",
+  secondary: "p5-button bg-panel-strong px-5 text-foreground hover:bg-border",
   ghost: "bg-transparent text-foreground hover:bg-panel-strong",
   danger: "bg-transparent text-danger hover:bg-panel-strong",
 };
@@ -28,7 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       whileTap={disabled ? undefined : { scale: 0.97 }}
       transition={{ duration: 0.1 }}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 text-body font-semibold whitespace-nowrap transition-colors",
+        "inline-flex min-h-11 items-center justify-center gap-2 px-4 text-body font-semibold whitespace-nowrap transition-colors",
         "disabled:cursor-not-allowed disabled:bg-panel-strong disabled:text-muted",
         VARIANTS[variant],
         className,
@@ -54,9 +54,9 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       whileTap={disabled ? undefined : { scale: 0.92 }}
       transition={{ duration: 0.1 }}
       className={cn(
-        "inline-flex size-11 shrink-0 items-center justify-center rounded-control text-muted-strong transition-colors",
+        "inline-flex size-11 shrink-0 items-center justify-center text-muted-strong transition-colors",
         "hover:bg-panel-strong hover:text-foreground disabled:cursor-not-allowed disabled:text-muted",
-        active && "text-accent-strong",
+        active && "text-accent-text",
         className,
       )}
       {...rest}

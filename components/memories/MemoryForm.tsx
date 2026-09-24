@@ -96,12 +96,12 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
 
   return (
     <Dialog onClose={busy ? () => {} : onClose} label="Add a memory" className="w-full sm:w-[460px]">
-      <form onSubmit={submit} className="max-h-[90dvh] overflow-y-auto rounded-t-[20px] bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[20px]">
+      <form onSubmit={submit} className="max-h-[90dvh] overflow-y-auto border-t-4 border-accent bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div className="mb-5 flex items-start justify-between">
           <div>
             <h2 className="text-title font-bold">New memory</h2>
           </div>
-          <button type="button" onClick={onClose} disabled={busy} className="-mt-1 -mr-2 flex size-11 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong hover:text-foreground" aria-label="Close">
+          <button type="button" onClick={onClose} disabled={busy} className="-mt-1 -mr-2 flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground" aria-label="Close">
             <CloseIcon size={20} />
           </button>
         </div>
@@ -123,7 +123,7 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={busy}
-          className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-card border-2 border-dashed border-field-border bg-panel transition-colors hover:bg-panel-strong"
+          className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden border-2 border-dashed border-field-border bg-panel transition-colors hover:bg-panel-strong"
           aria-label={image ? "Change photo" : "Choose a photo"}
         >
           {preview ? (

@@ -31,8 +31,8 @@ export function BottomNav() {
                   active ? "text-foreground" : "text-muted-strong hover:text-foreground",
                 )}
               >
-                {/* Selected tab: the game's slanted menu cursor behind the icon. */}
-                <span className={cn("flex h-8 w-14 items-center justify-center", active && "menu-cursor text-accent")}>
+                {/* Selected tab: the game's red slanted cursor behind the icon. */}
+                <span className={cn("flex h-8 w-14 items-center justify-center", active && "p5-cursor")}>
                   <Icon size={22} />
                 </span>
                 <span className={cn("text-meta", active && "font-bold")}>{label}</span>

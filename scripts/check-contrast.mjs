@@ -6,7 +6,7 @@ import { readFile } from "node:fs/promises";
 const css = await readFile("app/globals.css", "utf8");
 
 function tokens(selector) {
-  const start = css.indexOf(selector);
+  const start = css.indexOf(`${selector} {`);
   const block = css.slice(css.indexOf("{", start) + 1, css.indexOf("}", start));
   return Object.fromEntries([...block.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6})/gi)].map((m) => [m[1], m[2]]));
 }
@@ -35,7 +35,8 @@ const PAIRS = [
   ...["background", "panel", "background-raised"].map((s) => ["field-border", s, 3]),
   ["foreground", "accent-soft", 4.5],
   ["accent-foreground", "accent", 4.5],
-  ["accent-foreground", "accent-strong", 4.5],
+  ["accent-foreground", "accent-hover", 4.5],
+  ...SURFACES.map((s) => ["accent-text", s, 4.5]),
   ["incoming-foreground", "incoming", 7],
   ["outgoing-foreground", "outgoing", 4.5],
   ["accent", "background", 3],
@@ -44,8 +45,8 @@ const PAIRS = [
 
 let failed = false;
 for (const [name, selector] of [
-  ["Dark Hour", '[data-theme="darkhour"]'],
-  ["Daylight", '[data-theme="daylight"]'],
+  ["Phantom", '[data-theme="phantom"]'],
+  ["Paper", '[data-theme="paper"]'],
 ]) {
   const t = tokens(selector);
   console.log(`\n${name}`);
@@ -56,4 +57,12 @@ for (const [name, selector] of [
     console.log(`${ok ? "ok  " : "FAIL"} ${fg.padEnd(20)} on ${bg.padEnd(18)} ${r.toFixed(2)} (min ${min})`);
   }
 }
+// "Automatic" repeats the Paper values inside a media query; they must match.
+const paper = JSON.stringify(tokens('[data-theme="paper"]'));
+const system = JSON.stringify(tokens('  [data-theme="system"]'));
+if (paper !== system) {
+  failed = true;
+  console.log('\nFAIL [data-theme="system"] light values differ from [data-theme="paper"]');
+}
+
 process.exit(failed ? 1 : 0);

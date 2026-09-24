@@ -25,7 +25,7 @@ function subscribe(onChange: () => void) {
 const getSnapshot = () => (minute ||= Math.floor(Date.now() / 60_000));
 const getServerSnapshot = () => 0;
 
-/** Date, moon phase and time of day, laid out like the game's calendar HUD. */
+/** Date, weekday tag, moon phase and time of day, like the calendar in the corner of the game screen. */
 export function DayClock({ className }: { className?: string }) {
   const tick = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   if (!tick) return <span className={cn("block h-10 w-56", className)} aria-hidden="true" />;
@@ -42,7 +42,9 @@ export function DayClock({ className }: { className?: string }) {
       </span>
       <span className="flex items-baseline gap-2" aria-hidden="true">
         <span className="font-mono text-heading font-bold">{dateFormat.format(now)}</span>
-        <span className="title-caps text-small text-muted-strong">{weekdayFormat.format(now)}</span>
+        <span className="p5-button bg-accent px-2 py-0.5 text-small font-extrabold text-accent-foreground uppercase">
+          {weekdayFormat.format(now)}
+        </span>
       </span>
       <MoonPhase age={age} />
       <UiMark name={`time-${part.id}`} className="h-4 w-28 bg-foreground [--mark-position:left]" />

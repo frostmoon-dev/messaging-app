@@ -38,6 +38,16 @@ async function nightTime() {
   return sharp(out, { raw: { width, height: H, channels: 1 } });
 }
 
+// "Sleeping" has no icon in the game, so cut a crescent moon out of the
+// plain Talk bubble. Same outline and weight as the other status icons.
+async function sleeping() {
+  const bubble = await sharp(path.join(SRC, "T_UI_AccessIcon_Talk_00.png")).extractChannel(0).png().toBuffer();
+  const moon = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+    <path d="M60 30a23 23 0 1 0 20 35a18 18 0 1 1-20-35Z" fill="#000"/>
+  </svg>`;
+  return sharp(await sharp(bubble).composite([{ input: Buffer.from(moon) }]).png().toBuffer());
+}
+
 // Where the shape lives in each source file:
 //   "alpha" – already transparent PNG, keep its alpha
 //   "red"   – red-on-black icon sheet, red channel is the shape
@@ -57,10 +67,17 @@ const JOBS = [
   { src: "T_UI_AccessIcon_Quest_01.png", out: "alert.png", from: "red", height: 128 },
   { src: "T_UI_AccessIcon_Commu_00.png", out: "arcana.png", from: "red", height: 128 },
   { src: "T_UI_SaveLoad_Sakura.png", out: "sakura.png", from: "alpha", height: 128 },
-  // The dialogue box "next" chevron, the menu slash and the Social Link
+  // The dialogue box "next" chevron and the Social Link
   // rank-up brush stroke (top-left cell of the sheet).
   { src: "T_UI_Message_02_texture.png", out: "chevron.png", from: "alpha", height: 64 },
-  { src: "T_UI_Camp_PartyPanel_01_texture.png", out: "slash.png", from: "alpha", height: 128 },
+  // Status icons: the game's field access icons for what someone is doing.
+  { src: "T_UI_AccessIcon_Talk_00.png", out: "status-free.png", from: "red", height: 96 },
+  { src: "T_UI_AccessIcon_Quest_01.png", out: "status-busy.png", from: "red", height: 96 },
+  { src: "T_UI_AccessIcon_StudyGroup_00.png", out: "status-studying.png", from: "red", height: 96 },
+  { src: "T_UI_AccessIcon_DormitoryLife_00.png", out: "status-home.png", from: "red", height: 96 },
+  { src: "T_UI_AccessIcon_Walking_00.png", out: "status-out.png", from: "red", height: 96 },
+  { src: "T_UI_AccessIcon_MaleQuest_00.png", out: "status-urgent.png", from: "red", height: 96 },
+  { src: sleeping, out: "status-sleeping.png", from: "luma", height: 96 },
   { src: "T_UI_PointUp_Commu_texture.png", crop: { left: 0, top: 0, width: 512, height: 384 }, out: "rankup.png", from: "alpha", height: 128 },
 ];
 
@@ -74,7 +91,8 @@ async function shapeChannel(src, from, crop) {
 
 await mkdir(OUT, { recursive: true });
 
-for (const job of JOBS) {
+const only = process.argv.slice(2);
+for (const job of JOBS.filter((j) => !only.length || only.includes(j.out))) {
   const mask = await (await shapeChannel(job.src, job.from, job.crop)).raw().toBuffer({ resolveWithObject: true });
   const { width, height } = mask.info;
   // White pixels, shape in the alpha channel. Trim empty space, then resize.

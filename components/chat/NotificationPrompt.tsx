@@ -32,7 +32,7 @@ export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: ()
           role="region"
           aria-label="Notification settings"
         >
-          <div className="flex items-center gap-3 rounded-card bg-panel-strong p-3">
+          <div className="p5-panel flex items-center gap-3 bg-panel-strong p-3">
             <UiMark name="alert" className="size-7 bg-accent" />
             <p className="flex-1 text-small">
               Get a notification when {partner.display_name} writes while you&apos;re away?
@@ -40,14 +40,14 @@ export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: ()
             <button
               type="button"
               onClick={enable}
-              className="min-h-11 rounded-control bg-accent px-4 text-small font-bold text-accent-foreground hover:bg-accent-strong"
+              className="p5-button min-h-11 bg-accent px-4 text-small font-bold text-accent-foreground hover:bg-accent-hover"
             >
               Turn on
             </button>
             <button
               type="button"
               onClick={later}
-              className="flex size-11 items-center justify-center rounded-control text-muted-strong hover:bg-panel hover:text-foreground"
+              className="flex size-11 items-center justify-center text-muted-strong hover:bg-panel hover:text-foreground"
               aria-label="Not now"
             >
               <CloseIcon size={18} />

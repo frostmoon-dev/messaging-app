@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
-import { UiMark } from "./UiMark";
 
 /**
- * Screen title in the game's menu style: a cyan slash, then one or two
- * heavy capital words. The description stays in sentence case.
+ * Screen title as a Persona 5 label: heavy capitals on a paper strip with
+ * a red block behind. The description stays in normal sentence case.
  */
 export function PageHeader({ title, description, action }: {
   title: string;
@@ -13,11 +12,8 @@ export function PageHeader({ title, description, action }: {
   return (
     <div className="flex items-end justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="title-caps flex items-center gap-2 text-display">
-          <UiMark name="slash" className="h-9 w-7 bg-accent" />
-          {title}
-        </h1>
-        {description && <p className="mt-2 text-small text-muted-strong">{description}</p>}
+        <h1 className="p5-title text-display">{title}</h1>
+        {description && <p className="mt-4 text-small text-muted-strong">{description}</p>}
       </div>
       {action}
     </div>

@@ -4,23 +4,23 @@
 import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 
-const BLUE = "#1c5fe0";
+const RED = "#e5102b";
 const WHITE = "#ffffff";
 
-// Mark: a blue field with a white "H" drawn as two uprights and a crossbar
+// Mark: a red field with a white "H" drawn as two uprights and a crossbar
 // (two people and the line between them). The OS adds its own corner mask.
 const icon = (padding = 0) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="${BLUE}"/>
+  <rect width="512" height="512" fill="${RED}"/>
   <g transform="translate(${padding} ${padding}) scale(${(512 - padding * 2) / 512})">
-    <path d="M150 128v256M362 128v256M150 256h212" stroke="${WHITE}" stroke-width="64" stroke-linecap="round" fill="none"/>
+    <path d="M150 128v256M362 128v256M150 256h212" stroke="${WHITE}" stroke-width="64" stroke-linecap="square" fill="none"/>
   </g>
 </svg>`;
 
 // Notification badge: monochrome, the OS tints it.
 const badge = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
-  <path d="M28 20v56M68 20v56M28 48h40" stroke="#fff" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <path d="M28 20v56M68 20v56M28 48h40" stroke="#fff" stroke-width="14" stroke-linecap="square" fill="none"/>
 </svg>`;
 
 await mkdir("public/icons", { recursive: true });

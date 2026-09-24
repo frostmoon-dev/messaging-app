@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useChat, usePresence } from "@/components/providers/ChatProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusPicker } from "@/components/profile/StatusPicker";
+import { StatusIcon } from "@/components/ui/StatusIcon";
 import { activeStatus } from "@/lib/status";
 import { formatLastSeen } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ export function ChatHeader() {
   const presence = partnerTyping ? "Typing…" : partnerOnline ? "Online" : formatLastSeen(partnerLastSeen);
 
   return (
-    <header className="relative z-10 shrink-0 border-b border-border bg-background-raised pt-[env(safe-area-inset-top)]">
+    <header className="relative z-10 shrink-0 border-b-2 border-accent bg-background-raised pt-[env(safe-area-inset-top)]">
       <div className="flex min-h-16 items-center gap-3 px-3 sm:px-5">
         <Avatar profile={partner} size="md" online={partnerOnline} />
 
@@ -29,14 +30,16 @@ export function ChatHeader() {
             <span
               className={cn(
                 "shrink-0",
-                partnerTyping ? "text-accent-strong" : partnerOnline ? "text-online" : "text-muted",
+                partnerTyping ? "text-accent-text" : partnerOnline ? "text-online" : "text-muted",
               )}
             >
               {presence}
             </span>
             {status && (
-              <span className="truncate text-muted-strong">
-                <span aria-hidden="true">· {status.emoji}</span> {status.text}
+              <span className="flex min-w-0 items-center gap-1.5 text-muted-strong">
+                <span aria-hidden="true">·</span>
+                {status.icon && <StatusIcon icon={status.icon} className="size-4" />}
+                <span className="truncate">{status.text}</span>
               </span>
             )}
           </p>
@@ -45,11 +48,11 @@ export function ChatHeader() {
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="flex min-h-11 items-center gap-2 rounded-full border border-field-border px-3 text-small text-muted-strong transition-colors hover:bg-panel-strong hover:text-foreground"
-          aria-label={myStatus ? `Your status: ${myStatus.emoji} ${myStatus.text}. Change status` : "Set your status"}
+          className="p5-button flex min-h-11 items-center gap-2 bg-panel-strong px-4 text-small font-semibold text-foreground transition-colors hover:bg-border"
+          aria-label={myStatus ? `Your status: ${myStatus.text}. Change status` : "Set your status"}
         >
-          {myStatus?.emoji && <span className="text-body leading-none" aria-hidden="true">{myStatus.emoji}</span>}
-          <span className={cn(myStatus?.emoji && "hidden sm:inline")}>{myStatus ? "My status" : "Set status"}</span>
+          {myStatus?.icon && <StatusIcon icon={myStatus.icon} />}
+          <span className={cn(myStatus?.icon && "hidden sm:inline")}>{myStatus ? "My status" : "Set status"}</span>
         </button>
       </div>
 
