@@ -3,6 +3,7 @@ import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from "next/fon
 import { cookies } from "next/headers";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app";
 import { ServiceWorker } from "@/components/providers/ServiceWorker";
+import { Preloader } from "@/components/ui/Preloader";
 import { DEFAULT_THEME, isThemeId, SCHEME_COLORS, THEME_COLORS, THEME_COOKIE, themeScheme, type ThemeId } from "@/lib/themes";
 import "./globals.css";
 
@@ -50,6 +51,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-theme={theme} className={`${atkinson.variable} ${atkinsonMono.variable} antialiased`}>
       <body>
+        <Preloader />
         {children}
         <ServiceWorker />
       </body>

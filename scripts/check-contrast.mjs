@@ -45,8 +45,9 @@ const PAIRS = [
 
 let failed = false;
 for (const [name, selector] of [
-  ["Phantom", '[data-theme="phantom"]'],
+  ["Ink", '[data-theme="ink"]'],
   ["Paper", '[data-theme="paper"]'],
+  ["Phantom", '[data-theme="phantom"]'],
   ["Moon Cell", '[data-theme="mooncell"]'],
 ]) {
   const t = tokens(selector);
