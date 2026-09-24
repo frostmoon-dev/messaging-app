@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { usedKeyboardLast } from "@/lib/input-modality";
 
 /**
  * Native <dialog> (focus trap, Esc, top layer). Sheets rise from the
@@ -41,7 +42,10 @@ export function Dialog({
     return () => {
       dialog.removeEventListener("cancel", onCancel);
       if (dialog.open) dialog.close();
-      previouslyFocused?.focus?.();
+      // Back to where you were, for keyboard users. After a tap, blur instead:
+      // otherwise iPhone Safari draws a focus ring on the button that opened it.
+      if (usedKeyboardLast()) previouslyFocused?.focus?.();
+      else (document.activeElement as HTMLElement | null)?.blur?.();
     };
   }, []);
 

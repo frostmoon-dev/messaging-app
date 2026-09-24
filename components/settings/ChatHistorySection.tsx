@@ -37,8 +37,9 @@ export function ChatHistorySection() {
         Long-press (or right-click) a message in the chat to pin it, add it to your favourites, or delete it for both of you. Clearing removes
         every message up to now from your side only; {partner.display_name} keeps theirs.
       </p>
-      <div className="mt-4 -ml-4 flex flex-wrap gap-2">
-        <Button variant="ghost" onClick={() => setShowFavourites(true)}>
+      {/* Inside the card's padding: nothing may touch or cross its border. */}
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button variant="secondary" onClick={() => setShowFavourites(true)}>
           <StarIcon size={18} /> Favourites
         </Button>
         <Button variant="danger" onClick={() => setConfirming(true)}>
