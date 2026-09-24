@@ -27,7 +27,7 @@ export function Preloader() {
   return (
     <div className={cn("preloader", phase === "leaving" && "preloader-leave")} role="status" aria-live="polite">
       {/* eslint-disable-next-line @next/next/no-img-element -- must render before any JS; plain img */}
-      <img src="/icons/icon-192.png" alt="" width={112} height={112} className="preloader-icon" />
+      <img src="/icons/icon-192.png" alt="" width={96} height={96} className="preloader-icon" />
       <p className="preloader-text">Loading</p>
       <span className="preloader-bar" aria-hidden="true">
         <span />

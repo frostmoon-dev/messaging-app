@@ -23,6 +23,7 @@ export function ImageCropper({
   onAspectChange,
   round = false,
   label = "Crop photo",
+  maxHeightRatio = 0.5,
 }: {
   src: string;
   width: number;
@@ -35,6 +36,8 @@ export function ImageCropper({
   onAspectChange?: (id: string) => void;
   round?: boolean;
   label?: string;
+  /** Tallest the frame may be, as a share of the screen height. */
+  maxHeightRatio?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -46,12 +49,12 @@ export function ImageCropper({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const measure = () => setBox({ width: el.clientWidth, maxHeight: Math.min(window.innerHeight * 0.5, 440) });
+    const measure = () => setBox({ width: el.clientWidth, maxHeight: Math.min(window.innerHeight * maxHeightRatio, 440) });
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [maxHeightRatio]);
 
   const frameWidth = Math.min(box.width, box.maxHeight * aspect);
   const frameHeight = frameWidth / aspect;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat, useLiveTable } from "@/components/providers/ChatProvider";
 import { Dialog } from "@/components/ui/Dialog";
@@ -24,7 +25,13 @@ type Toast = { id: string; text: string; action?: "view" | "share"; alertId?: st
  */
 export function AlertCenter() {
   const { me, partner, conversationId } = useChat();
+  const router = useRouter();
   const [sos, setSos] = useState<AlertRow | null>(null);
+  // Full screen, or folded into a red bar at the top (after "See where" or closing).
+  const [sosOpen, setSosOpen] = useState(true);
+  const [alarmOn, setAlarmOn] = useState(false);
+  const [answering, setAnswering] = useState(false);
+  const [answerFailed, setAnswerFailed] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const stopAlarm = useRef<(() => void) | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -32,6 +39,7 @@ export function AlertCenter() {
   const silence = useCallback(() => {
     stopAlarm.current?.();
     stopAlarm.current = null;
+    setAlarmOn(false);
   }, []);
 
   const showToast = useCallback((t: Toast) => {
@@ -63,7 +71,10 @@ export function AlertCenter() {
       .order("created_at", { ascending: false })
       .limit(1)
       .then(({ data }) => {
-        if (!cancelled && data?.[0]) setSos(data[0]);
+        if (!cancelled && data?.[0]) {
+          setSos(data[0]);
+          setSosOpen(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -77,8 +88,10 @@ export function AlertCenter() {
     if (change.type === "INSERT" && fromPartner) {
       if (alert.kind === "sos") {
         setSos(alert);
+        setSosOpen(true);
         silence();
         stopAlarm.current = startAlarm();
+        setAlarmOn(true);
       } else if (alert.kind === "here") {
         playSound("received");
         showToast({ id: alert.id, text: `${partner.display_name} ♡ shared where they are`, action: "view", alertId: alert.id });
@@ -112,12 +125,34 @@ export function AlertCenter() {
   const handle = async () => {
     if (!sos) return;
     silence();
+    setAnswering(true);
+    setAnswerFailed(false);
     try {
       await resolveAlert(sos.id);
     } catch (error) {
+      // Keep the SOS on screen: they must know their answer didn't reach the other phone.
       devLog("resolve failed", error);
+      setAnswering(false);
+      setAnswerFailed(true);
+      return;
     }
+    setAnswering(false);
     setSos(null);
+  };
+
+  // Close the full screen and show the spot. The SOS stays unanswered (red bar)
+  // until "I'm on it", so the other person isn't told you're coming by accident.
+  const showOnMap = () => {
+    if (!sos) return;
+    silence();
+    setSosOpen(false);
+    router.push(`/map?alert=${sos.id}`);
+    window.dispatchEvent(new CustomEvent("napyru:focus-alert", { detail: sos }));
+  };
+
+  const fold = () => {
+    silence();
+    setSosOpen(false);
   };
 
   return (
@@ -167,11 +202,30 @@ export function AlertCenter() {
         )}
       </AnimatePresence>
 
-      {sos && (
+      {sos && !sosOpen && (
+        // Folded SOS: stays at the top of every screen until it's answered.
+        <div className="fixed inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] z-50 mx-auto max-w-md" role="alert">
+          <div className="flex items-center gap-2 rounded-full bg-[#a8182c] py-1.5 pr-1.5 pl-4 text-white shadow-lg">
+            <button type="button" onClick={() => setSosOpen(true)} className="min-h-11 flex-1 text-left text-small font-bold">
+              SOS from {partner.display_name} · {formatTime(sos.created_at)}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handle()}
+              disabled={answering}
+              className="pill min-h-11 bg-white px-4 text-small font-bold text-[#7a1020] disabled:opacity-80"
+            >
+              {answering ? "Sending…" : answerFailed ? "Try again" : "I'm on it"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {sos && sosOpen && (
         // Emergency uses a fixed red in every theme: it is the only colour
         // in the app, so it can't be missed.
-        <Dialog onClose={silence} label={`SOS from ${partner.display_name}`} variant="fullscreen" className="w-full max-w-md px-4">
-          <div role="alertdialog" aria-labelledby="sos-title" aria-describedby="sos-body" className="card bg-[#a8182c] p-6 text-white">
+        <Dialog onClose={fold} label={`SOS from ${partner.display_name}`} variant="fullscreen" className="w-full max-w-md px-4">
+          <div role="alertdialog" aria-labelledby="sos-title" aria-describedby="sos-body" className="card max-h-[calc(100dvh-2rem)] overflow-y-auto bg-[#a8182c] p-6 text-white">
             <p className="text-small font-bold">Emergency</p>
             <h2 id="sos-title" className="mt-1 text-display leading-tight font-extrabold">
               SOS from {partner.display_name}
@@ -184,13 +238,13 @@ export function AlertCenter() {
             <div className="mt-6 flex flex-col gap-3">
               {sos.lat !== null && sos.lng !== null && (
                 <>
-                  <Link
-                    href={`/map?alert=${sos.id}`}
-                    onClick={silence}
+                  <button
+                    type="button"
+                    onClick={showOnMap}
                     className="pill flex min-h-12 items-center justify-center gap-2 bg-white px-5 font-bold text-[#7a1020]"
                   >
                     <MapPinIcon size={18} /> See where on the map
-                  </Link>
+                  </button>
                   <a
                     href={directionsUrl(sos.lat, sos.lng)}
                     target="_blank"
@@ -202,11 +256,26 @@ export function AlertCenter() {
                   </a>
                 </>
               )}
-              <button type="button" onClick={() => void handle()} className="pill min-h-12 bg-[#1b1a1e] px-5 font-bold text-white">
-                I&apos;m on it
+              <button
+                type="button"
+                onClick={() => void handle()}
+                disabled={answering}
+                className="pill min-h-12 bg-[#1b1a1e] px-5 font-bold text-white disabled:opacity-80"
+              >
+                {answering ? "Letting them know…" : "I'm on it"}
               </button>
-              <button type="button" onClick={silence} className="min-h-11 text-small font-semibold underline underline-offset-2">
-                Silence the alarm
+              {answerFailed && (
+                <p className="text-center text-small font-semibold" role="alert">
+                  Couldn&apos;t reach {partner.display_name}&apos;s phone. Check your connection and tap again, or call them.
+                </p>
+              )}
+              {/* Shows what happened, so the tap never feels ignored. */}
+              <button
+                type="button"
+                onClick={alarmOn ? silence : fold}
+                className="min-h-11 text-small font-semibold underline underline-offset-2"
+              >
+                {alarmOn ? "Silence the alarm" : "Close for now"}
               </button>
             </div>
           </div>

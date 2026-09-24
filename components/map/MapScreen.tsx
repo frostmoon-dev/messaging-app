@@ -172,6 +172,14 @@ export function MapScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // "See where on the map" from the SOS screen while the map is already open:
+  // the URL doesn't change screens, so the alert is handed over directly.
+  useEffect(() => {
+    const onFocus = (e: Event) => setFocusAlert((e as CustomEvent<AlertRow>).detail);
+    window.addEventListener("napyru:focus-alert", onFocus);
+    return () => window.removeEventListener("napyru:focus-alert", onFocus);
+  }, []);
+
   return (
     <div className="scroll-area flex h-full flex-col overflow-y-auto pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 py-6 sm:px-8 sm:py-8">

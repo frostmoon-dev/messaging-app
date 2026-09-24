@@ -3,8 +3,7 @@
 import { AlertIcon } from "@/components/ui/icons";
 import { useActionState } from "react";
 import { signIn, type SignInState } from "@/lib/auth/actions";
-import { Wordmark } from "@/components/ui/Wordmark";
-import { DayClock } from "@/components/ui/DayClock";
+import { APP_NAME } from "@/lib/app";
 import { Button } from "@/components/ui/Button";
 import { fieldClass, labelClass } from "@/components/ui/field";
 
@@ -14,21 +13,22 @@ export function LoginForm() {
   const [state, action, pending] = useActionState(signIn, initial);
 
   return (
-    <main className="flex min-h-dvh flex-col bg-background px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-10">
-      <div className="flex items-center justify-between gap-4 py-2">
-        <Wordmark />
-        <DayClock className="hidden sm:flex" />
-      </div>
-
-      <section className="m-auto w-full max-w-sm" aria-labelledby="login-title">
-        <h1 id="login-title" className="page-title text-display">
+    // Centred on the screen, with the icon where the start-up screen had it,
+    // so opening the app flows straight into signing in.
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-background px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <section className="flex w-full max-w-sm flex-col items-center" aria-labelledby="login-title">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static brand image */}
+        <img src="/brand-mark@4x.png" alt="" width={96} height={96} className="size-24" />
+        <p className="mt-3 text-title font-extrabold">{APP_NAME}</p>
+        <h1 id="login-title" className="page-title mt-8 text-heading">
           Sign in
         </h1>
         <span className="ink-stroke mt-3" aria-hidden="true" />
-        <div className="card mt-6 bg-panel p-6 sm:p-7">
-          <p className="text-body text-muted-strong">A private line for two people.</p>
+        <p className="mt-3 text-center text-body text-muted-strong">A private line for two people.</p>
 
-          <form action={action} className="mt-6 flex flex-col gap-4" noValidate>
+        <div className="card mt-8 w-full bg-panel p-6">
+
+          <form action={action} className="flex flex-col gap-4" noValidate>
             <div>
               <label htmlFor="email" className={labelClass}>
                 Email

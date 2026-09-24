@@ -23,7 +23,7 @@ const MAX_STICKER_BYTES = 2 * 1024 * 1024;
 
 /** Crops, uploads and adds a sticker to the pack you share. GIFs are kept as they are so they stay animated. */
 export async function addSticker(conversationId: string, image: PreparedImage, rect: Rect | null): Promise<StickerRow> {
-  const sticker = image.contentType === "image/gif" || !rect ? image : await cropImage(image, rect, STICKER_SIZE);
+  const sticker = image.contentType === "image/gif" || !rect ? image : await cropImage(image, rect, STICKER_SIZE, "png");
   if (sticker.blob.size > MAX_STICKER_BYTES) throw new ImageValidationError("Stickers must be under 2 MB.");
   const id = uuid();
   const path = `${conversationId}/${id}.${sticker.extension}`;

@@ -68,12 +68,12 @@ function hasTransparency(canvas: HTMLCanvasElement) {
  * back to JPEG, or PNG when the image has transparency: JPEG has none and
  * would turn see-through areas black.
  */
-async function encode(canvas: HTMLCanvasElement) {
+async function encode(canvas: HTMLCanvasElement, opaque: "jpeg" | "png" = "jpeg") {
   let blob = await toBlob(canvas, "image/webp", 0.82);
   let contentType = "image/webp";
   let extension = "webp";
   if (!blob || blob.type !== "image/webp") {
-    if (hasTransparency(canvas)) {
+    if (opaque === "png" || hasTransparency(canvas)) {
       blob = await toBlob(canvas, "image/png", 1);
       contentType = "image/png";
       extension = "png";
@@ -126,7 +126,13 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
  * Cuts `rect` (in the prepared image's pixels) out of a prepared image and
  * re-encodes it, scaled down so the longer side is at most `maxSide`.
  */
-export async function cropImage(image: PreparedImage, rect: Rect, maxSide = MAX_DIMENSION): Promise<PreparedImage> {
+export async function cropImage(
+  image: PreparedImage,
+  rect: Rect,
+  maxSide = MAX_DIMENSION,
+  /** Format when the browser can't write WebP. Stickers use PNG: their bucket doesn't take JPEG. */
+  fallback: "jpeg" | "png" = "jpeg",
+): Promise<PreparedImage> {
   const decoded = await decode(image.blob);
   try {
     const scale = Math.min(1, maxSide / Math.max(rect.width, rect.height));
@@ -139,7 +145,7 @@ export async function cropImage(image: PreparedImage, rect: Rect, maxSide = MAX_
     if (!ctx) throw new ImageValidationError("Couldn't process that image.");
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(decoded.source, rect.x, rect.y, rect.width, rect.height, 0, 0, width, height);
-    return { ...(await encode(canvas)), width, height };
+    return { ...(await encode(canvas, fallback)), width, height };
   } finally {
     decoded.close();
   }
