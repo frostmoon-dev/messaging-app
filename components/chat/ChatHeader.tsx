@@ -68,26 +68,24 @@ export function ChatHeader() {
                 <span className="text-muted" aria-hidden="true">
                   ·
                 </span>
-                <span className="flex min-w-0 items-center gap-1 text-muted-strong">
-                  {status.icon && <StatusIcon icon={status.icon} className="size-3.5" />}
-                  <span className="truncate">{status.text}</span>
-                </span>
+                {/* Text only here: at this size the status artwork turns into a blot. */}
+                <span className="min-w-0 truncate text-muted-strong">{status.text}</span>
               </>
             )}
           </p>
         </div>
 
-        {/* Your own status: a round button with its icon, or a small "Set status" pill. */}
+        {/* Your own status: just its icon (still a 44px target), or "Set status". */}
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
           className={cn(
-            "flex shrink-0 items-center justify-center rounded-full bg-panel-strong/80 text-foreground transition-colors hover:bg-panel-strong",
-            myStatus?.icon ? "size-11" : "min-h-11 px-4 text-small font-semibold",
+            "-mr-2 flex shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-panel-strong/60",
+            myStatus?.icon ? "size-11" : "min-h-11 px-3 text-small font-semibold",
           )}
           aria-label={myStatus ? `Your status: ${myStatus.text}. Change status` : "Set your status"}
         >
-          {myStatus?.icon ? <StatusIcon icon={myStatus.icon} /> : myStatus ? "My status" : "Set status"}
+          {myStatus?.icon ? <StatusIcon icon={myStatus.icon} className="size-7" /> : myStatus ? "My status" : "Set status"}
         </button>
       </div>
 

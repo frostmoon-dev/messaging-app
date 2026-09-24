@@ -320,7 +320,10 @@ select:focus-visible {
 [data-chat-background="photo"] .chat-meta {
   border-radius: 9999px;
   background: color-mix(in srgb, var(--background) 85%, transparent);
-  padding-inline: 8px;
+  /* Even room around the text: line-height 1 so the 4px above and below
+     read the same as the space beside the text. */
+  padding: 4px 8px;
+  line-height: 1;
 }
 [data-chat-background="photo"] .chat-note {
   border-radius: 18px;

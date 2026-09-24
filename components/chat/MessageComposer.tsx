@@ -110,7 +110,8 @@ export function MessageComposer({
 
   return (
     // Phones: the tab bar below already clears the home indicator, so the same 8px above and below.
-    <div className="relative shrink-0 border-t border-border bg-background-raised pb-2 lg:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    // A shade lighter than the tab bar, so typing and navigating read as two areas.
+    <div className="relative shrink-0 border-t border-border bg-panel pb-2 lg:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       <AnimatePresence initial={false}>
         {replyTo && (
           <motion.div
@@ -238,7 +239,7 @@ export function MessageComposer({
             enterKeyHint={isTouch ? "enter" : "send"}
             autoComplete="off"
             className={cn(
-              "block max-h-36 min-h-11 w-full resize-none rounded-[22px] border-2 border-field-border bg-panel px-4 py-[10px] text-body leading-[1.45]",
+              "block max-h-36 min-h-11 w-full resize-none rounded-[22px] border-2 border-field-border bg-background px-4 py-[10px] text-body leading-[1.45]",
               "placeholder:text-muted focus:border-accent focus:outline-none focus-visible:outline-none",
               tooLong && "border-danger",
             )}
