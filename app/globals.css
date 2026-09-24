@@ -11,76 +11,105 @@
    ========================================================================== */
 
 :root,
-[data-theme="dark"] {
-  --background: #111113;
-  --background-raised: #161618;
-  --foreground: #f2f0ed;
-  --muted: #a19ea6;
-  --muted-strong: #cac7ce;
-  --panel: #1d1d20;
-  --panel-strong: #27272b;
-  --border: #323237;
-  --accent: #d0243a;
-  --accent-strong: #ff5a6e;
-  --accent-soft: rgba(208, 36, 58, 0.16);
+[data-theme="darkhour"] {
+  /* Deep-sea blue with a cyan highlight, after Persona 3 Reload's menus. */
+  --background: #040a17;
+  --background-raised: #08132a;
+  --foreground: #eaf4ff;
+  --muted: #8aa2c8;
+  --muted-strong: #b6c8e6;
+  --panel: #0c1a36;
+  --panel-strong: #122446;
+  --border: #1d3461;
+  --field-border: #3d5a8c;
+  --accent: #2fc5ff;
+  --accent-strong: #6fd8ff;
+  --accent-deep: #0b4a8a;
+  --accent-foreground: #03101f;
+  --incoming: #e6f1ff;
+  --incoming-foreground: #06122a;
+  --incoming-shadow: #16305c;
+  --outgoing: #1760e8;
+  --outgoing-foreground: #ffffff;
+  --outgoing-shadow: #06214f;
+  --danger: #ff6b7d;
+  --success: #eaf4ff;
+  --focus: #ffe14d;
+  --stripe: rgba(47, 197, 255, 0.045);
+  color-scheme: dark;
+}
+
+[data-theme="phantom"] {
+  --background: #0a0a0b;
+  --background-raised: #121214;
+  --foreground: #f6f3ee;
+  --muted: #8d8a93;
+  --muted-strong: #b9b5bf;
+  --panel: #18181b;
+  --panel-strong: #202024;
+  --border: #2c2c31;
+  --accent: #e3162f;
+  --accent-strong: #ff2d47;
+  --accent-deep: #8f0d1d;
   --accent-foreground: #ffffff;
   --incoming: #27272b;
   --incoming-foreground: #f2f0ed;
   --outgoing: #d0243a;
   --outgoing-foreground: #ffffff;
-  --danger: #ff5a6e;
-  --online: #3fbf7f;
-  --focus: #f2f0ed;
+  --outgoing-shadow: #5c0812;
+  --field-border: #55535c;
+  --danger: #ff5d6c;
+  --success: #f6f3ee;
+  --focus: #ffe14d;
+  --stripe: rgba(227, 22, 47, 0.06);
   color-scheme: dark;
 }
 
-[data-theme="light"] {
-  --background: #f6f4f1;
-  --background-raised: #ffffff;
-  --foreground: #1a181c;
-  --muted: #5c5862;
-  --muted-strong: #3d3a41;
-  --panel: #ffffff;
-  --panel-strong: #ebe8e3;
-  --border: #dcd8d2;
-  --accent: #c21a30;
-  --accent-strong: #b3162b;
-  --accent-soft: rgba(194, 26, 48, 0.1);
+/* Softer variant for long late-night conversations. */
+[data-theme="midnight"] {
+  --background: #09090c;
+  --background-raised: #101015;
+  --foreground: #ecebf0;
+  --muted: #86858f;
+  --muted-strong: #b0afb8;
+  --panel: #16161c;
+  --panel-strong: #1d1d25;
+  --border: #292933;
+  --accent: #d0233a;
+  --accent-strong: #ee3a52;
+  --accent-deep: #6d0f1b;
+  --accent-foreground: #ffffff;
+  --incoming: #23232c;
+  --incoming-foreground: #ecebf0;
+  --incoming-shadow: #000000;
+  --outgoing: #b81d31;
+  --outgoing-foreground: #ffffff;
+  --outgoing-shadow: #3d0810;
+  --field-border: #4d4c58;
+  --stripe: rgba(208, 35, 58, 0.04);
+}
+
+/* Alternate accent to prove the system; same structure, blue energy. */
+[data-theme="cobalt"] {
+  --background: #07090f;
+  --background-raised: #0e121b;
+  --foreground: #f1f4fa;
+  --muted: #858c9c;
+  --muted-strong: #aeb5c4;
+  --panel: #131825;
+  --panel-strong: #1a2030;
+  --border: #262e42;
+  --accent: #1f6bff;
+  --accent-strong: #4c8bff;
+  --accent-deep: #0d2f75;
   --accent-foreground: #ffffff;
   --incoming: #ebe8e3;
   --incoming-foreground: #1a181c;
   --outgoing: #c21a30;
   --outgoing-foreground: #ffffff;
-  --danger: #b3162b;
-  --online: #1d7f4e;
-  --focus: #1a181c;
-  color-scheme: light;
-}
-
-/* "system" follows the device. Same values as [data-theme="light"]. */
-@media (prefers-color-scheme: light) {
-  [data-theme="system"] {
-    --background: #f6f4f1;
-    --background-raised: #ffffff;
-    --foreground: #1a181c;
-    --muted: #5c5862;
-    --muted-strong: #3d3a41;
-    --panel: #ffffff;
-    --panel-strong: #ebe8e3;
-    --border: #dcd8d2;
-    --accent: #c21a30;
-    --accent-strong: #b3162b;
-    --accent-soft: rgba(194, 26, 48, 0.1);
-    --accent-foreground: #ffffff;
-    --incoming: #ebe8e3;
-    --incoming-foreground: #1a181c;
-    --outgoing: #c21a30;
-    --outgoing-foreground: #ffffff;
-    --danger: #b3162b;
-  --online: #1d7f4e;
-    --focus: #1a181c;
-    color-scheme: light;
-  }
+  --outgoing-shadow: #0a2361;
+  --field-border: #3f4a66;
+  --stripe: rgba(31, 107, 255, 0.06);
 }
 
 @theme inline {
@@ -92,6 +121,7 @@
   --color-panel: var(--panel);
   --color-panel-strong: var(--panel-strong);
   --color-border: var(--border);
+  --color-field-border: var(--field-border);
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
@@ -104,8 +134,8 @@
   --color-online: var(--online);
   --color-focus: var(--focus);
 
-  /* One family for reading, its mono sibling for numbers that must line up. */
-  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+  --font-display: var(--font-anton), "Impact", "Haettenschweiler", "Arial Narrow Bold", sans-serif;
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   --font-mono: var(--font-atkinson-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
@@ -167,6 +197,79 @@ body {
 }
 
 /* ==========================================================================
+   Texture + geometry
+   ========================================================================== */
+
+/* Diagonal speed lines. Very low contrast on purpose. */
+.bg-texture {
+  background-color: var(--background);
+  background-image:
+    repeating-linear-gradient(
+      -58deg,
+      transparent 0 22px,
+      var(--stripe) 22px 24px
+    );
+}
+
+.halftone {
+  background-image: radial-gradient(var(--accent) 1px, transparent 1.4px);
+  background-size: 7px 7px;
+}
+
+/* Single-colour artwork from public/ui (built by scripts/build-ui-assets.mjs).
+   The file is only a shape; the element's background colour paints it, so
+   every mark follows the theme. Set the colour with a bg-* class. */
+@layer components {
+  .ui-mark {
+    display: inline-block;
+    flex-shrink: 0;
+    background-color: currentColor;
+    -webkit-mask: var(--mark) var(--mark-position, center) / contain no-repeat;
+    mask: var(--mark) var(--mark-position, center) / contain no-repeat;
+  }
+}
+
+/* Angular panel shapes. Small cuts so content never gets clipped. */
+.cut-corners {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.cut-corners-sm {
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+
+.shape-incoming {
+  clip-path: polygon(0 3px, 100% 0, calc(100% - 5px) 100%, 7px calc(100% - 2px));
+}
+
+.shape-outgoing {
+  clip-path: polygon(5px 0, 100% 3px, calc(100% - 7px) calc(100% - 2px), 0 100%);
+}
+
+.shape-tag {
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+
+.shape-slant {
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+.shadow-incoming {
+  filter: drop-shadow(3px 3px 0 var(--incoming-shadow));
+}
+
+.shadow-outgoing {
+  filter: drop-shadow(-3px 3px 0 var(--outgoing-shadow));
+}
+
+.text-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 0.95;
+}
+
+/* ==========================================================================
    Motion helpers
    ========================================================================== */
 
@@ -207,8 +310,9 @@ body {
   }
 }
 
-.typing-dot {
-  animation: typing-dot 1.1s ease-in-out infinite;
+.typing-bar {
+  animation: typing-bar 0.9s ease-in-out infinite;
+  transform-origin: bottom;
 }
 
 @media (prefers-reduced-motion: reduce) {

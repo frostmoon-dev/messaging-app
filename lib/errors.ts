@@ -3,7 +3,7 @@ import { devLog } from "./utils";
 export const MESSAGES = {
   send: "Couldn't send message. Try again.",
   upload: "Image upload failed. Try again.",
-  rateLimited: "Too many messages at once. Wait a few seconds.",
+  rateLimited: "Too many messages at once. Wait a few seconds and try again.",
   load: "Couldn't load messages. Try again.",
   connection: "Connection lost. Reconnecting…",
   offline: "You're offline. Messages will send when you retry.",

@@ -44,8 +44,7 @@ export function StatusPicker({ onClose }: { onClose: () => void }) {
       <div className="rounded-t-[20px] bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[20px]">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h2 className="text-title font-bold">Your status</h2>
-            <p className="text-small text-muted">What you&apos;re up to. Clears after 24 hours.</p>
+            <h2 className="text-display text-3xl">Status</h2>
           </div>
           <button type="button" onClick={onClose} className="-mt-1 -mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground" aria-label="Close">
             <CloseIcon size={20} />

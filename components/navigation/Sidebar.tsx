@@ -21,20 +21,26 @@ export function Sidebar() {
   const myStatus = activeStatus(me);
 
   return (
-    <aside className="hidden w-72 shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-background-raised p-4 lg:flex">
-      <section aria-label={`${partner.display_name}'s profile`} className="flex items-center gap-3 px-2 pt-2">
-        <Avatar profile={partner} size="lg" online={partnerOnline} />
-        <div className="min-w-0">
-          <p className="truncate text-title font-bold">{partner.display_name}</p>
-          <p className={cn("text-small", partnerOnline ? "text-online" : "text-muted")}>
-            {partnerOnline ? "Online" : formatLastSeen(partnerLastSeen)}
-          </p>
-          {partnerStatus && (
-            <p className="truncate text-small text-muted-strong">
-              <span aria-hidden="true">{partnerStatus.emoji}</span> {partnerStatus.text}
+    <aside className="hidden w-[300px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-background-raised/80 p-5 lg:flex">
+      <section
+        aria-label={`${partner.display_name}'s profile`}
+        className="cut-corners relative bg-panel p-4"
+      >
+        <span className="halftone absolute top-0 right-0 h-16 w-24 opacity-25" aria-hidden="true" />
+        <div className="relative flex items-center gap-3">
+          <Avatar profile={partner} size="lg" online={partnerOnline} />
+          <div className="min-w-0">
+            <p className="text-display truncate text-2xl">{partner.display_name}</p>
+            <p className={cn("text-display text-[11px] tracking-[0.2em]", partnerOnline ? "text-accent-strong" : "text-muted")}>
+              {partnerOnline ? "Online" : formatLastSeen(partnerLastSeen)}
             </p>
           )}
         </div>
+        {partnerStatus && (
+          <p className="relative mt-3 text-sm text-muted-strong">
+            <span aria-hidden="true">{partnerStatus.emoji}</span> {partnerStatus.text}
+          </p>
+        )}
       </section>
 
       <nav aria-label="Main">

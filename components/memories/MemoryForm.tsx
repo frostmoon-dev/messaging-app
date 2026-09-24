@@ -14,6 +14,8 @@ import { uuid } from "@/lib/utils";
 import type { MemoryRow } from "@/types/app";
 import { fieldClass as inputClass, labelClass } from "@/components/ui/field";
 
+const inputClass = "w-full border border-field-border bg-panel px-3 py-2.5 text-[16px] outline-none focus:border-accent";
+const labelClass = "text-display mb-1.5 block text-xs tracking-[0.2em] text-muted-strong";
 
 export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCreated: (m: MemoryRow) => void }) {
   const { conversationId } = useChat();
@@ -98,8 +100,10 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
     <Dialog onClose={busy ? () => {} : onClose} label="Add a memory" className="w-full sm:w-[460px]">
       <form onSubmit={submit} className="max-h-[90dvh] overflow-y-auto rounded-t-[20px] bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[20px]">
         <div className="mb-5 flex items-start justify-between">
-          <h2 className="text-title font-bold">New memory</h2>
-          <button type="button" onClick={onClose} disabled={busy} className="-mt-1 -mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground" aria-label="Close">
+          <div>
+            <h2 className="text-display text-3xl">New memory</h2>
+          </div>
+          <button type="button" onClick={onClose} disabled={busy} className="p-2 text-muted hover:text-foreground" aria-label="Close">
             <CloseIcon size={20} />
           </button>
         </div>

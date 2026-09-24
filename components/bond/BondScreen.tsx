@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EditIcon } from "@/components/ui/icons";
+import { UiMark } from "@/components/ui/UiMark";
 import { BondEditor } from "./BondEditor";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -45,41 +46,45 @@ export function BondScreen() {
 
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-8">
-        <PageHeader
-          title="Bond"
-          description="Set by the two of you, by hand. The app never scores it."
-          action={
-            <Button variant="secondary" onClick={() => setEditing(true)} disabled={!bond}>
-              <EditIcon size={18} /> Edit
-            </Button>
-          }
-        />
+      <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 py-8 sm:px-8">
+        <div className="flex items-end justify-between gap-4">
+          <h1 className="text-display flex items-center gap-3 text-5xl">
+            <UiMark name="arcana" className="size-11 bg-accent" />
+            Bond
+          </h1>
+          <Button variant="outline" onClick={() => setEditing(true)} disabled={!bond} aria-label="Edit bond settings">
+            <EditIcon size={16} /> Edit
+          </Button>
+        </div>
 
-        <section className="rounded-card border border-border bg-panel p-5" aria-label="Bond level">
-          <div className="flex items-center gap-4">
-            <div className="flex -space-x-3" aria-hidden="true">
-              <Avatar profile={me} size="lg" className="rounded-full ring-4 ring-panel" />
-              <Avatar profile={partner} size="lg" className="rounded-full ring-4 ring-panel" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-title font-bold">{bond?.title ?? "Partners in Crime"}</p>
-              <p className="truncate text-small text-muted">
-                {me.display_name} and {partner.display_name}
-              </p>
-            </div>
+        {/* The duo */}
+        <section className="cut-corners relative overflow-hidden bg-panel px-5 py-7" aria-label="The two of you">
+          <span className="absolute inset-y-0 left-1/2 w-24 -translate-x-1/2 -skew-x-[18deg] bg-accent" aria-hidden="true" />
+          <span className="halftone absolute inset-y-0 left-1/2 w-40 -translate-x-1/2 -skew-x-[18deg] opacity-30" aria-hidden="true" />
+          <div className="relative flex items-center justify-between gap-2">
+            <DuoMember name={me.display_name} profile={me} />
+            <span className="text-display text-6xl text-accent-foreground drop-shadow-[3px_3px_0_#000]" aria-hidden="true">
+              X
+            </span>
+            <DuoMember name={partner.display_name} profile={partner} />
           </div>
+        </section>
 
-          <div className="mt-6 flex items-baseline justify-between gap-3">
-            <p className="text-small text-muted-strong">
-              Level <span className="font-mono text-heading font-bold text-foreground">{level}</span>
-            </p>
-            <p className="text-small text-muted">
-              <span className="font-mono">{progress}%</span> to level {level + 1}
-            </p>
-          </div>
+        {/* Level */}
+        <section className="relative flex flex-col items-center text-center" aria-label="Bond level">
+          <UiMark name="arcana" className="absolute top-2 left-1/2 size-56 -translate-x-1/2 bg-accent-deep opacity-60" />
+          <p className="text-display relative text-sm tracking-[0.4em] text-muted-strong">Bond level</p>
+          <p className="text-display relative my-3 inline-flex items-end gap-3 leading-none" aria-label={`Level ${level}`}>
+            <span className="relative inline-block min-w-[1.1em] px-[0.12em] text-center text-[104px] sm:text-[132px]" aria-hidden="true">
+              <span className="absolute inset-x-0 top-[52%] h-[32%] -skew-x-12 bg-accent" />
+              <span className="relative">{toRoman(level)}</span>
+            </span>
+            <span className="mb-3 text-lg tracking-[0.2em] text-muted-strong" aria-hidden="true">
+              Lv.{level}
+            </span>
+          </p>
           <div
-            className="mt-2 h-2.5 overflow-hidden rounded-full bg-panel-strong"
+            className="relative flex w-full max-w-md gap-1"
             role="progressbar"
             aria-label={`Progress to level ${level + 1}`}
             aria-valuemin={0}
@@ -93,6 +98,12 @@ export function BondScreen() {
               transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
             />
           </div>
+          <p className="text-display relative mt-5 bg-foreground px-4 py-1.5 text-xl tracking-wider text-background -skew-x-6">
+            {bond?.title ?? "Partners in Crime"}
+          </p>
+          <p className="text-display relative mt-3 text-sm tracking-[0.2em] text-muted-strong">
+            {me.display_name} <span className="font-sans">×</span> {partner.display_name}
+          </p>
         </section>
 
         <section aria-labelledby="bond-record">
@@ -111,9 +122,10 @@ export function BondScreen() {
               <Stat label="Messages" value={stats ? stats.message_count.toLocaleString() : null} />
               <Stat
                 label="Days together"
-                value={days !== null ? days.toLocaleString() : stats ? "Not set" : null}
-                hint={bond?.together_since ? `Since ${formatLongDate(bond.together_since)}` : "Add a date with Edit"}
+                value={bond?.together_since ? daysSince(bond.together_since).toLocaleString() : stats ? "Not set" : null}
+                hint={bond?.together_since ? `since ${formatLongDate(bond.together_since)}` : "Set a date in Edit"}
               />
+              <Stat label="Favorite emoji" value={stats ? stats.favorite_emoji ?? "None yet" : null} large />
               <Stat label="Photos shared" value={stats ? stats.image_count.toLocaleString() : null} />
               <Stat label="Most used emoji" value={stats ? stats.favorite_emoji ?? "None yet" : null} />
               <Stat

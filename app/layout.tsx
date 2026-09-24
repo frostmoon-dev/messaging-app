@@ -1,24 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from "next/font/google";
+import { Anton, Barlow } from "next/font/google";
 import { cookies } from "next/headers";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app";
 import { ServiceWorker } from "@/components/providers/ServiceWorker";
 import { DEFAULT_THEME, isThemeId, SCHEME_COLORS, THEME_COOKIE, type ThemeId } from "@/lib/themes";
 import "./globals.css";
 
-// Atkinson Hyperlegible Next (SIL OFL, Braille Institute): letterforms built
-// to stay distinct (I/l/1, O/0, b/d) for low-vision and tired eyes.
-// The Mono sibling is used only for numbers that should line up.
-const atkinson = Atkinson_Hyperlegible_Next({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-atkinson",
-  display: "swap",
-});
-const atkinsonMono = Atkinson_Hyperlegible_Mono({
+// Anton (SIL OFL) for display type, Barlow (SIL OFL) for reading.
+const anton = Anton({ weight: "400", subsets: ["latin"], variable: "--font-anton", display: "swap" });
+const barlow = Barlow({
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
-  variable: "--font-atkinson-mono",
+  variable: "--font-barlow",
   display: "swap",
-  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -57,7 +51,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const theme = await storedTheme();
 
   return (
-    <html lang="en" data-theme={theme} className={`${atkinson.variable} ${atkinsonMono.variable}`}>
+    <html lang="en" data-theme={theme} className={`${anton.variable} ${barlow.variable} antialiased`}>
       <body>
         {children}
         <ServiceWorker />

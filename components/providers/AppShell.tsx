@@ -23,7 +23,7 @@ export function AppShell({
   return (
     <MotionConfig reducedMotion="user">
       <ChatProvider session={session} initialBond={bond}>
-        <div className="app-height fixed inset-x-0 top-0 flex flex-col overflow-hidden bg-background">
+        <div className="app-height bg-texture fixed inset-x-0 top-0 flex flex-col overflow-hidden">
           <a
             href="#main"
             className="sr-only-focusable absolute top-2 left-2 z-50 rounded-control bg-accent px-3 py-2 font-semibold text-accent-foreground"

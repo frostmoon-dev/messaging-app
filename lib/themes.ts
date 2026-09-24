@@ -1,17 +1,22 @@
 export const THEMES = [
-  { id: "system", name: "Automatic", description: "Follows your device." },
-  { id: "dark", name: "Dark", description: "Easier on the eyes at night." },
-  { id: "light", name: "Light", description: "Best in bright rooms." },
+  { id: "darkhour", name: "Dark Hour", description: "Deep blue, cyan light." },
+  { id: "phantom", name: "Phantom", description: "Black, paper white, loud red." },
+  { id: "midnight", name: "Midnight", description: "Softer panels for late nights." },
+  { id: "cobalt", name: "Cobalt", description: "Same energy, blue accent." },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
 
-export const DEFAULT_THEME: ThemeId = "system";
+export const DEFAULT_THEME: ThemeId = "darkhour";
 export const THEME_COOKIE = "hl-theme";
 
 export function isThemeId(value: unknown): value is ThemeId {
   return THEMES.some((t) => t.id === value);
 }
 
-/** Browser chrome colour (<meta name="theme-color">) for each resolved scheme. */
-export const SCHEME_COLORS = { dark: "#111113", light: "#f6f4f1" } as const;
+export const THEME_COLORS: Record<ThemeId, string> = {
+  darkhour: "#040a17",
+  phantom: "#0a0a0b",
+  midnight: "#09090c",
+  cobalt: "#07090f",
+};

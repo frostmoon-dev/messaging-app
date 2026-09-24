@@ -30,8 +30,10 @@ type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Pro
 export function SettingsScreen() {
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-8">
-        <PageHeader title="Settings" />
+      <div className="mx-auto flex max-w-xl flex-col gap-6 px-5 py-8 sm:px-8">
+        <div>
+          <h1 className="text-display text-5xl">Settings</h1>
+        </div>
         <ProfileSection />
         <ThemeSection />
         <AlertsSection />
@@ -197,8 +199,8 @@ function ThemeSection() {
   };
 
   return (
-    <Panel title="Appearance">
-      <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Theme">
+    <Panel title="Theme">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" role="radiogroup" aria-label="Theme">
         {THEMES.map((t) => (
           <button
             key={t.id}

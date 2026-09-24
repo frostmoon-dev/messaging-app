@@ -3,22 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#f6f4f1" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#111113" media="(prefers-color-scheme: dark)" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#040a17" />
     <title>Offline · HEARTLINE</title>
     <style>
-      :root{--bg:#111113;--fg:#f2f0ed;--muted:#a19ea6;--accent:#d0243a;--focus:#f2f0ed}
-      @media (prefers-color-scheme: light){:root{--bg:#f6f4f1;--fg:#1a181c;--muted:#5c5862;--accent:#c21a30;--focus:#1a181c}}
-      html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);
-        font:16px/1.5 "Atkinson Hyperlegible Next",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-      body{display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
-      img{width:56px;height:56px;border-radius:14px;margin-bottom:24px}
-      h1{font-size:28px;line-height:1.2;margin:0 0 8px}
-      p{color:var(--muted);max-width:300px;margin:0 auto 24px}
-      button{font:600 16px/1 inherit;font-family:inherit;background:var(--accent);color:#fff;border:0;border-radius:10px;
-        min-height:44px;padding:0 20px;cursor:pointer}
-      button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+      html,body{height:100%;margin:0;background:#040a17;color:#eaf4ff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      body{display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;
+        background-image:repeating-linear-gradient(-58deg,transparent 0 22px,rgba(227,22,47,.06) 22px 24px)}
+      h1{font:900 44px/1 Impact,"Arial Narrow Bold",sans-serif;text-transform:uppercase;letter-spacing:.02em;margin:0 0 12px;
+        display:inline-block;background:#eaf4ff;color:#040a17;padding:6px 14px;transform:rotate(-3deg)}
+      p{color:#b6c8e6;max-width:280px;margin:16px auto 24px;line-height:1.5}
+      button{font:900 16px Impact,sans-serif;letter-spacing:.15em;text-transform:uppercase;background:#2fc5ff;color:#03101f;border:0;
+        min-height:44px;padding:0 28px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);cursor:pointer}
+      button:focus-visible{outline:2px solid #ffe14d;outline-offset:3px}
     </style>
   </head>
   <body>

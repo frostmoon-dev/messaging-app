@@ -20,7 +20,7 @@ export function ChatHeader() {
 
   return (
     <header className="relative z-10 shrink-0 border-b border-border bg-background-raised pt-[env(safe-area-inset-top)]">
-      <div className="flex min-h-16 items-center gap-3 px-4">
+      <div className="flex min-h-16 items-center gap-3 px-3 sm:px-5">
         <Avatar profile={partner} size="md" online={partnerOnline} />
 
         <div className="min-w-0 flex-1">
@@ -51,7 +51,16 @@ export function ChatHeader() {
           {myStatus?.emoji && <span className="text-body leading-none" aria-hidden="true">{myStatus.emoji}</span>}
           <span className={cn(myStatus?.emoji && "hidden sm:inline")}>{myStatus ? "My status" : "Set status"}</span>
         </button>
+        <Link
+          href="/settings"
+          className="flex size-11 items-center justify-center text-foreground hover:text-accent-strong lg:hidden"
+          aria-label="Settings"
+        >
+          <SettingsIcon />
+        </Link>
       </div>
+
+      <span className="absolute -bottom-px left-0 h-[2px] w-24 -skew-x-[30deg] bg-accent" aria-hidden="true" />
 
       {pickerOpen && <StatusPicker onClose={() => setPickerOpen(false)} />}
     </header>
