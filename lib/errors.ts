@@ -10,6 +10,7 @@ export const MESSAGES = {
   save: "Couldn't save. Try again.",
   signIn: "Wrong e-mail or password.",
   generic: "Something went wrong. Try again.",
+  needsUpdate: "The database needs the latest update first (npx supabase db push).",
 } as const;
 
 type ErrorLike = { message?: string; code?: string; status?: number; statusCode?: string } | null | undefined;
@@ -23,5 +24,14 @@ export function friendlyError(error: unknown, fallback: keyof typeof MESSAGES = 
   const e = error as ErrorLike;
   if (typeof navigator !== "undefined" && navigator.onLine === false) return MESSAGES.offline;
   if (e?.code === "P0429" || e?.message?.includes("RATE_LIMITED")) return MESSAGES.rateLimited;
+  // A feature whose migration isn't applied yet: the new message types fail the old
+  // checks (23514), or the new table doesn't exist (42P01 from Postgres, PGRST205 from the API).
+  if (
+    (e?.code === "23514" && /messages_(body|message_type)_check/.test(e.message ?? "")) ||
+    e?.code === "42P01" ||
+    e?.code === "PGRST205"
+  ) {
+    return MESSAGES.needsUpdate;
+  }
   return MESSAGES[fallback];
 }
