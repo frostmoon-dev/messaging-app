@@ -1,67 +1,91 @@
 #!/usr/bin/env node
-// Renders the Napyru mark to every icon size PWAs, iOS and notifications need.
+// Renders the Napyru icon from the ink drawing in scripts/brand/napyru-art.jpg
+// to every size PWAs, iOS and notifications need.
 // Run: node scripts/generate-icons.mjs  (npm run icons)
 //
-// The mark: one disc split by a single curve. The left part is a crescent
-// moon, the right part is the sun, with rays only on the sun's open side.
-// Flat colours, no gradients. Night blue + cream + warm gold is a
-// complementary pair (blue / orange) with a neutral in between.
+// The icon: the head-and-cat part of the drawing inside a circle with an ink
+// ring, on warm paper. Phones add their own rounded-square or circle mask
+// around it. The artist's signature is outside the crop only because it
+// can't be read at icon sizes; keep credit to the artist elsewhere.
 import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 
-const NIGHT = "#1c2140";
-const MOON = "#f1e7cc";
-const SUN = "#f0a93b";
+const SOURCE = "scripts/brand/napyru-art.jpg";
+const INK = "#161616";
+const PAPER = "#f2f1ef";
 
-function rays(cx, cy, r0, r1, angles, halfWidth) {
-  return angles
-    .map((deg) => {
-      const a = (deg * Math.PI) / 180;
-      const p = (rad, off) => `${(cx + rad * Math.cos(a + off)).toFixed(1)} ${(cy + rad * Math.sin(a + off)).toFixed(1)}`;
-      return `M${p(r0, -halfWidth)}L${p(r1, 0)}L${p(r0, halfWidth)}Z`;
-    })
-    .join("");
+// Head, ears and the cat, measured on the 1199×1484 source.
+const CROP = { left: 176, top: 96, width: 872, height: 872 };
+
+/** The drawing cleaned up: paper becomes pure white (multiplied away), ink stays dark. */
+function art(size) {
+  return sharp(SOURCE).extract(CROP).greyscale().linear(1.3, -40).resize(size, size).png().toBuffer();
 }
 
-// Disc (256,256,r120) split by the circle (300,256,r100); they meet at
-// (328,160) and (328,352). Shifted left 16px so the rays don't pull the
-// mark off-centre.
-const RAYS = rays(256, 256, 136, 170, [-60, -30, 0, 30, 60], 0.1);
-const CRESCENT = "M328 160A120 120 0 1 0 328 352A100 100 0 1 1 328 160Z";
-const DIVIDER = "M328 352A100 100 0 1 1 328 160";
+function circleMask(d) {
+  return Buffer.from(`<svg width="${d}" height="${d}"><circle cx="${d / 2}" cy="${d / 2}" r="${d / 2}" fill="#fff"/></svg>`);
+}
 
-const mark = (colors) => `
-  <g transform="translate(-16 0)">
-    <clipPath id="disc"><circle cx="256" cy="256" r="120"/></clipPath>
-    <circle cx="256" cy="256" r="120" fill="${colors.sun}"/>
-    <path fill="${colors.moon}" d="${CRESCENT}"/>
-    <path fill="none" stroke="${colors.gap}" stroke-width="10" clip-path="url(#disc)" d="${DIVIDER}"/>
-    <path fill="${colors.sun}" d="${RAYS}"/>
-  </g>`;
+/**
+ * Square icon: the drawing in a circle of `disc` × 512 px with an ink ring.
+ * `background: null` leaves the outside transparent (favicon, in-app mark).
+ */
+async function icon({ disc, ring, background = PAPER }) {
+  const d = Math.round(512 * disc);
+  const off = Math.round((512 - d) / 2);
+  const inside = await sharp({ create: { width: d, height: d, channels: 4, background: PAPER } })
+    .composite([{ input: await art(d), blend: "multiply" }, { input: circleMask(d), blend: "dest-in" }])
+    .png()
+    .toBuffer();
+  const ringSvg = Buffer.from(
+    `<svg width="512" height="512"><circle cx="256" cy="256" r="${d / 2 - ring / 2}" fill="none" stroke="${INK}" stroke-width="${ring}"/></svg>`,
+  );
+  const base = background
+    ? { width: 512, height: 512, channels: 4, background }
+    : { width: 512, height: 512, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } };
+  return sharp({ create: base })
+    .composite([{ input: inside, left: off, top: off }, { input: ringSvg }])
+    .png()
+    .toBuffer();
+}
 
-const full = { moon: MOON, sun: SUN, gap: NIGHT };
-
-const icon = (padding = 0) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="${NIGHT}"/>
-  <g transform="translate(${padding} ${padding}) scale(${(512 - padding * 2) / 512})">${mark(full)}</g>
-</svg>`;
-
-// Notification badge (Android): one colour on transparent; the OS tints it.
-// The divider is cut out so the two halves still read at 24px.
-const badge = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <mask id="cut"><rect width="512" height="512" fill="#000"/>${mark({ moon: "#fff", sun: "#fff", gap: "#000" }).replace(/stroke-width="10"/, 'stroke-width="18"')}</mask>
-  <rect width="512" height="512" fill="#fff" mask="url(#cut)"/>
-</svg>`;
+/** Android notification badge: one colour on transparent (the OS tints it). */
+async function badge() {
+  const size = 96;
+  const d = 88;
+  // Ink becomes opaque, paper becomes transparent.
+  const alpha = await sharp(SOURCE).extract(CROP).greyscale().negate().linear(1.6, -60).resize(d, d).extractChannel(0).raw().toBuffer();
+  const joined = await sharp({ create: { width: d, height: d, channels: 3, background: "#ffffff" } })
+    .joinChannel(alpha, { raw: { width: d, height: d, channels: 1 } })
+    .png()
+    .toBuffer();
+  const inkShape = await sharp(joined).composite([{ input: circleMask(d), blend: "dest-in" }]).png().toBuffer();
+  return sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: inkShape, left: (size - d) / 2, top: (size - d) / 2 }])
+    .png()
+    .toBuffer();
+}
 
 await mkdir("public/icons", { recursive: true });
-const render = (svg, size, out) => sharp(Buffer.from(svg)).resize(size, size).png().toFile(out);
+const write = (buf, size, out) => sharp(buf).resize(size, size).png({ compressionLevel: 9 }).toFile(out);
 
-await render(icon(), 192, "public/icons/icon-192.png");
-await render(icon(), 512, "public/icons/icon-512.png");
-// Maskable icons get cropped to a circle; keep the mark inside the safe zone.
-await render(icon(56), 512, "public/icons/maskable-512.png");
-await render(icon(), 180, "app/apple-icon.png");
-await render(badge, 96, "public/icons/badge-96.png");
-await writeFile("app/icon.svg", icon().trim() + "\n");
-await writeFile("public/brand-mark.svg", icon().trim() + "\n");
+const full = await icon({ disc: 0.9, ring: 12 });
+// Maskable icons get cut to a circle or squircle; keep the drawing in the safe zone.
+const maskable = await icon({ disc: 0.76, ring: 10 });
+const mark = await icon({ disc: 1, ring: 16, background: null });
+
+await write(full, 192, "public/icons/icon-192.png");
+await write(full, 512, "public/icons/icon-512.png");
+await write(maskable, 512, "public/icons/maskable-512.png");
+await write(full, 180, "app/apple-icon.png");
+await write(mark, 64, "public/brand-mark.png");
+await write(mark, 256, "public/brand-mark@4x.png");
+await sharp(await badge()).png().toFile("public/icons/badge-96.png");
+
+// Browser tab icon: the round mark, embedded so it works as one file.
+const favicon = (await sharp(mark).resize(96, 96).png().toBuffer()).toString("base64");
+await writeFile(
+  "app/icon.svg",
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><image width="96" height="96" href="data:image/png;base64,${favicon}"/></svg>\n`,
+);
 console.log("icons written");

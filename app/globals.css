@@ -3,7 +3,7 @@
 /* ==========================================================================
    Design tokens
    Every colour in the app comes from these variables. Themes are listed in
-   lib/themes.ts. "system" picks Phantom or Paper from the device.
+   lib/themes.ts. "system" picks Ink or Paper from the device.
 
    Contrast (WCAG 2.2, checked by `npm run contrast`):
    body text >= 7:1, muted text >= 4.5:1 on every surface it sits on,
@@ -21,8 +21,72 @@
    - 60/30/10: ~60% page, ~30% panels and bubbles, ~10% accent (actions,
      selection, your own bubbles). */
 
-/* Phantom: Persona 5 Royal's black, white and red. */
+/* Ink: the default. Monochrome, taken from the app icon's ink drawing:
+   soft black paper, off-white ink, greys for depth. Colour appears only
+   where it carries meaning (errors and SOS are red). */
 :root,
+[data-theme="ink"] {
+  --background: #121212;
+  --background-raised: #181818;
+  --foreground: #ececec;
+  --muted: #a3a3a3;
+  --muted-strong: #cfcfcf;
+  --panel: #1e1e1e;
+  --panel-strong: #2a2a2a;
+  --border: #3a3a3a;
+  --field-border: #858585;
+  --accent: #e8e8e8;
+  --accent-hover: #f7f7f7;
+  --accent-text: #ececec;
+  --accent-foreground: #121212;
+  --accent-soft: #303030;
+  --incoming: #262626;
+  --incoming-foreground: #ececec;
+  --incoming-shadow: #3a3a3a;
+  --outgoing: #e8e8e8;
+  --outgoing-foreground: #121212;
+  --outgoing-shadow: #5a5a5a;
+  --online: #e8e8e8;
+  --danger: #ff8e8e;
+  --focus: #ececec;
+  --frame: #e8e8e8;
+  --grid: transparent;
+  --title-shadow: #4d4d4d;
+  color-scheme: dark;
+}
+
+/* Paper: Ink's daytime twin. Warm paper, soft black ink. */
+[data-theme="paper"] {
+  --background: #f1f0ed;
+  --background-raised: #f9f8f6;
+  --foreground: #171717;
+  --muted: #585858;
+  --muted-strong: #363636;
+  --panel: #f9f8f6;
+  --panel-strong: #e4e3df;
+  --border: #d0cfcb;
+  --field-border: #767676;
+  --accent: #1c1c1c;
+  --accent-hover: #3a3a3a;
+  --accent-text: #171717;
+  --accent-foreground: #f5f4f2;
+  --accent-soft: #e2e1dd;
+  --incoming: #f9f8f6;
+  --incoming-foreground: #171717;
+  --incoming-shadow: #d0cfcb;
+  --outgoing: #1c1c1c;
+  --outgoing-foreground: #f5f4f2;
+  --outgoing-shadow: #9a9a9a;
+  --online: #171717;
+  --danger: #a8182c;
+  --focus: #171717;
+  --frame: #1c1c1c;
+  --grid: transparent;
+  --title-shadow: #b3b1ac;
+  color-scheme: light;
+}
+
+/* Phantom: Persona 5 Royal's black, white and red. */
 [data-theme="phantom"] {
   --background: #141416;
   --background-raised: #1b1b1e;
@@ -49,36 +113,8 @@
   --focus: #ffd83d;
   --frame: #eceaef;
   --grid: transparent;
+  --title-shadow: #d42840;
   color-scheme: dark;
-}
-
-[data-theme="paper"] {
-  --background: #f2f0ec;
-  --background-raised: #faf9f6;
-  --foreground: #1b1a1e;
-  --muted: #5a5761;
-  --muted-strong: #3a383f;
-  --panel: #faf9f6;
-  --panel-strong: #e6e3de;
-  --border: #d3cfc9;
-  --field-border: #78747e;
-  --accent: #c42238;
-  --accent-hover: #a01b2e;
-  --accent-text: #ad1e32;
-  --accent-foreground: #ffffff;
-  --accent-soft: #f8dfe2;
-  --incoming: #faf9f6;
-  --incoming-foreground: #1b1a1e;
-  --incoming-shadow: #1b1a1e;
-  --outgoing: #c42238;
-  --outgoing-foreground: #ffffff;
-  --outgoing-shadow: #1b1a1e;
-  --online: #0b7a44;
-  --danger: #a8182c;
-  --focus: #1a4fd6;
-  --frame: #1b1a1e;
-  --grid: transparent;
-  color-scheme: light;
 }
 
 /* Moon Cell: after the Moon Cell Automaton and SE.RA.PH, the digital moon
@@ -111,6 +147,7 @@
   --focus: #ffd83d;
   --frame: #46c99b;
   --grid: #1c3038;
+  --title-shadow: transparent;
   color-scheme: dark;
 }
 
@@ -118,32 +155,33 @@
    (npm run contrast checks this). */
 @media (prefers-color-scheme: light) {
   [data-theme="system"] {
-    SYS--background: #f2f0ec;
-  --background-raised: #faf9f6;
-  --foreground: #1b1a1e;
-  --muted: #5a5761;
-  --muted-strong: #3a383f;
-  --panel: #faf9f6;
-  --panel-strong: #e6e3de;
-  --border: #d3cfc9;
-  --field-border: #78747e;
-  --accent: #c42238;
-  --accent-hover: #a01b2e;
-  --accent-text: #ad1e32;
-  --accent-foreground: #ffffff;
-  --accent-soft: #f8dfe2;
-  --incoming: #faf9f6;
-  --incoming-foreground: #1b1a1e;
-  --incoming-shadow: #1b1a1e;
-  --outgoing: #c42238;
-  --outgoing-foreground: #ffffff;
-  --outgoing-shadow: #1b1a1e;
-  --online: #0b7a44;
-  --danger: #a8182c;
-  --focus: #1a4fd6;
-  --frame: #1b1a1e;
-  --grid: transparent;
-  color-scheme: light;
+    --background: #f1f0ed;
+    --background-raised: #f9f8f6;
+    --foreground: #171717;
+    --muted: #585858;
+    --muted-strong: #363636;
+    --panel: #f9f8f6;
+    --panel-strong: #e4e3df;
+    --border: #d0cfcb;
+    --field-border: #767676;
+    --accent: #1c1c1c;
+    --accent-hover: #3a3a3a;
+    --accent-text: #171717;
+    --accent-foreground: #f5f4f2;
+    --accent-soft: #e2e1dd;
+    --incoming: #f9f8f6;
+    --incoming-foreground: #171717;
+    --incoming-shadow: #d0cfcb;
+    --outgoing: #1c1c1c;
+    --outgoing-foreground: #f5f4f2;
+    --outgoing-shadow: #9a9a9a;
+    --online: #171717;
+    --danger: #a8182c;
+    --focus: #171717;
+    --frame: #1c1c1c;
+    --grid: transparent;
+    --title-shadow: #b3b1ac;
+    color-scheme: light;
   }
 }
 
@@ -229,10 +267,12 @@ body {
 }
 
 /* ==========================================================================
-   Persona 5 shapes
-   The look comes from shapes, not from the letters: text is never slanted,
-   italic or stretched, so it reads like any other text. Every cut is small
-   (a few px) so content is never clipped.
+   Shapes
+   Soft and sleek by default (Ink, Paper): rounded panels, bubbles, avatars
+   and tags, with a Persona 5 edge kept where it helps you find things:
+   slanted buttons, a tilted title label and a slanted selection marker.
+   Text is never slanted, italic or stretched. Phantom and Moon Cell swap
+   in their own shapes below.
    ========================================================================== */
 
 @layer components {
@@ -246,19 +286,20 @@ body {
     mask: var(--mark) var(--mark-position, center) / contain no-repeat;
   }
 
-  /* Panels: a four-sided shape with uneven corners, like the game's menus. */
+  /* Panels: rounded, with one tighter corner (top right) as a quiet edge. */
   .p5-panel {
-    clip-path: polygon(0 4px, calc(100% - 10px) 0, 100% calc(100% - 6px), 8px 100%);
+    border-radius: 18px 5px 18px 18px;
   }
 
-  /* Buttons: a slanted slab. Hover darkens the colour; nothing fades. */
+  /* Buttons: a slanted slab, the Persona 5 edge. Hover changes colour;
+     nothing fades. */
   .p5-button {
     clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
   }
 
-  /* Page title: one or two heavy capital words on a paper label, tilted a
-     little, with a red block behind. Capitals only for short labels:
-     they read fast at a glance but slow down anything longer. */
+  /* Page title: one or two heavy capital words on a label, tilted a
+     little, with a block behind. Capitals only for short labels: they read
+     fast at a glance but slow down anything longer. */
   .p5-title {
     display: inline-block;
     position: relative;
@@ -270,10 +311,10 @@ body {
     color: var(--background);
     background: var(--foreground);
     transform: rotate(-2deg);
-    box-shadow: 6px 6px 0 var(--accent);
+    box-shadow: 6px 6px 0 var(--title-shadow);
   }
 
-  /* Selected menu item: a red slanted bar behind upright white text. */
+  /* Selected menu item: a slanted bar behind upright text. */
   .p5-cursor {
     position: relative;
     isolation: isolate;
@@ -288,25 +329,59 @@ body {
     clip-path: polygon(10px 0, 100% 3px, calc(100% - 6px) 100%, 0 calc(100% - 4px));
   }
 
-  /* Portrait frame for avatars, like the texting screen's character icons. */
+  /* Portraits are round, like the app icon. */
   .p5-frame {
-    clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 95%);
+    border-radius: 9999px;
   }
 
-  /* Message bubbles. A hard offset shadow sits on a wrapper because
-     clip-path would cut a shadow on the bubble itself. */
+  /* Message bubbles: rounded, with a tight corner on the sender's side. */
   .bubble-in {
-    clip-path: polygon(0 3px, 100% 0, calc(100% - 4px) 100%, 5px calc(100% - 2px));
+    border-radius: 20px 20px 20px 6px;
+    box-shadow: inset 0 0 0 1px var(--incoming-shadow);
   }
   .bubble-out {
-    clip-path: polygon(4px 0, 100% 3px, calc(100% - 5px) calc(100% - 2px), 0 100%);
+    border-radius: 20px 20px 6px 20px;
   }
-  .bubble-in-shadow {
-    filter: drop-shadow(-3px 3px 0 var(--incoming-shadow));
+
+  /* Small labels (day dividers) are pills. */
+  .day-tag {
+    border-radius: 9999px;
+    clip-path: none;
   }
-  .bubble-out-shadow {
-    filter: drop-shadow(3px 3px 0 var(--outgoing-shadow));
-  }
+}
+
+/* ==========================================================================
+   Phantom quirks: the full Persona 5 look
+   ========================================================================== */
+
+[data-theme="phantom"] .p5-panel {
+  border-radius: 0;
+  clip-path: polygon(0 4px, calc(100% - 10px) 0, 100% calc(100% - 6px), 8px 100%);
+}
+[data-theme="phantom"] .p5-frame {
+  border-radius: 0;
+  clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 95%);
+}
+[data-theme="phantom"] .bubble-in {
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: polygon(0 3px, 100% 0, calc(100% - 4px) 100%, 5px calc(100% - 2px));
+}
+[data-theme="phantom"] .bubble-out {
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 3px, calc(100% - 5px) calc(100% - 2px), 0 100%);
+}
+/* A hard offset shadow sits on a wrapper because clip-path would cut it. */
+[data-theme="phantom"] .bubble-in-shadow {
+  filter: drop-shadow(-3px 3px 0 var(--incoming-shadow));
+}
+[data-theme="phantom"] .bubble-out-shadow {
+  filter: drop-shadow(3px 3px 0 var(--outgoing-shadow));
+}
+[data-theme="phantom"] .day-tag {
+  rotate: -2deg;
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
 }
 
 /* ==========================================================================
@@ -319,6 +394,7 @@ body {
 /* Cut corners (top-left, bottom-right) instead of Persona slants. */
 [data-theme="mooncell"] .p5-panel,
 [data-theme="mooncell"] .p5-frame {
+  border-radius: 0;
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 }
 [data-theme="mooncell"] .p5-button,
@@ -327,6 +403,8 @@ body {
 }
 [data-theme="mooncell"] .bubble-in,
 [data-theme="mooncell"] .bubble-out {
+  border-radius: 0;
+  box-shadow: none;
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
 }
 
@@ -370,6 +448,8 @@ body {
 /* Day dividers become log entries. */
 [data-theme="mooncell"] .day-tag {
   rotate: none;
+  border-radius: 0;
+  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
 }
 [data-theme="mooncell"] .day-tag::before {
   content: "LOG · ";
@@ -398,6 +478,7 @@ body {
 
 /* Dark themes dim and invert the (bright) OpenStreetMap tiles so the map
    doesn't flash white at night. Markers are not affected. */
+[data-theme="ink"] .leaflet-tile-pane,
 [data-theme="phantom"] .leaflet-tile-pane,
 [data-theme="mooncell"] .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);
@@ -417,9 +498,14 @@ body {
   font-weight: 800;
   font-size: 13px;
   border: 3px solid var(--frame);
+  border-radius: 9999px;
+}
+[data-theme="phantom"] .map-marker {
+  border-radius: 0;
   clip-path: polygon(6% 0, 100% 4%, 94% 100%, 0 95%);
 }
 [data-theme="mooncell"] .map-marker {
+  border-radius: 0;
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
 }
 .map-me {
@@ -446,6 +532,75 @@ body {
 .map-accuracy.map-sos {
   fill: #a8182c;
   stroke: #a8182c;
+}
+
+/* ==========================================================================
+   Preloader (components/ui/Preloader.tsx)
+   The same paper and ink as the app icon, in every theme, so the icon sits
+   on its own background. Android uses the manifest's background_color for
+   its launch screen, which matches.
+   ========================================================================== */
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #f2f1ef;
+  color: #171717;
+  transition: opacity 0.3s var(--ease-out);
+  /* Failsafe: if the app's scripts never run, get out of the way. */
+  animation: preloader-failsafe 0.3s ease 10s forwards;
+}
+.preloader-leave {
+  opacity: 0;
+  pointer-events: none;
+}
+.preloader-icon {
+  width: 112px;
+  height: 112px;
+  border-radius: 9999px;
+}
+.preloader-text {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.preloader-bar {
+  position: relative;
+  width: 96px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: #d0cfcb;
+}
+.preloader-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: 9999px;
+  background: #171717;
+  animation: preloader-slide 1.1s var(--ease-out) infinite;
+}
+@keyframes preloader-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+@keyframes preloader-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 /* ==========================================================================

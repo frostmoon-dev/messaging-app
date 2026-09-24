@@ -28,8 +28,8 @@ export function ReplyQuote({
       className={cn(
         "mb-1.5 block w-full px-3 py-1.5 text-left text-small transition-colors",
         tone === "outgoing"
-          ? "border-l-4 border-white bg-black/25 hover:bg-black/35"
-          : "border-l-4 border-accent bg-black/[0.07] hover:bg-black/[0.12]",
+          ? "border-l-4 border-current bg-current/10 hover:bg-current/15"
+          : "border-l-4 border-accent bg-current/10 hover:bg-current/15",
       )}
       aria-label={`Replying to ${authorName}: ${snippetText(snippet)}. Jump to message.`}
     >

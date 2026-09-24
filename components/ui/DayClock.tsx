@@ -65,7 +65,7 @@ function MoonPhase({ age, size = 24 }: { age: number; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
       <circle cx="12" cy="12" r={r} className="fill-panel-strong stroke-muted" strokeWidth="1" />
-      {t > 0.02 && <path d={lit} fill="#f6ecc4" transform={waxing ? undefined : "matrix(-1 0 0 1 24 0)"} />}
+      {t > 0.02 && <path d={lit} className="fill-foreground" transform={waxing ? undefined : "matrix(-1 0 0 1 24 0)"} />}
     </svg>
   );
 }

@@ -21,7 +21,7 @@ export function ChatHeader() {
   const presence = partnerTyping ? "Typing…" : partnerOnline ? "Online" : formatLastSeen(partnerLastSeen);
 
   return (
-    <header className="relative z-10 shrink-0 border-b-2 border-accent bg-background-raised pt-[env(safe-area-inset-top)]">
+    <header className="relative z-10 shrink-0 border-b border-border bg-background-raised pt-[env(safe-area-inset-top)]">
       <div className="flex min-h-16 items-center gap-3 px-3 sm:px-5">
         <Link href="/bond" className="shrink-0" aria-label={`Bond with ${partner.display_name}`}>
           <Avatar profile={partner} size="md" online={partnerOnline} />

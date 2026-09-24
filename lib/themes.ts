@@ -1,7 +1,8 @@
 export const THEMES = [
-  { id: "system", name: "Automatic", description: "Follows your device: Phantom at night, Paper by day." },
-  { id: "phantom", name: "Phantom", description: "Black, white and red." },
-  { id: "paper", name: "Paper", description: "Warm paper with black and red." },
+  { id: "system", name: "Automatic", description: "Follows your device: Ink at night, Paper by day." },
+  { id: "ink", name: "Ink", description: "Soft black and white, like the icon." },
+  { id: "paper", name: "Paper", description: "Warm paper and ink." },
+  { id: "phantom", name: "Phantom", description: "Persona 5: black, white and red." },
   { id: "mooncell", name: "Moon Cell", description: "The digital moon. Teal space, data green." },
 ] as const;
 
@@ -17,14 +18,15 @@ export function isThemeId(value: unknown): value is ThemeId {
 
 /** Browser chrome colour for each theme. Matches --background in globals.css. */
 export const THEME_COLORS: Record<FixedThemeId, string> = {
+  ink: "#121212",
+  paper: "#f1f0ed",
   phantom: "#141416",
-  paper: "#f2f0ec",
   mooncell: "#0e171b",
 };
 
 /** What "Automatic" picks for each device setting. */
 export const SCHEME_COLORS = {
-  dark: THEME_COLORS.phantom,
+  dark: THEME_COLORS.ink,
   light: THEME_COLORS.paper,
 } as const;
 
