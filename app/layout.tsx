@@ -1,14 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Inter } from "next/font/google";
+import { Anton, Barlow } from "next/font/google";
 import { cookies } from "next/headers";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app";
 import { ServiceWorker } from "@/components/providers/ServiceWorker";
 import { DEFAULT_THEME, isThemeId, THEME_COLORS, THEME_COOKIE } from "@/lib/themes";
 import "./globals.css";
 
-// Anton (SIL OFL) for display type, Inter (SIL OFL) for reading.
+// Anton (SIL OFL) for display type, Barlow (SIL OFL) for reading.
 const anton = Anton({ weight: "400", subsets: ["latin"], variable: "--font-anton", display: "swap" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const barlow = Barlow({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-barlow",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
@@ -36,7 +41,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const theme = isThemeId(stored) ? stored : DEFAULT_THEME;
 
   return (
-    <html lang="en" data-theme={theme} className={`${anton.variable} ${inter.variable} antialiased`}>
+    <html lang="en" data-theme={theme} className={`${anton.variable} ${barlow.variable} antialiased`}>
       <body>
         {children}
         <ServiceWorker />

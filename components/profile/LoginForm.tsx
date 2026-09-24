@@ -4,6 +4,8 @@ import { useActionState } from "react";
 import { motion, MotionConfig } from "framer-motion";
 import { signIn, type SignInState } from "@/lib/auth/actions";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { DayClock } from "@/components/ui/DayClock";
+import { UiMark } from "@/components/ui/UiMark";
 
 const initial: SignInState = { error: null, email: "" };
 
@@ -12,7 +14,7 @@ export function LoginForm() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <main className="bg-texture grain relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10">
+      <main className="bg-texture relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10">
         {/* Big diagonal slab behind the card. */}
         <motion.div
           initial={{ x: "-110%" }}
@@ -28,12 +30,13 @@ export function LoginForm() {
           className="absolute top-[calc(24%+5.5rem)] left-1/2 h-3 w-[160vw] -translate-x-1/2 -rotate-[14deg] bg-foreground sm:top-[calc(30%+7.5rem)]"
           aria-hidden="true"
         />
+        <DayClock className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 sm:right-6" />
 
         <motion.section
           initial={{ opacity: 0, y: 24, rotate: -2 }}
           animate={{ opacity: 1, y: 0, rotate: 0 }}
           transition={{ duration: 0.3, delay: 0.15, ease: [0.2, 0.9, 0.1, 1] }}
-          className="cut-corners relative w-full max-w-sm bg-background-raised p-7 shadow-[8px_8px_0_#000]"
+          className="cut-corners relative w-full max-w-sm bg-background-raised p-7 shadow-[8px_8px_0_var(--accent-deep)]"
           aria-labelledby="login-title"
         >
           <Wordmark className="mb-6" />
@@ -55,7 +58,7 @@ export function LoginForm() {
                 inputMode="email"
                 required
                 defaultValue={state.email}
-                className="w-full border border-border bg-panel px-3.5 py-3 text-[16px] outline-none focus:border-accent"
+                className="w-full border border-field-border bg-panel px-3.5 py-3 text-[16px] outline-none focus:border-accent"
                 aria-invalid={state.error ? true : undefined}
                 aria-describedby={state.error ? "login-error" : undefined}
               />
@@ -70,7 +73,7 @@ export function LoginForm() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full border border-border bg-panel px-3.5 py-3 text-[16px] outline-none focus:border-accent"
+                className="w-full border border-field-border bg-panel px-3.5 py-3 text-[16px] outline-none focus:border-accent"
                 aria-invalid={state.error ? true : undefined}
                 aria-describedby={state.error ? "login-error" : undefined}
               />
@@ -82,8 +85,9 @@ export function LoginForm() {
                 role="alert"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="border-l-4 border-accent bg-panel px-3 py-2 text-sm"
+                className="flex items-center gap-2.5 bg-panel px-3 py-2.5 text-sm"
               >
+                <UiMark name="alert" className="size-6 bg-danger" />
                 {state.error}
               </motion.p>
             )}

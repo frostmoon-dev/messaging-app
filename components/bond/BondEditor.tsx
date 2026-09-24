@@ -10,7 +10,7 @@ import { friendlyError } from "@/lib/errors";
 import { todayDateOnly } from "@/lib/time";
 import type { BondRow } from "@/types/app";
 
-const inputClass = "w-full border border-border bg-panel px-3 py-2.5 text-[16px] outline-none focus:border-accent";
+const inputClass = "w-full border border-field-border bg-panel px-3 py-2.5 text-[16px] outline-none focus:border-accent";
 const labelClass = "text-display mb-1.5 block text-xs tracking-[0.2em] text-muted-strong";
 
 /** Everything here is set by hand. The app never judges the relationship. */

@@ -13,7 +13,7 @@ import { todayDateOnly } from "@/lib/time";
 import { uuid } from "@/lib/utils";
 import type { MemoryRow } from "@/types/app";
 
-const inputClass = "w-full border border-border bg-panel px-3 py-2.5 text-[16px] outline-none focus:border-accent";
+const inputClass = "w-full border border-field-border bg-panel px-3 py-2.5 text-[16px] outline-none focus:border-accent";
 const labelClass = "text-display mb-1.5 block text-xs tracking-[0.2em] text-muted-strong";
 
 export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCreated: (m: MemoryRow) => void }) {
@@ -100,7 +100,6 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
       <form onSubmit={submit} className="cut-corners max-h-[90dvh] overflow-y-auto bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div className="mb-5 flex items-start justify-between">
           <div>
-            <p className="text-display text-xs tracking-[0.3em] text-accent-strong">Scrapbook</p>
             <h2 className="text-display text-3xl">New memory</h2>
           </div>
           <button type="button" onClick={onClose} disabled={busy} className="p-2 text-muted hover:text-foreground" aria-label="Close">

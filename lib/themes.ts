@@ -1,4 +1,5 @@
 export const THEMES = [
+  { id: "darkhour", name: "Dark Hour", description: "Deep blue, cyan light." },
   { id: "phantom", name: "Phantom", description: "Black, paper white, loud red." },
   { id: "midnight", name: "Midnight", description: "Softer panels for late nights." },
   { id: "cobalt", name: "Cobalt", description: "Same energy, blue accent." },
@@ -6,7 +7,7 @@ export const THEMES = [
 
 export type ThemeId = (typeof THEMES)[number]["id"];
 
-export const DEFAULT_THEME: ThemeId = "phantom";
+export const DEFAULT_THEME: ThemeId = "darkhour";
 export const THEME_COOKIE = "hl-theme";
 
 export function isThemeId(value: unknown): value is ThemeId {
@@ -14,6 +15,7 @@ export function isThemeId(value: unknown): value is ThemeId {
 }
 
 export const THEME_COLORS: Record<ThemeId, string> = {
+  darkhour: "#040a17",
   phantom: "#0a0a0b",
   midnight: "#09090c",
   cobalt: "#07090f",

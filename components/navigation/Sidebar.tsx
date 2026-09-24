@@ -24,10 +24,7 @@ export function Sidebar() {
 
   return (
     <aside className="hidden w-[300px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-background-raised/80 p-5 lg:flex">
-      <motion.section
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.25 }}
+      <section
         aria-label={`${partner.display_name}'s profile`}
         className="cut-corners relative bg-panel p-4"
       >
@@ -46,7 +43,7 @@ export function Sidebar() {
             <span aria-hidden="true">{partnerStatus.emoji}</span> {partnerStatus.text}
           </p>
         )}
-      </motion.section>
+      </section>
 
       <nav aria-label="Main">
         <ul className="flex flex-col gap-1">

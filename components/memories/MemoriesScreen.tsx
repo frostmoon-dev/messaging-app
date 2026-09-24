@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PlusIcon } from "@/components/ui/icons";
+import { UiMark } from "@/components/ui/UiMark";
 import { MemoryCard } from "./MemoryCard";
 import { MemoryForm } from "./MemoryForm";
 import { MemoryViewer } from "./MemoryViewer";
@@ -42,10 +43,10 @@ export function MemoriesScreen() {
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
       <div className="mx-auto max-w-4xl px-5 py-8 sm:px-8">
         <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-display text-xs tracking-[0.3em] text-accent-strong">Private scrapbook</p>
-            <h1 className="text-display text-5xl">Memories</h1>
-          </div>
+          <h1 className="text-display flex items-center gap-3 text-5xl">
+            <UiMark name="sakura" className="size-10 bg-accent" />
+            Memories
+          </h1>
           <Button onClick={() => setAdding(true)} aria-label="Add a memory">
             <PlusIcon size={18} /> Add
           </Button>
@@ -67,19 +68,19 @@ export function MemoriesScreen() {
         )}
 
         {memories?.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col items-center py-16 text-center"
-          >
-            <p className="text-display -rotate-3 bg-foreground px-4 py-2 text-3xl text-background">Blank pages</p>
-            <p className="mt-5 max-w-xs text-sm text-muted-strong">
-              Keep the good ones here — a photo, a title, a date. Only the two of you can see them.
+          <div className="flex flex-col items-center py-16 text-center">
+            <span className="relative mb-4 h-24 w-32" aria-hidden="true">
+              <UiMark name="sakura" className="absolute top-0 left-2 size-20 bg-foreground" />
+              <UiMark name="sakura" className="absolute right-0 bottom-0 size-10 rotate-[24deg] bg-accent" />
+            </span>
+            <p className="text-display text-2xl tracking-wide">No memories yet</p>
+            <p className="mt-2 max-w-xs text-[15px] leading-relaxed text-muted-strong">
+              Keep the good ones here: a photo, a title and a date. Only the two of you can see them.
             </p>
             <Button className="mt-6" onClick={() => setAdding(true)}>
-              <PlusIcon size={18} /> First memory
+              <PlusIcon size={18} /> Add the first one
             </Button>
-          </motion.div>
+          </div>
         )}
 
         {memories && memories.length > 0 && (

@@ -13,7 +13,8 @@
     "test:e2e": "node --env-file=.env.local node_modules/@playwright/test/cli.js test",
     "setup:users": "node --env-file=.env.local scripts/setup-users.mjs",
     "db:types": "supabase gen types typescript --local > types/database.ts",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "ui-assets": "node scripts/build-ui-assets.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

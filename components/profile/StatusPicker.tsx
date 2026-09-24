@@ -43,7 +43,6 @@ export function StatusPicker({ onClose }: { onClose: () => void }) {
       <div className="cut-corners bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <p className="text-display text-xs tracking-[0.3em] text-accent-strong">Today I&apos;m</p>
             <h2 className="text-display text-3xl">Status</h2>
           </div>
           <button type="button" onClick={onClose} className="p-2 text-muted hover:text-foreground" aria-label="Close">

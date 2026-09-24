@@ -7,6 +7,34 @@
    ========================================================================== */
 
 :root,
+[data-theme="darkhour"] {
+  /* Deep-sea blue with a cyan highlight, after Persona 3 Reload's menus. */
+  --background: #040a17;
+  --background-raised: #08132a;
+  --foreground: #eaf4ff;
+  --muted: #8aa2c8;
+  --muted-strong: #b6c8e6;
+  --panel: #0c1a36;
+  --panel-strong: #122446;
+  --border: #1d3461;
+  --field-border: #3d5a8c;
+  --accent: #2fc5ff;
+  --accent-strong: #6fd8ff;
+  --accent-deep: #0b4a8a;
+  --accent-foreground: #03101f;
+  --incoming: #e6f1ff;
+  --incoming-foreground: #06122a;
+  --incoming-shadow: #16305c;
+  --outgoing: #1760e8;
+  --outgoing-foreground: #ffffff;
+  --outgoing-shadow: #06214f;
+  --danger: #ff6b7d;
+  --success: #eaf4ff;
+  --focus: #ffe14d;
+  --stripe: rgba(47, 197, 255, 0.045);
+  color-scheme: dark;
+}
+
 [data-theme="phantom"] {
   --background: #0a0a0b;
   --background-raised: #121214;
@@ -26,10 +54,10 @@
   --outgoing: #e3162f;
   --outgoing-foreground: #ffffff;
   --outgoing-shadow: #5c0812;
+  --field-border: #55535c;
   --danger: #ff5d6c;
   --success: #f6f3ee;
   --focus: #ffe14d;
-  --texture-opacity: 0.07;
   --stripe: rgba(227, 22, 47, 0.06);
   color-scheme: dark;
 }
@@ -54,8 +82,8 @@
   --outgoing: #b81d31;
   --outgoing-foreground: #ffffff;
   --outgoing-shadow: #3d0810;
+  --field-border: #4d4c58;
   --stripe: rgba(208, 35, 58, 0.04);
-  --texture-opacity: 0.05;
 }
 
 /* Alternate accent to prove the system; same structure, blue energy. */
@@ -78,6 +106,7 @@
   --outgoing: #1f6bff;
   --outgoing-foreground: #ffffff;
   --outgoing-shadow: #0a2361;
+  --field-border: #3f4a66;
   --stripe: rgba(31, 107, 255, 0.06);
 }
 
@@ -90,6 +119,7 @@
   --color-panel: var(--panel);
   --color-panel-strong: var(--panel-strong);
   --color-border: var(--border);
+  --color-field-border: var(--field-border);
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-deep: var(--accent-deep);
@@ -102,7 +132,7 @@
   --color-focus: var(--focus);
 
   --font-display: var(--font-anton), "Impact", "Haettenschweiler", "Arial Narrow Bold", sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
 
   --ease-snap: cubic-bezier(0.2, 0.9, 0.1, 1);
@@ -147,7 +177,7 @@ body {
    Texture + geometry
    ========================================================================== */
 
-/* Diagonal speed lines + halftone-ish grain. Very low contrast on purpose. */
+/* Diagonal speed lines. Very low contrast on purpose. */
 .bg-texture {
   background-color: var(--background);
   background-image:
@@ -158,19 +188,22 @@ body {
     );
 }
 
-.grain::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: var(--texture-opacity);
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
-
 .halftone {
   background-image: radial-gradient(var(--accent) 1px, transparent 1.4px);
   background-size: 7px 7px;
+}
+
+/* Single-colour artwork from public/ui (built by scripts/build-ui-assets.mjs).
+   The file is only a shape; the element's background colour paints it, so
+   every mark follows the theme. Set the colour with a bg-* class. */
+@layer components {
+  .ui-mark {
+    display: inline-block;
+    flex-shrink: 0;
+    background-color: currentColor;
+    -webkit-mask: var(--mark) var(--mark-position, center) / contain no-repeat;
+    mask: var(--mark) var(--mark-position, center) / contain no-repeat;
+  }
 }
 
 /* Angular panel shapes. Small cuts so content never gets clipped. */
@@ -256,20 +289,6 @@ body {
 .typing-bar {
   animation: typing-bar 0.9s ease-in-out infinite;
   transform-origin: bottom;
-}
-
-@keyframes accent-sweep {
-  0% {
-    transform: translateX(-110%) skewX(-24deg);
-  }
-  60%,
-  100% {
-    transform: translateX(260%) skewX(-24deg);
-  }
-}
-
-.accent-sweep {
-  animation: accent-sweep 5.5s var(--ease-snap) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

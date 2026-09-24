@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
-import { BellIcon, CloseIcon } from "@/components/ui/icons";
+import { CloseIcon } from "@/components/ui/icons";
+import { UiMark } from "@/components/ui/UiMark";
 import { dismissPrompt, requestNotificationPermission } from "@/lib/notifications";
 
 /** Asked only after the user has sent something — never on first load. */
@@ -31,19 +32,19 @@ export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: ()
           role="region"
           aria-label="Notification settings"
         >
-          <div className="cut-corners flex items-center gap-3 border-l-4 border-accent bg-panel-strong p-3">
-            <BellIcon size={20} className="shrink-0 text-accent-strong" />
-            <p className="flex-1 text-[13px] leading-snug">
+          <div className="cut-corners flex items-center gap-3 bg-panel-strong p-3">
+            <UiMark name="alert" className="size-7 bg-accent" />
+            <p className="flex-1 text-sm leading-snug">
               Want a heads-up when {partner.display_name} messages you while you&apos;re away?
             </p>
             <button
               type="button"
               onClick={enable}
-              className="shape-tag text-display min-h-9 bg-accent px-3 text-xs tracking-wider text-accent-foreground"
+              className="shape-tag text-display min-h-11 bg-accent px-4 text-sm tracking-wider text-accent-foreground hover:bg-accent-strong"
             >
               Turn on
             </button>
-            <button type="button" onClick={later} className="p-1 text-muted hover:text-foreground" aria-label="Not now">
+            <button type="button" onClick={later} className="flex size-11 items-center justify-center text-muted-strong hover:text-foreground" aria-label="Not now">
               <CloseIcon size={16} />
             </button>
           </div>

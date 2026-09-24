@@ -18,7 +18,7 @@ export function ChatHeader() {
   const myStatus = activeStatus(me);
 
   return (
-    <header className="relative z-10 shrink-0 border-b border-border bg-background-raised/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+    <header className="relative z-10 shrink-0 border-b border-border bg-background-raised pt-[env(safe-area-inset-top)]">
       <div className="flex min-h-16 items-center gap-3 px-3 sm:px-5">
         <Avatar profile={partner} size="md" online={partnerOnline} />
 
@@ -87,10 +87,7 @@ export function ChatHeader() {
         </Link>
       </div>
 
-      {/* Subtle accent: a red slash sweeping along the bottom edge. */}
-      <div className="pointer-events-none absolute inset-x-0 -bottom-px h-[2px] overflow-hidden" aria-hidden="true">
-        <div className="accent-sweep h-full w-1/3 bg-accent" />
-      </div>
+      <span className="absolute -bottom-px left-0 h-[2px] w-24 -skew-x-[30deg] bg-accent" aria-hidden="true" />
 
       {pickerOpen && <StatusPicker onClose={() => setPickerOpen(false)} />}
     </header>

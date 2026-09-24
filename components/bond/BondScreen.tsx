@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EditIcon } from "@/components/ui/icons";
+import { UiMark } from "@/components/ui/UiMark";
 import { BondEditor } from "./BondEditor";
 import { createClient } from "@/lib/supabase/client";
 import { toRoman } from "@/lib/roman";
@@ -49,23 +50,17 @@ export function BondScreen() {
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 py-8 sm:px-8">
         <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-display text-xs tracking-[0.3em] text-accent-strong">Confidant file</p>
-            <h1 className="text-display text-5xl">Bond</h1>
-          </div>
+          <h1 className="text-display flex items-center gap-3 text-5xl">
+            <UiMark name="arcana" className="size-11 bg-accent" />
+            Bond
+          </h1>
           <Button variant="outline" onClick={() => setEditing(true)} disabled={!bond} aria-label="Edit bond settings">
             <EditIcon size={16} /> Edit
           </Button>
         </div>
 
         {/* The duo */}
-        <motion.section
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.28, ease: [0.2, 0.9, 0.1, 1] }}
-          className="cut-corners relative overflow-hidden bg-panel px-5 py-7"
-          aria-label="The two of you"
-        >
+        <section className="cut-corners relative overflow-hidden bg-panel px-5 py-7" aria-label="The two of you">
           <span className="absolute inset-y-0 left-1/2 w-24 -translate-x-1/2 -skew-x-[18deg] bg-accent" aria-hidden="true" />
           <span className="halftone absolute inset-y-0 left-1/2 w-40 -translate-x-1/2 -skew-x-[18deg] opacity-30" aria-hidden="true" />
           <div className="relative flex items-center justify-between gap-2">
@@ -75,17 +70,12 @@ export function BondScreen() {
             </span>
             <DuoMember name={partner.display_name} profile={partner} />
           </div>
-        </motion.section>
+        </section>
 
         {/* Level */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.28, delay: 0.06, ease: [0.2, 0.9, 0.1, 1] }}
-          className="flex flex-col items-center text-center"
-          aria-label="Bond level"
-        >
-          <p className="text-display text-sm tracking-[0.4em] text-muted-strong">Bond level</p>
+        <section className="relative flex flex-col items-center text-center" aria-label="Bond level">
+          <UiMark name="arcana" className="absolute top-2 left-1/2 size-56 -translate-x-1/2 bg-accent-deep opacity-60" />
+          <p className="text-display relative text-sm tracking-[0.4em] text-muted-strong">Bond level</p>
           <p className="text-display relative my-3 inline-flex items-end gap-3 leading-none" aria-label={`Level ${level}`}>
             <span className="relative inline-block min-w-[1.1em] px-[0.12em] text-center text-[104px] sm:text-[132px]" aria-hidden="true">
               <span className="absolute inset-x-0 top-[52%] h-[32%] -skew-x-12 bg-accent" />
@@ -96,7 +86,7 @@ export function BondScreen() {
             </span>
           </p>
           <div
-            className="flex w-full max-w-md gap-1"
+            className="relative flex w-full max-w-md gap-1"
             role="progressbar"
             aria-label="Progress to next level"
             aria-valuemin={0}
@@ -113,13 +103,13 @@ export function BondScreen() {
               />
             ))}
           </div>
-          <p className="text-display mt-5 bg-foreground px-4 py-1.5 text-xl tracking-wider text-background -skew-x-6">
+          <p className="text-display relative mt-5 bg-foreground px-4 py-1.5 text-xl tracking-wider text-background -skew-x-6">
             {bond?.title ?? "Partners in Crime"}
           </p>
-          <p className="text-display mt-3 text-sm tracking-[0.2em] text-muted">
+          <p className="text-display relative mt-3 text-sm tracking-[0.2em] text-muted-strong">
             {me.display_name} <span className="font-sans">×</span> {partner.display_name}
           </p>
-        </motion.section>
+        </section>
 
         {/* Stats */}
         <section aria-label="Statistics">
@@ -136,10 +126,10 @@ export function BondScreen() {
               <Stat label="Messages exchanged" value={stats ? stats.message_count.toLocaleString() : null} />
               <Stat
                 label="Days together"
-                value={bond?.together_since ? daysSince(bond.together_since).toLocaleString() : stats ? "—" : null}
+                value={bond?.together_since ? daysSince(bond.together_since).toLocaleString() : stats ? "Not set" : null}
                 hint={bond?.together_since ? `since ${formatLongDate(bond.together_since)}` : "Set a date in Edit"}
               />
-              <Stat label="Favorite emoji" value={stats ? stats.favorite_emoji ?? "—" : null} large />
+              <Stat label="Favorite emoji" value={stats ? stats.favorite_emoji ?? "None yet" : null} large />
               <Stat label="Photos shared" value={stats ? stats.image_count.toLocaleString() : null} />
               <Stat
                 label="First message"

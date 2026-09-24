@@ -30,7 +30,6 @@ export function SettingsScreen() {
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex max-w-xl flex-col gap-6 px-5 py-8 sm:px-8">
         <div>
-          <p className="text-display text-xs tracking-[0.3em] text-accent-strong">Your side</p>
           <h1 className="text-display text-5xl">Settings</h1>
         </div>
         <ProfileSection />
@@ -191,7 +190,7 @@ function ThemeSection() {
 
   return (
     <Panel title="Theme">
-      <div className="grid grid-cols-3 gap-3" role="radiogroup" aria-label="Theme">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" role="radiogroup" aria-label="Theme">
         {THEMES.map((t) => (
           <button
             key={t.id}
