@@ -83,3 +83,20 @@ describe("activeStatus", () => {
     expect(activeStatus({ status_emoji: "☕", status_text: null, status_updated_at: fresh }, now)).toBeNull();
   });
 });
+
+describe("delete and clear", () => {
+  it("clearing keeps only messages still sending", () => {
+    let s = chatReducer(initialChatState, { type: "loaded", rows: [row("1", "2026-01-01T00:01Z")], hasMore: true });
+    s = chatReducer(s, { type: "addLocal", message: { ...row("p", "2026-01-01T00:02Z"), local: { status: "sending" } } });
+    s = chatReducer(s, { type: "cleared" });
+    expect(s.messages.map((m) => m.id)).toEqual(["p"]);
+    expect(s.hasMore).toBe(false);
+  });
+
+  it("a deleted message replaces the original in place", () => {
+    let s = chatReducer(initialChatState, { type: "loaded", rows: [row("1", "2026-01-01T00:01Z")], hasMore: false });
+    s = chatReducer(s, { type: "upsert", rows: [row("1", "2026-01-01T00:01Z", { content: null, deleted_at: "2026-01-01T00:05Z" })] });
+    expect(s.messages[0].content).toBeNull();
+    expect(s.messages[0].deleted_at).toBe("2026-01-01T00:05Z");
+  });
+});

@@ -2,8 +2,9 @@ import type { BrowserSupabase } from "@/lib/supabase/client";
 import type { MessageRow, ReplySnippet } from "@/types/app";
 
 export const PAGE_SIZE = 50;
-const COLUMNS =
-  "id, conversation_id, sender_id, content, message_type, image_url, image_width, image_height, reply_to, created_at, delivered_at, read_at";
+// All columns: messages hold nothing large, and "*" keeps the chat loading if the
+// app ships a moment before a migration that adds a column (e.g. deleted_at).
+const COLUMNS = "*";
 
 export async function fetchLatest(supabase: BrowserSupabase, conversationId: string, limit = PAGE_SIZE) {
   const { data, error } = await supabase
@@ -73,7 +74,7 @@ export async function fetchSnippets(supabase: BrowserSupabase, ids: string[]): P
   if (!ids.length) return [];
   const { data, error } = await supabase
     .from("messages")
-    .select("id, sender_id, content, message_type")
+    .select("*")
     .in("id", ids);
   if (error) throw error;
   return data ?? [];
@@ -98,4 +99,59 @@ export async function markDelivered(supabase: BrowserSupabase, conversationId: s
 export async function markRead(supabase: BrowserSupabase, conversationId: string) {
   const { error } = await supabase.rpc("mark_messages_read", { conv: conversationId });
   if (error) throw error;
+}
+
+/** Deletes your own message for both of you. Returns the photo path to remove, if any. */
+export async function deleteMessage(supabase: BrowserSupabase, id: string) {
+  const { data, error } = await supabase.rpc("delete_message", { msg: id });
+  if (error) throw error;
+  return data;
+}
+
+/** Hides the whole history for you only. */
+export async function clearChat(supabase: BrowserSupabase, conversationId: string) {
+  const { error } = await supabase.rpc("clear_chat", { conv: conversationId });
+  if (error) throw error;
+}
+
+/** Pinned messages, newest pin first (at most 5; the database keeps it that way). */
+export async function fetchPinned(supabase: BrowserSupabase, conversationId: string) {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .not("pinned_at", "is", null)
+    .order("pinned_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function pinMessage(supabase: BrowserSupabase, id: string, pinned: boolean) {
+  const { error } = await supabase.rpc("pin_message", { msg: id, pinned });
+  if (error) throw error;
+}
+
+/** Ids of the messages you starred (yours only). */
+export async function fetchStarIds(supabase: BrowserSupabase) {
+  const { data, error } = await supabase.from("message_stars").select("message_id");
+  if (error) throw error;
+  return (data ?? []).map((r) => r.message_id);
+}
+
+export async function setStar(supabase: BrowserSupabase, id: string, starred: boolean) {
+  const { error } = starred
+    ? await supabase.from("message_stars").insert({ message_id: id })
+    : await supabase.from("message_stars").delete().eq("message_id", id);
+  if (error) throw error;
+}
+
+/** Your starred messages with their content, newest star first. */
+export async function fetchStarred(supabase: BrowserSupabase) {
+  const { data, error } = await supabase
+    .from("message_stars")
+    .select("created_at, message:messages(*)")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []).flatMap((r) => (r.message && !r.message.deleted_at ? [r.message] : []));
 }

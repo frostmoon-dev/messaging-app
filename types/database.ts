@@ -135,6 +135,7 @@ export type Database = {
           conversation_id: string
           joined_at: string
           user_id: string
+          cleared_at?: string | null
         }
         Insert: {
           conversation_id: string
@@ -345,6 +346,9 @@ export type Database = {
           read_at: string | null
           reply_to: string | null
           sender_id: string
+          deleted_at?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
         }
         Insert: {
           content?: string | null
@@ -466,6 +470,32 @@ export type Database = {
           },
         ]
       }
+      message_stars: {
+        Row: {
+          created_at: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_stars_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stickers: {
         Row: {
           conversation_id: string
@@ -537,6 +567,9 @@ export type Database = {
       is_conversation_member: { Args: { conv: string }; Returns: boolean }
       mark_messages_delivered: { Args: { conv: string }; Returns: number }
       mark_messages_read: { Args: { conv: string }; Returns: number }
+      delete_message: { Args: { msg: string }; Returns: string | null }
+      clear_chat: { Args: { conv: string }; Returns: string }
+      pin_message: { Args: { msg: string; pinned: boolean }; Returns: string | null }
       resolve_alert: { Args: { alert: string }; Returns: undefined }
       save_push_subscription: {
         Args: { sub_auth: string; sub_endpoint: string; sub_p256dh: string }

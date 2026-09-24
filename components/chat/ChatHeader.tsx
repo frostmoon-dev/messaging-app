@@ -10,13 +10,14 @@ import { activeStatus } from "@/lib/status";
 import { formatLastSeen } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { ConnectionBanner } from "./ConnectionBanner";
+import { PinnedBar } from "./PinnedBar";
 
 /**
  * Frosted glass over the top of the chat: messages (and a photo background)
  * scroll softly underneath. It floats, so it publishes its height as
  * --chat-header-h on the chat for the list's top padding.
  */
-export function ChatHeader() {
+export function ChatHeader({ onJump }: { onJump: (id: string) => void }) {
   const { partner, me } = useChat();
   const { partnerOnline, partnerTyping, partnerLastSeen } = usePresence();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -90,6 +91,7 @@ export function ChatHeader() {
         </button>
       </div>
 
+      <PinnedBar onJump={onJump} />
       <ConnectionBanner />
       {pickerOpen && <StatusPicker onClose={() => setPickerOpen(false)} />}
     </header>

@@ -20,11 +20,13 @@ export function MessageList({
   onReply,
   onJump,
   onOpenImage,
+  onActions,
 }: {
   highlightedId: string | null;
   onReply: (id: string) => void;
   onJump: (id: string) => void;
   onOpenImage: (src: string, alt: string) => void;
+  onActions: (id: string) => void;
 }) {
   const {
     me,
@@ -40,6 +42,7 @@ export function MessageList({
     discard,
     getSnippet,
     localPreview,
+    starred,
   } = useChat();
   const isTouch = useIsTouch();
 
@@ -184,6 +187,8 @@ export function MessageList({
                   onRetry={retry}
                   onDiscard={discard}
                   onOpenImage={onOpenImage}
+                  onActions={onActions}
+                  starred={starred.has(m.id)}
                 />
               </Fragment>
             );

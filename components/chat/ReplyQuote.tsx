@@ -5,6 +5,7 @@ import type { ReplySnippet } from "@/types/app";
 
 export function snippetText(snippet: ReplySnippet | undefined) {
   if (!snippet) return "Original message";
+  if (snippet.deleted_at) return "Deleted message";
   if (snippet.message_type === "image") return snippet.content ? `Photo: ${snippet.content}` : "Photo";
   if (snippet.message_type === "sticker") return "Sticker";
   if (snippet.message_type === "gif") return snippet.content ? `GIF: ${snippet.content}` : "GIF";

@@ -29,7 +29,7 @@ export type LocalState = {
 
 export type ChatMessage = MessageRow & { local?: LocalState };
 
-export type ReplySnippet = Pick<MessageRow, "id" | "sender_id" | "content" | "message_type">;
+export type ReplySnippet = Pick<MessageRow, "id" | "sender_id" | "content" | "message_type" | "deleted_at">;
 
 export type Session = {
   me: Profile;

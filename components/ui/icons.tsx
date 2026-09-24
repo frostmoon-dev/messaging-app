@@ -170,3 +170,30 @@ export const StickerIcon = (p: IconProps) => (
     <path d="M9.5 9.5h.01M14.5 9.5h.01" />
   </Svg>
 );
+
+export const MoreIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M6 12h.01M12 12h.01M18 12h.01" strokeWidth={3} />
+  </Svg>
+);
+
+export const CopyIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="9" y="9" width="11" height="11" rx="2.5" />
+    <path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15" />
+  </Svg>
+);
+
+export const PinIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M9 4h6l-1 5 3 3v2H7v-2l3-3-1-5Z" />
+    <path d="M12 14v6" />
+  </Svg>
+);
+
+/** Outline star; pass fill="currentColor" for a starred one. */
+export const StarIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9Z" />
+  </Svg>
+);
