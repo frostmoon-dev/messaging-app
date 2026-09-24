@@ -201,7 +201,7 @@ export function MessageList({
             transition={{ duration: 0.16 }}
             onClick={() => scrollToBottom()}
             className={cn(
-              "pill absolute right-4 bottom-3 flex min-h-11 min-w-12 items-center justify-center gap-2 px-4 text-small font-bold",
+              "pill absolute right-4 bottom-3 flex min-h-11 min-w-12 items-center justify-center gap-2 px-4 text-small font-bold shadow-[var(--shadow-float)]",
               unseen ? "bg-accent text-accent-foreground" : "bg-foreground text-background",
             )}
             aria-label={unseen ? `${unseen} new messages. Scroll to latest.` : "Scroll to latest message"}

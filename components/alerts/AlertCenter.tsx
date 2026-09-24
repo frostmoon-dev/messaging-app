@@ -168,7 +168,7 @@ export function AlertCenter() {
             className="fixed inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] z-50 mx-auto max-w-md"
             role="status"
           >
-            <div className="card flex items-center gap-3 border-l-4 border-accent bg-panel-strong p-3 shadow-lg">
+            <div className="card flex items-center gap-3 border-l-4 border-accent bg-panel-strong p-3 shadow-[var(--shadow-float)]">
               <MapPinIcon size={20} className="shrink-0 text-accent-text" />
               <p className="flex-1 text-small font-semibold">{toast.text}</p>
               {toast.action === "view" && (
@@ -205,7 +205,7 @@ export function AlertCenter() {
       {sos && !sosOpen && (
         // Folded SOS: stays at the top of every screen until it's answered.
         <div className="fixed inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] z-50 mx-auto max-w-md" role="alert">
-          <div className="flex items-center gap-2 rounded-full bg-[#a8182c] py-1.5 pr-1.5 pl-4 text-white shadow-lg">
+          <div className="flex items-center gap-2 rounded-full bg-[#a8182c] py-1.5 pr-1.5 pl-4 text-white shadow-[var(--shadow-float)]">
             <button type="button" onClick={() => setSosOpen(true)} className="min-h-11 flex-1 text-left text-small font-bold">
               SOS from {partner.display_name} · {formatTime(sos.created_at)}
             </button>

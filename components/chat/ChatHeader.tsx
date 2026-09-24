@@ -42,9 +42,10 @@ export function ChatHeader() {
     <header
       ref={ref}
       className={cn(
-        "absolute inset-x-0 top-0 z-20 pt-[env(safe-area-inset-top)]",
+        // Rounded underneath and lifted off the chat: a floating sheet of glass.
+        "absolute inset-x-0 top-0 z-20 rounded-b-[24px] pt-[env(safe-area-inset-top)]",
         "bg-[color-mix(in_srgb,var(--background-raised)_78%,transparent)] backdrop-blur-xl backdrop-saturate-150",
-        "shadow-[0_1px_0_color-mix(in_srgb,var(--foreground)_8%,transparent)]",
+        "shadow-[0_1px_0_color-mix(in_srgb,var(--foreground)_8%,transparent),var(--shadow-float)]",
       )}
     >
       <div className="flex min-h-[4.5rem] items-center gap-3 px-4">
