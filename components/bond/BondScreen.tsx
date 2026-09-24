@@ -59,7 +59,7 @@ export function BondScreen() {
         {/* The two of you, the app's drawing between you, and the rank. */}
         <section className="card bg-panel p-5 sm:p-6" aria-labelledby="bond-rank">
           <div className="flex items-center justify-between gap-3">
-            <Member profile={me} label="You" />
+            <Member profile={me} label={me.display_name} />
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand image */}
             <img src="/brand-mark@4x.png" alt="" width={96} height={96} className="size-20 sm:size-24" />
             <Member profile={partner} label={partner.display_name} />
@@ -149,7 +149,7 @@ function Member({ profile, label }: { profile: Profile; label: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
       <Avatar profile={profile} size="lg" />
-      <span className="max-w-full truncate text-small font-semibold">{label}</span>
+      <span className="script-name max-w-full truncate text-[1.375rem] leading-snug">{label}</span>
     </div>
   );
 }

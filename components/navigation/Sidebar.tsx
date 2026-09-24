@@ -27,7 +27,7 @@ export function Sidebar() {
         <div className="flex items-center gap-3">
           <Avatar profile={partner} size="lg" online={partnerOnline} />
           <div className="min-w-0">
-            <p className="truncate text-title font-bold">{partner.display_name}</p>
+            <p className="truncate script-name text-[1.625rem] leading-snug">{partner.display_name}</p>
             <p className={cn("text-small", partnerOnline ? "text-online" : "text-muted")}>
               {partnerOnline ? "Online" : formatLastSeen(partnerLastSeen)}
             </p>
@@ -92,7 +92,7 @@ export function Sidebar() {
       <div className="mt-auto flex items-center gap-3 border-t border-border px-1 pt-4">
         <Avatar profile={me} size="sm" showStatus />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-small font-semibold">{me.display_name}</p>
+          <p className="truncate script-name text-[1.125rem] leading-snug">{me.display_name}</p>
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
