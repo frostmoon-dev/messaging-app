@@ -1,0 +1,315 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Design tokens
+   Every colour in the app comes from these variables. Add a new theme by
+   adding another [data-theme="..."] block and listing it in lib/themes.ts.
+   ========================================================================== */
+
+:root,
+[data-theme="phantom"] {
+  --background: #0a0a0b;
+  --background-raised: #121214;
+  --foreground: #f6f3ee;
+  --muted: #8d8a93;
+  --muted-strong: #b9b5bf;
+  --panel: #18181b;
+  --panel-strong: #202024;
+  --border: #2c2c31;
+  --accent: #e3162f;
+  --accent-strong: #ff2d47;
+  --accent-deep: #8f0d1d;
+  --accent-foreground: #ffffff;
+  --incoming: #efebe3;
+  --incoming-foreground: #121212;
+  --incoming-shadow: #3a3a40;
+  --outgoing: #e3162f;
+  --outgoing-foreground: #ffffff;
+  --outgoing-shadow: #5c0812;
+  --danger: #ff5d6c;
+  --success: #f6f3ee;
+  --focus: #ffe14d;
+  --texture-opacity: 0.07;
+  --stripe: rgba(227, 22, 47, 0.06);
+  color-scheme: dark;
+}
+
+/* Softer variant for long late-night conversations. */
+[data-theme="midnight"] {
+  --background: #09090c;
+  --background-raised: #101015;
+  --foreground: #ecebf0;
+  --muted: #86858f;
+  --muted-strong: #b0afb8;
+  --panel: #16161c;
+  --panel-strong: #1d1d25;
+  --border: #292933;
+  --accent: #d0233a;
+  --accent-strong: #ee3a52;
+  --accent-deep: #6d0f1b;
+  --accent-foreground: #ffffff;
+  --incoming: #23232c;
+  --incoming-foreground: #ecebf0;
+  --incoming-shadow: #000000;
+  --outgoing: #b81d31;
+  --outgoing-foreground: #ffffff;
+  --outgoing-shadow: #3d0810;
+  --stripe: rgba(208, 35, 58, 0.04);
+  --texture-opacity: 0.05;
+}
+
+/* Alternate accent to prove the system; same structure, blue energy. */
+[data-theme="cobalt"] {
+  --background: #07090f;
+  --background-raised: #0e121b;
+  --foreground: #f1f4fa;
+  --muted: #858c9c;
+  --muted-strong: #aeb5c4;
+  --panel: #131825;
+  --panel-strong: #1a2030;
+  --border: #262e42;
+  --accent: #1f6bff;
+  --accent-strong: #4c8bff;
+  --accent-deep: #0d2f75;
+  --accent-foreground: #ffffff;
+  --incoming: #e9edf5;
+  --incoming-foreground: #0b0e16;
+  --incoming-shadow: #2b3347;
+  --outgoing: #1f6bff;
+  --outgoing-foreground: #ffffff;
+  --outgoing-shadow: #0a2361;
+  --stripe: rgba(31, 107, 255, 0.06);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-raised: var(--background-raised);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-panel: var(--panel);
+  --color-panel-strong: var(--panel-strong);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-incoming: var(--incoming);
+  --color-incoming-foreground: var(--incoming-foreground);
+  --color-outgoing: var(--outgoing);
+  --color-outgoing-foreground: var(--outgoing-foreground);
+  --color-danger: var(--danger);
+  --color-focus: var(--focus);
+
+  --font-display: var(--font-anton), "Impact", "Haettenschweiler", "Arial Narrow Bold", sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.1, 1);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+html,
+body {
+  height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* App shell height follows the *visual* viewport so the on-screen keyboard
+   never covers the composer. --app-height is set by useViewportHeight(). */
+.app-height {
+  height: 100dvh;
+  height: var(--app-height, 100dvh);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Texture + geometry
+   ========================================================================== */
+
+/* Diagonal speed lines + halftone-ish grain. Very low contrast on purpose. */
+.bg-texture {
+  background-color: var(--background);
+  background-image:
+    repeating-linear-gradient(
+      -58deg,
+      transparent 0 22px,
+      var(--stripe) 22px 24px
+    );
+}
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--texture-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.halftone {
+  background-image: radial-gradient(var(--accent) 1px, transparent 1.4px);
+  background-size: 7px 7px;
+}
+
+/* Angular panel shapes. Small cuts so content never gets clipped. */
+.cut-corners {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.cut-corners-sm {
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+
+.shape-incoming {
+  clip-path: polygon(0 3px, 100% 0, calc(100% - 5px) 100%, 7px calc(100% - 2px));
+}
+
+.shape-outgoing {
+  clip-path: polygon(5px 0, 100% 3px, calc(100% - 7px) calc(100% - 2px), 0 100%);
+}
+
+.shape-tag {
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+
+.shape-slant {
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+.shadow-incoming {
+  filter: drop-shadow(3px 3px 0 var(--incoming-shadow));
+}
+
+.shadow-outgoing {
+  filter: drop-shadow(-3px 3px 0 var(--outgoing-shadow));
+}
+
+.text-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 0.95;
+}
+
+/* ==========================================================================
+   Motion helpers
+   ========================================================================== */
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%) skewX(-20deg);
+  }
+  to {
+    transform: translateX(200%) skewX(-20deg);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: shimmer 1.4s var(--ease-snap) infinite;
+}
+
+@keyframes typing-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35) skewX(-18deg);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1) skewX(-18deg);
+    opacity: 1;
+  }
+}
+
+.typing-bar {
+  animation: typing-bar 0.9s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+@keyframes accent-sweep {
+  0% {
+    transform: translateX(-110%) skewX(-24deg);
+  }
+  60%,
+  100% {
+    transform: translateX(260%) skewX(-24deg);
+  }
+}
+
+.accent-sweep {
+  animation: accent-sweep 5.5s var(--ease-snap) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Hide scrollbars visually on touch devices; keep them on desktop. */
+@media (pointer: coarse) {
+  .scroll-area {
+    scrollbar-width: none;
+  }
+  .scroll-area::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (pointer: fine) {
+  .scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+}
+
+.sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Give the keyboard the room: hide bottom nav while typing on phones. */
+html[data-keyboard="open"] .bottom-nav {
+  display: none;
+}
