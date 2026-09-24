@@ -49,7 +49,7 @@
   --online: #5bd08a;
   --danger: #ff8e8e;
   --focus: #ececec;
-  --frame: #e8e8e8;
+  --frame: #5c5c5c; /* avatar ring: between border and field-border */
   --title-shadow: #4d4d4d;
   color-scheme: dark;
 }
@@ -79,7 +79,7 @@
   --online: #146b39;
   --danger: #a8182c;
   --focus: #171717;
-  --frame: #1c1c1c;
+  --frame: #a8a6a1; /* avatar ring: warm grey, between border and field-border */
   --title-shadow: #b3b1ac;
   color-scheme: light;
 }
@@ -111,7 +111,7 @@
     --online: #146b39;
     --danger: #a8182c;
     --focus: #171717;
-    --frame: #1c1c1c;
+    --frame: #a8a6a1;
     --title-shadow: #b3b1ac;
     color-scheme: light;
   }
@@ -344,7 +344,7 @@ body {
   height: 40px;
   font-weight: 800;
   font-size: 13px;
-  border: 3px solid var(--frame);
+  border: 3px solid var(--foreground);
   border-radius: 9999px;
 }
 .map-me {
