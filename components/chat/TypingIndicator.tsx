@@ -4,15 +4,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { usePresence, useChat } from "@/components/providers/ChatProvider";
 
 /**
- * The game's "talk" speech bubble with three dots, where the reply will
- * appear. Same colour as an incoming message.
+ * Three dots in an incoming bubble, where the reply will appear. It floats
+ * over the end of the list (which leaves room for it) instead of reserving
+ * a strip of its own, so messages scroll all the way down to the composer.
  */
 export function TypingIndicator() {
   const { partnerTyping } = usePresence();
   const { partner } = useChat();
 
   return (
-    <div className="pointer-events-none relative h-10 px-4" aria-live="polite">
+    <div className="pointer-events-none absolute inset-x-0 bottom-1 h-10 px-4" aria-live="polite">
       <AnimatePresence>
         {partnerTyping && (
           <motion.div

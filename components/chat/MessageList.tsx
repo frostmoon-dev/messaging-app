@@ -128,7 +128,8 @@ export function MessageList({
         aria-relevant="additions"
         tabIndex={0}
       >
-        <div className="flex flex-col pt-4 pb-2">
+        {/* pb-12: room at the end for the typing bubble that floats there. */}
+        <div className="flex flex-col pt-4 pb-12">
           <div ref={topRef} aria-hidden="true" />
           {hasMore && (
             <div className="flex justify-center py-3">
