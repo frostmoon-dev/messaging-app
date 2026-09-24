@@ -58,13 +58,7 @@ export function ChatWindow() {
   }, []);
 
   return (
-    <motion.section
-      initial={{ opacity: 0, x: 24 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25, ease: [0.2, 0.9, 0.1, 1] }}
-      className="relative flex h-full min-h-0 flex-col"
-      aria-label="Chat"
-    >
+    <section className="relative flex h-full min-h-0 flex-col" aria-label="Chat">
       <ChatHeader />
       <ConnectionBanner />
       <MessageList
@@ -79,7 +73,7 @@ export function ChatWindow() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="mx-auto mb-1 bg-panel-strong px-3 py-1 text-xs text-muted-strong"
+            className="mx-auto mb-1 rounded-full bg-panel-strong px-3 py-1 text-small"
             role="status"
           >
             {jumpError}
@@ -90,6 +84,6 @@ export function ChatWindow() {
       <NotificationPrompt open={askNotify} onDone={() => setAskNotify(false)} />
       <MessageComposer replyTo={replyTo} onCancelReply={() => setReplyTo(null)} onSent={onSent} />
       {viewer && <ImageViewer src={viewer.src} alt={viewer.alt} onClose={() => setViewer(null)} />}
-    </motion.section>
+    </section>
   );
 }

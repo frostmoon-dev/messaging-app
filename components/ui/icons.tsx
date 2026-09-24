@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-// Original, minimal stroke icons. Decorative by default (aria-hidden);
+// Original, minimal stroke icons (rounded to match the type). Decorative by default (aria-hidden);
 // the surrounding button supplies the accessible label.
 type IconProps = SVGProps<SVGSVGElement> & { size?: number };
 
@@ -12,9 +12,9 @@ function Svg({ size = 22, children, ...rest }: IconProps) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2.2}
-      strokeLinecap="square"
-      strokeLinejoin="miter"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
       {...rest}

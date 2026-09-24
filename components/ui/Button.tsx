@@ -4,20 +4,20 @@ import { motion, type HTMLMotionProps } from "framer-motion";
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "ghost" | "outline" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger";
 
+// Hover changes colour, never opacity: faded buttons read as disabled.
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-accent text-accent-foreground hover:bg-accent-strong",
+  secondary: "bg-panel-strong text-foreground hover:bg-border",
   ghost: "bg-transparent text-foreground hover:bg-panel-strong",
-  // A clip-path would cut a border, so "outline" is a quiet filled slab.
-  outline: "bg-panel-strong text-foreground hover:bg-border",
-  danger: "bg-danger/10 text-danger hover:bg-danger/20",
+  danger: "bg-transparent text-danger hover:bg-accent-soft",
 };
 
-type ButtonProps = HTMLMotionProps<"button"> & { variant?: Variant; slanted?: boolean };
+type ButtonProps = HTMLMotionProps<"button"> & { variant?: Variant };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = "primary", slanted = true, className, type = "button", disabled, ...rest },
+  { variant = "primary", className, type = "button", disabled, ...rest },
   ref,
 ) {
   return (
@@ -25,12 +25,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={type}
       disabled={disabled}
-      whileTap={disabled ? undefined : { scale: 0.96, x: 1 }}
-      transition={{ duration: 0.12 }}
+      whileTap={disabled ? undefined : { scale: 0.97 }}
+      transition={{ duration: 0.1 }}
       className={cn(
-        "text-display inline-flex min-h-11 items-center justify-center gap-2 px-5 text-[15px] tracking-wider transition-colors",
-        "disabled:cursor-not-allowed disabled:opacity-40",
-        slanted && "shape-slant px-6",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 text-body font-semibold transition-colors",
+        "disabled:cursor-not-allowed disabled:bg-panel-strong disabled:text-muted",
         VARIANTS[variant],
         className,
       )}
@@ -52,11 +51,11 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       aria-label={label}
       title={label}
       disabled={disabled}
-      whileTap={disabled ? undefined : { scale: 0.9 }}
-      transition={{ duration: 0.12 }}
+      whileTap={disabled ? undefined : { scale: 0.92 }}
+      transition={{ duration: 0.1 }}
       className={cn(
-        "inline-flex size-11 shrink-0 items-center justify-center text-foreground transition-colors",
-        "hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-40",
+        "inline-flex size-11 shrink-0 items-center justify-center rounded-control text-muted-strong transition-colors",
+        "hover:bg-panel-strong hover:text-foreground disabled:cursor-not-allowed disabled:text-muted",
         active && "text-accent-strong",
         className,
       )}

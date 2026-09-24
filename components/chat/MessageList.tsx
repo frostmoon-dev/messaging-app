@@ -107,8 +107,8 @@ export function MessageList({
   if (!loaded && loadError) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center" role="alert">
-        <p className="text-display text-2xl">Signal lost</p>
-        <p className="text-sm text-muted-strong">{loadError}</p>
+        <p className="text-title font-bold">Messages didn&apos;t load</p>
+        <p className="text-small text-muted-strong">{loadError}</p>
         <Button onClick={() => void reload()}>Try again</Button>
       </div>
     );
@@ -133,14 +133,14 @@ export function MessageList({
           {hasMore && (
             <div className="flex justify-center py-3">
               {loadingOlder ? (
-                <span className="text-display text-[11px] tracking-[0.25em] text-muted">Loading history…</span>
+                <span className="text-small text-muted">Loading earlier messages…</span>
               ) : (
                 <button
                   type="button"
                   onClick={() => void loadOlder()}
-                  className="text-display min-h-9 px-3 text-[11px] tracking-[0.25em] text-muted hover:text-foreground"
+                  className="min-h-11 rounded-full px-4 text-small text-muted-strong hover:bg-panel-strong hover:text-foreground"
                 >
-                  Load earlier
+                  Load earlier messages
                 </button>
               )}
             </div>
@@ -199,8 +199,8 @@ export function MessageList({
             transition={{ duration: 0.16 }}
             onClick={() => scrollToBottom()}
             className={cn(
-              "shape-tag text-display absolute right-4 bottom-3 flex min-h-10 items-center gap-2 px-4 text-xs tracking-widest",
-              unseen ? "bg-accent text-accent-foreground" : "bg-panel-strong text-foreground",
+              "absolute right-4 bottom-3 flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full border border-border px-3 text-small font-semibold",
+              unseen ? "border-transparent bg-accent text-accent-foreground" : "bg-background-raised text-foreground",
             )}
             aria-label={unseen ? `${unseen} new messages. Scroll to latest.` : "Scroll to latest message"}
           >
@@ -215,12 +215,10 @@ export function MessageList({
 
 function DayDivider({ iso }: { iso: string }) {
   return (
-    <div className="my-4 flex items-center gap-3 px-6" role="separator" aria-label={formatDayLabel(iso)}>
-      <span className="h-px flex-1 bg-border" />
-      <span className="shape-tag text-display bg-panel-strong px-3 py-1 text-[11px] tracking-[0.25em] text-muted-strong">
+    <div className="my-4 flex justify-center px-4" role="separator" aria-label={formatDayLabel(iso)}>
+      <span className="rounded-full bg-panel-strong px-3 py-0.5 text-meta font-semibold text-muted-strong">
         {formatDayLabel(iso)}
       </span>
-      <span className="h-px flex-1 bg-border" />
     </div>
   );
 }
@@ -238,8 +236,8 @@ function ChatSkeleton() {
     <div className="flex flex-1 flex-col justify-end gap-3 px-4 pb-4" aria-busy="true" aria-label="Loading messages">
       {rows.map((r, i) => (
         <div key={i} className={cn("flex items-end gap-2", r.mine ? "justify-end" : "justify-start")}>
-          {!r.mine && <Skeleton className="size-9" />}
-          <Skeleton className={cn("h-11 max-w-[70%]", r.w)} />
+          {!r.mine && <Skeleton className="size-9 rounded-full" />}
+          <Skeleton className={cn("h-10 max-w-[70%] rounded-bubble", r.w)} />
         </div>
       ))}
     </div>

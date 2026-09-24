@@ -2,10 +2,11 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
-import { BellIcon, CloseIcon } from "@/components/ui/icons";
+import { BellIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/Button";
 import { dismissPrompt, requestNotificationPermission } from "@/lib/notifications";
 
-/** Asked only after the user has sent something — never on first load. */
+/** Asked only after the user has sent something, never on first load. */
 export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: () => void }) {
   const { partner } = useChat();
 
@@ -23,29 +24,23 @@ export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: ()
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 16 }}
-          transition={{ duration: 0.2 }}
-          className="mx-3 mb-2 sm:mx-5"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.16 }}
+          className="mx-4 mb-2"
           role="region"
           aria-label="Notification settings"
         >
-          <div className="cut-corners flex items-center gap-3 border-l-4 border-accent bg-panel-strong p-3">
-            <BellIcon size={20} className="shrink-0 text-accent-strong" />
-            <p className="flex-1 text-[13px] leading-snug">
-              Want a heads-up when {partner.display_name} messages you while you&apos;re away?
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-border bg-panel p-3">
+            <BellIcon size={20} className="shrink-0 text-muted-strong" />
+            <p className="min-w-40 flex-1 text-small">
+              Get notified when {partner.display_name} writes while you are away?
             </p>
-            <button
-              type="button"
-              onClick={enable}
-              className="shape-tag text-display min-h-9 bg-accent px-3 text-xs tracking-wider text-accent-foreground"
-            >
-              Turn on
-            </button>
-            <button type="button" onClick={later} className="p-1 text-muted hover:text-foreground" aria-label="Not now">
-              <CloseIcon size={16} />
-            </button>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={later}>Not now</Button>
+              <Button onClick={enable}>Turn on</Button>
+            </div>
           </div>
         </motion.div>
       )}

@@ -44,17 +44,17 @@ export function MemoryViewer({
 
   return (
     <Dialog onClose={onClose} label={memory.title} variant="fullscreen" className="w-full max-w-lg px-4">
-      <article className="relative bg-incoming p-3 pb-5 text-incoming-foreground shadow-[6px_6px_0_var(--accent)]">
+      <article className="relative overflow-hidden rounded-[20px] bg-background-raised pb-5">
         <button
           type="button"
           onClick={onClose}
-          className="shape-tag absolute -top-3 -right-3 z-10 flex size-11 items-center justify-center bg-accent text-accent-foreground"
+          className="absolute top-3 right-3 z-10 flex size-11 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
           aria-label="Close"
           autoFocus
         >
           <CloseIcon size={20} />
         </button>
-        <div className="flex max-h-[60dvh] items-center justify-center overflow-hidden bg-black/10">
+        <div className="flex max-h-[60dvh] items-center justify-center overflow-hidden bg-black">
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element -- signed URL from a private bucket
             <img src={url} alt={memory.title} className="max-h-[60dvh] w-full object-contain" />
@@ -62,20 +62,20 @@ export function MemoryViewer({
             <div className="skeleton aspect-square w-full" />
           )}
         </div>
-        <h2 className="text-display mt-3 text-3xl">{memory.title}</h2>
-        <p className="text-xs tracking-wide opacity-60">
+        <h2 className="mt-4 px-5 text-title font-bold">{memory.title}</h2>
+        <p className="px-5 text-small text-muted">
           {formatLongDate(memory.memory_date)} · saved by {mine ? "you" : partner.display_name}
         </p>
-        {memory.caption && <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-wrap">{memory.caption}</p>}
+        {memory.caption && <p className="mt-3 max-w-prose px-5 whitespace-pre-wrap">{memory.caption}</p>}
 
-        {error && <p className="mt-3 text-sm text-accent" role="alert">{error}</p>}
+        {error && <p className="mt-3 px-5 text-small text-danger" role="alert">{error}</p>}
 
         {mine && (
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end px-3">
             {confirming ? (
               <div className="flex items-center gap-2">
-                <span className="text-sm">Delete this memory?</span>
-                <Button variant="ghost" slanted={false} className="text-incoming-foreground" onClick={() => setConfirming(false)}>
+                <span className="text-small">Delete for both of you?</span>
+                <Button variant="ghost" onClick={() => setConfirming(false)}>
                   Keep
                 </Button>
                 <Button onClick={remove} disabled={busy}>{busy ? "Deleting…" : "Delete"}</Button>
@@ -84,7 +84,7 @@ export function MemoryViewer({
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className="inline-flex min-h-10 items-center gap-1.5 px-2 text-sm opacity-70 hover:opacity-100"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-control px-3 text-small text-muted-strong hover:bg-accent-soft hover:text-danger"
               >
                 <TrashIcon size={16} /> Delete
               </button>

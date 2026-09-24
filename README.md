@@ -1,6 +1,6 @@
 # HEARTLINE
 
-A private messenger for exactly two people. Loud red/black/white look, quiet UX.
+A private messenger for exactly two people. Calm, readable, and built around the conversation.
 
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Framer Motion · Supabase (Auth, Postgres + RLS, Realtime, Storage) · installable PWA.
 
@@ -12,7 +12,7 @@ A private messenger for exactly two people. Loud red/black/white look, quiet UX.
 - Reconnects on its own and fills any gap in messages
 - **Bond** screen (level, title, progress, stats — all set by hand), **Memories** scrapbook, daily status
 - Browser notifications when you're away (asked only after you send something), optional sounds (off by default)
-- Three themes built on CSS variables (`app/globals.css`), mobile-first layout with keyboard-safe composer
+- Automatic / Dark / Light themes built on CSS variables (`app/globals.css`, WCAG AA contrast), mobile-first layout with keyboard-safe composer
 
 ## Security model
 
@@ -73,5 +73,5 @@ npm run dev                 # http://127.0.0.1:3000
 - **Notifications** are local notifications: they fire while the app is open or in a background tab. Getting pinged while the app is fully closed needs Web Push (VAPID keys + a server trigger), which is not included.
 - **iPhone:** notifications only work after "Add to Home Screen" (iOS 16.4+).
 - **Enter to send:** on keyboards Enter sends and Shift+Enter adds a line. On touch screens Enter adds a line and the send button sends, like native messengers.
-- Fonts: Anton and Inter (both SIL Open Font License) via `next/font`, self-hosted at build time with system fallbacks.
-- The visual identity is original: no Persona 5 assets, fonts, logos or sounds.
+- Fonts: Atkinson Hyperlegible Next for all text and Atkinson Hyperlegible Mono for numbers (both SIL Open Font License, Braille Institute) via `next/font`, self-hosted at build time.
+- Icons are generated from one source by `npm run icons` (`scripts/generate-icons.mjs`).

@@ -12,9 +12,8 @@ import { friendlyError, MESSAGES } from "@/lib/errors";
 import { todayDateOnly } from "@/lib/time";
 import { uuid } from "@/lib/utils";
 import type { MemoryRow } from "@/types/app";
+import { fieldClass as inputClass, labelClass } from "@/components/ui/field";
 
-const inputClass = "w-full border border-border bg-panel px-3 py-2.5 text-[16px] outline-none focus:border-accent";
-const labelClass = "text-display mb-1.5 block text-xs tracking-[0.2em] text-muted-strong";
 
 export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCreated: (m: MemoryRow) => void }) {
   const { conversationId } = useChat();
@@ -97,13 +96,10 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
 
   return (
     <Dialog onClose={busy ? () => {} : onClose} label="Add a memory" className="w-full sm:w-[460px]">
-      <form onSubmit={submit} className="cut-corners max-h-[90dvh] overflow-y-auto bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <form onSubmit={submit} className="max-h-[90dvh] overflow-y-auto rounded-t-[20px] bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[20px]">
         <div className="mb-5 flex items-start justify-between">
-          <div>
-            <p className="text-display text-xs tracking-[0.3em] text-accent-strong">Scrapbook</p>
-            <h2 className="text-display text-3xl">New memory</h2>
-          </div>
-          <button type="button" onClick={onClose} disabled={busy} className="p-2 text-muted hover:text-foreground" aria-label="Close">
+          <h2 className="text-title font-bold">New memory</h2>
+          <button type="button" onClick={onClose} disabled={busy} className="-mt-1 -mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground" aria-label="Close">
             <CloseIcon size={20} />
           </button>
         </div>
@@ -125,7 +121,7 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={busy}
-          className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden border-2 border-dashed border-border bg-panel hover:border-accent"
+          className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-card border-2 border-dashed border-border bg-panel transition-colors hover:border-muted"
           aria-label={image ? "Change photo" : "Choose a photo"}
         >
           {preview ? (
@@ -136,7 +132,7 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
           ) : (
             <span className="flex flex-col items-center gap-2 text-muted-strong">
               <ImageIcon size={28} />
-              <span className="text-display text-sm tracking-[0.2em]">Choose a photo</span>
+              <span className="font-semibold">Choose a photo</span>
             </span>
           )}
         </button>
@@ -159,18 +155,18 @@ export function MemoryForm({ onClose, onCreated }: { onClose: () => void; onCrea
             onChange={(e) => setCaption(e.target.value)}
             className={`${inputClass} resize-none`}
           />
-          <p className="mt-1 text-right text-[11px] text-muted">{caption.length}/280</p>
+          <p className="mt-1 text-right font-mono text-meta text-muted">{caption.length}/280</p>
         </div>
 
         {progress !== null && (
-          <div className="mt-2 h-2 -skew-x-12 bg-panel-strong" role="progressbar" aria-label="Upload progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
-            <div className="h-full bg-accent transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-panel-strong" role="progressbar" aria-label="Upload progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
+            <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
         )}
-        {error && <p className="mt-3 text-sm text-danger" role="alert">{error}</p>}
+        {error && <p className="mt-3 text-small text-danger" role="alert">{error}</p>}
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button variant="ghost" slanted={false} onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
           <Button type="submit" disabled={!valid || busy || preparing}>
             {busy ? "Saving…" : "Save memory"}
           </Button>

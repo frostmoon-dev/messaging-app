@@ -5,7 +5,7 @@ import type { ReplySnippet } from "@/types/app";
 
 export function snippetText(snippet: ReplySnippet | undefined) {
   if (!snippet) return "Original message";
-  if (snippet.message_type === "image") return snippet.content ? `📷 ${snippet.content}` : "📷 Photo";
+  if (snippet.message_type === "image") return snippet.content ? `Photo: ${snippet.content}` : "Photo";
   return snippet.content ?? "";
 }
 
@@ -26,15 +26,13 @@ export function ReplyQuote({
       type="button"
       onClick={onClick}
       className={cn(
-        "mb-1.5 block w-full border-l-[3px] px-2.5 py-1.5 text-left text-[13px] leading-snug transition-opacity hover:opacity-80",
-        tone === "outgoing"
-          ? "border-white/80 bg-black/20 text-white/90"
-          : "border-accent bg-black/[0.07] text-incoming-foreground/80",
+        "mb-1.5 block w-full rounded-[10px] px-3 py-1.5 text-left text-small transition-colors",
+        tone === "outgoing" ? "bg-black/20 hover:bg-black/30" : "bg-black/[0.08] hover:bg-black/[0.12]",
       )}
       aria-label={`Replying to ${authorName}: ${snippetText(snippet)}. Jump to message.`}
     >
-      <span className="text-display block text-[10px] tracking-[0.2em] opacity-80">{authorName}</span>
-      <span className="line-clamp-2 break-words [overflow-wrap:anywhere]">{snippetText(snippet)}</span>
+      <span className="block text-meta font-bold">{authorName}</span>
+      <span className="line-clamp-2 break-words opacity-90 [overflow-wrap:anywhere]">{snippetText(snippet)}</span>
     </button>
   );
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { PlusIcon } from "@/components/ui/icons";
+import { MemoriesIcon, PlusIcon } from "@/components/ui/icons";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { MemoryCard } from "./MemoryCard";
 import { MemoryForm } from "./MemoryForm";
 import { MemoryViewer } from "./MemoryViewer";
@@ -40,53 +41,54 @@ export function MemoriesScreen() {
 
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto max-w-4xl px-5 py-8 sm:px-8">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-display text-xs tracking-[0.3em] text-accent-strong">Private scrapbook</p>
-            <h1 className="text-display text-5xl">Memories</h1>
-          </div>
-          <Button onClick={() => setAdding(true)} aria-label="Add a memory">
-            <PlusIcon size={18} /> Add
-          </Button>
-        </div>
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-8">
+        <PageHeader
+          title="Memories"
+          description="Photos worth keeping. Only the two of you can see them."
+          action={
+            memories && memories.length > 0 ? (
+              <Button onClick={() => setAdding(true)}>
+                <PlusIcon size={18} /> Add
+              </Button>
+            ) : undefined
+          }
+        />
 
         {error && (
-          <div className="mb-6 flex items-center justify-between gap-3 bg-panel p-4 text-sm" role="alert">
-            <span className="text-muted-strong">{error}</span>
-            <Button variant="outline" onClick={() => void load()}>Retry</Button>
+          <div className="flex items-center justify-between gap-3 rounded-card border border-border bg-panel p-4" role="alert">
+            <span className="text-small text-muted-strong">{error}</span>
+            <Button variant="secondary" onClick={() => void load()}>Try again</Button>
           </div>
         )}
 
         {memories === null && !error && (
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3" aria-busy="true" aria-label="Loading memories">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3" aria-busy="true" aria-label="Loading memories">
             {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="aspect-[4/5] w-full" />
+              <Skeleton key={i} className="aspect-square w-full rounded-card" />
             ))}
           </div>
         )}
 
         {memories?.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col items-center py-16 text-center"
-          >
-            <p className="text-display -rotate-3 bg-foreground px-4 py-2 text-3xl text-background">Blank pages</p>
-            <p className="mt-5 max-w-xs text-sm text-muted-strong">
-              Keep the good ones here — a photo, a title, a date. Only the two of you can see them.
+          <div className="flex flex-col items-center rounded-card border border-dashed border-border px-6 py-14 text-center">
+            <span className="mb-4 flex size-14 items-center justify-center rounded-full bg-accent-soft text-accent-strong" aria-hidden="true">
+              <MemoriesIcon size={26} />
+            </span>
+            <p className="text-title font-bold">No memories yet</p>
+            <p className="mt-2 max-w-xs text-small text-muted-strong">
+              Save a photo with a title and a date. It stays here for both of you.
             </p>
             <Button className="mt-6" onClick={() => setAdding(true)}>
-              <PlusIcon size={18} /> First memory
+              <PlusIcon size={18} /> Add the first memory
             </Button>
-          </motion.div>
+          </div>
         )}
 
         {memories && memories.length > 0 && (
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 sm:gap-x-6">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3">
             <AnimatePresence initial={false}>
-              {memories.map((m, i) => (
-                <MemoryCard key={m.id} memory={m} index={i} onOpen={() => setViewing(m)} />
+              {memories.map((m) => (
+                <MemoryCard key={m.id} memory={m} onOpen={() => setViewing(m)} />
               ))}
             </AnimatePresence>
           </ul>

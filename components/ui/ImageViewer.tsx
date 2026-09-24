@@ -14,7 +14,7 @@ export function ImageViewer({ src, alt, onClose, children }: {
       <button
         type="button"
         onClick={onClose}
-        className="shape-tag absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex size-11 items-center justify-center bg-accent text-accent-foreground"
+        className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex size-11 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
         aria-label="Close image"
         autoFocus
       >
@@ -24,7 +24,7 @@ export function ImageViewer({ src, alt, onClose, children }: {
       <img
         src={src}
         alt={alt}
-        className="max-h-[calc(var(--app-height,100dvh)-9rem)] max-w-full object-contain shadow-[6px_6px_0_var(--accent)]"
+        className="max-h-[calc(var(--app-height,100dvh)-9rem)] max-w-full rounded-card object-contain"
         onClick={onClose}
       />
       {children}
