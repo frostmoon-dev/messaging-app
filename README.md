@@ -16,11 +16,13 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - **Map**: see each other while sharing is on (live while the app is open), send "I'm here", ask "Where are you?", get directions
 - **SOS**: two taps send an emergency alert with your location. The other phone gets an urgent notification that stays on screen, and a full-screen alarm with a siren if Napyru is open
 - Notifications read like "Rafie ♡ · Sent you a message" and never include message text
-- Themes: **Ink** (default: soft black and white, rounded shapes with Persona 5 slanted buttons and titles), **Paper** (the light version of Ink), Automatic (Ink at night, Paper by day). The only colours are green for "online" and red for danger
+- Look taken from the app icon (an ink drawing in a circle): round portraits, pill buttons, evenly rounded cards with a hairline ink line, one brush stroke under page titles
+- Themes: **Ink** (default: soft black and white), **Paper** (the light version of Ink), Automatic (Ink at night, Paper by day). The only colours are green for "online" and red for danger
 - **Chat background** (Settings): plain, dots, grid, slash, or your own photo, cropped and dimmed. Saved on the device only; the photo is never uploaded
 - Photo cropper (drag, pinch or slider to zoom) for memories, your avatar and the chat background
 - Colours are checked by `npm run contrast` (WCAG 2.2) and follow eye-comfort rules; see "Colour" below. Mobile-first layout with keyboard-safe composer
-- Game artwork from `public/assets` (Persona 3 Reload textures) turned into single-colour marks by `npm run ui-assets` and recoloured by the theme: status icons, talk bubble, arcana, sakura, rank-up, chevron, time-of-day banners
+- **Stickers and GIFs** (the sticker button next to the photo button): your own shared sticker pack made from photos (cropped, transparent PNGs keep their transparency), plus GIF and sticker search from GIPHY. GIFs play as small looping videos you can pause, and wait for a tap when the phone asks for reduced motion
+- Status icons come from `public/assets` (Persona 3 Reload textures), turned into single-colour marks by `npm run ui-assets`
 
 ## Security model
 
@@ -41,6 +43,7 @@ Copy `.env.example` → `.env.local`.
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | app | Project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | app | Publishable (public) key |
+| `GIPHY_API_KEY` | server (optional) | GIF and sticker search. Server-only. |
 | `SUPABASE_SECRET_KEY` | **scripts/tests only** | Secret key. Never add it to your host / Vercel. |
 | `SETUP_USER_{1,2}_{EMAIL,PASSWORD,USERNAME,DISPLAY_NAME}` | setup script | The two accounts |
 
@@ -96,6 +99,13 @@ How it works: a new message → a database trigger (`pg_net`) → the `send-push
 2. Redeploy the function so it knows reminders and alerts: `npx supabase functions deploy send-push`.
 3. Check that the reminder job exists: `select jobname, schedule from cron.job;` shows `napyru-reminders` every minute.
 4. On each phone, open **Map** once and allow location when asked.
+
+### Stickers and GIFs
+
+1. `npx supabase db push` applies `20260927000000_stickers_gifs.sql` (the sticker pack, a private `stickers` bucket, and the new message types).
+2. Optional, for GIF search: create an app at [developers.giphy.com](https://developers.giphy.com), copy its API key, and set `GIPHY_API_KEY` where the app runs (Vercel → Settings → Environment Variables, then redeploy). It is server-only: never prefix it with `NEXT_PUBLIC_`. A free beta key allows 100 searches an hour; the app caches results for 10 minutes. Without a key, the GIF tabs say so and your own stickers still work.
+
+Tenor isn't an option: Google shut its API down on 30 June 2026.
 
 **Limits, honestly:** a web app can only read location while it's open, so live sharing pauses when Napyru is closed ("I'm here" and SOS send the location at that moment). The SOS siren plays only when Napyru is open; when it's closed, the phone shows the urgent notification with its normal sound, and silent mode can mute it. SOS is not a replacement for calling emergency services.
 

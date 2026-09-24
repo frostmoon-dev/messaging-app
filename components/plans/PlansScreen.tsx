@@ -27,7 +27,7 @@ export function PlansScreen() {
   const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false);
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-8 sm:px-8">{hydrated ? <Plans /> : <PlansSkeleton />}</div>
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-8">{hydrated ? <Plans /> : <PlansSkeleton />}</div>
     </div>
   );
 }
@@ -114,7 +114,7 @@ function Plans() {
       />
 
       {error && (
-        <div className="p5-panel flex items-center justify-between gap-3 bg-panel p-4" role="alert">
+        <div className="card flex items-center justify-between gap-3 bg-panel p-4" role="alert">
           <span className="text-small text-muted-strong">{error}</span>
           <Button variant="secondary" onClick={() => void load()}>
             Try again
@@ -122,15 +122,15 @@ function Plans() {
         </div>
       )}
 
-      <section className="p5-panel bg-panel p-4 sm:p-5" aria-labelledby="month-label">
+      <section className="card bg-panel p-4 sm:p-5" aria-labelledby="month-label">
         <div className="mb-3 flex items-center justify-between">
-          <button type="button" onClick={() => move(-1)} className="flex size-11 items-center justify-center hover:bg-panel-strong" aria-label="Previous month">
+          <button type="button" onClick={() => move(-1)} className="rounded-full flex size-11 items-center justify-center hover:bg-panel-strong" aria-label="Previous month">
             <ChevronLeftIcon size={20} />
           </button>
           <h2 id="month-label" className="text-title font-bold" aria-live="polite">
             {monthFormat.format(cursor)}
           </h2>
-          <button type="button" onClick={() => move(1)} className="flex size-11 items-center justify-center hover:bg-panel-strong" aria-label="Next month">
+          <button type="button" onClick={() => move(1)} className="rounded-full flex size-11 items-center justify-center hover:bg-panel-strong" aria-label="Next month">
             <ChevronRightIcon size={20} />
           </button>
         </div>
@@ -158,17 +158,22 @@ function Plans() {
                     aria-selected={isSelected}
                     aria-label={`${dayFormat.format(day)}${count ? `, ${count} plan${count > 1 ? "s" : ""}` : ""}`}
                     onClick={() => setSelected(day)}
-                    className={cn(
-                      "relative flex h-12 flex-col items-center justify-center font-mono text-body transition-colors",
-                      !inMonth && "text-muted",
-                      isSelected ? "p5-button bg-accent font-bold text-accent-foreground" : "hover:bg-panel-strong",
-                      isToday && !isSelected && "font-bold text-accent-text",
-                    )}
+                    className="group flex h-12 items-center justify-center"
                   >
-                    {day.getDate()}
-                    {count > 0 && (
-                      <span className={cn("absolute bottom-1.5 size-1.5 rounded-full", isSelected ? "bg-accent-foreground" : "bg-accent")} aria-hidden="true" />
-                    )}
+                    {/* A circle, not the whole cell, so every day reads as a round dot on the grid. */}
+                    <span
+                      className={cn(
+                        "relative flex size-11 items-center justify-center rounded-full font-mono text-body transition-colors",
+                        !inMonth && "text-muted",
+                        isSelected ? "bg-accent font-bold text-accent-foreground" : "group-hover:bg-panel-strong",
+                        isToday && !isSelected && "font-bold text-accent-text ring-1 ring-field-border",
+                      )}
+                    >
+                      {day.getDate()}
+                      {count > 0 && (
+                        <span className={cn("absolute bottom-1 size-1.5 rounded-full", isSelected ? "bg-accent-foreground" : "bg-accent")} aria-hidden="true" />
+                      )}
+                    </span>
                   </button>
                 );
               })}
@@ -184,7 +189,7 @@ function Plans() {
         {events === null ? (
           <Skeleton className="h-20 w-full" />
         ) : dayEvents.length === 0 ? (
-          <div className="p5-panel flex items-center justify-between gap-3 bg-panel p-4">
+          <div className="card flex items-center justify-between gap-3 bg-panel p-4">
             <p className="text-small text-muted-strong">Nothing planned.</p>
             <Button variant="secondary" onClick={() => setEditing("new")}>
               <PlusIcon size={16} /> Add a plan
@@ -236,7 +241,7 @@ function EventItem({ event, by, showDate, onOpen }: { event: EventRow; by: strin
   const start = new Date(event.starts_at);
   return (
     <li>
-      <button type="button" onClick={onOpen} className="p5-panel flex w-full items-start gap-4 bg-panel p-4 text-left transition-colors hover:bg-panel-strong">
+      <button type="button" onClick={onOpen} className="card flex w-full items-start gap-4 bg-panel p-4 text-left transition-colors hover:bg-panel-strong">
         <span className="w-16 shrink-0 font-mono text-small font-bold text-accent-text">
           {event.all_day ? "All day" : timeFormat.format(start)}
         </span>

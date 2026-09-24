@@ -16,7 +16,7 @@ export function DesktopHeader() {
           : "Connecting…";
 
   return (
-    <header className="hidden h-16 shrink-0 items-center gap-6 border-b border-border bg-background-raised px-6 lg:flex">
+    <header className="hidden h-16 shrink-0 items-center gap-6 border-b border-border bg-background-raised px-4 lg:flex">
       <Wordmark />
       <p className="mr-auto text-small text-muted-strong" role="status">
         {text}

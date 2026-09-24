@@ -160,3 +160,13 @@ export const LocateIcon = (p: IconProps) => (
     <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
   </Svg>
 );
+
+/** A peeling sticker: square with a folded corner and a smile. */
+export const StickerIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M20 12.5V8a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h4.5Z" />
+    <path d="M20 12.5 12.5 20v-3.5a4 4 0 0 1 4-4Z" />
+    <path d="M9 13.5a3.5 3.5 0 0 0 3 1.5" />
+    <path d="M9.5 9.5h.01M14.5 9.5h.01" />
+  </Svg>
+);

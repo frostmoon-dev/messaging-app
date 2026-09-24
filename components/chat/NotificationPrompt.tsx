@@ -2,8 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
-import { CloseIcon } from "@/components/ui/icons";
-import { UiMark } from "@/components/ui/UiMark";
+import { BellIcon, CloseIcon } from "@/components/ui/icons";
 import { dismissPrompt, requestNotificationPermission } from "@/lib/notifications";
 import { enablePush } from "@/lib/push";
 import { devLog } from "@/lib/utils";
@@ -35,15 +34,15 @@ export function NotificationPrompt({ open, onDone }: { open: boolean; onDone: ()
           role="region"
           aria-label="Notification settings"
         >
-          <div className="p5-panel flex items-center gap-3 bg-panel-strong p-3">
-            <UiMark name="alert" className="size-7 bg-accent" />
+          <div className="card flex items-center gap-3 bg-panel-strong p-3">
+            <BellIcon size={22} className="shrink-0 text-muted-strong" />
             <p className="flex-1 text-small">
               Get a notification when {partner.display_name} writes while you&apos;re away?
             </p>
             <button
               type="button"
               onClick={enable}
-              className="p5-button min-h-11 bg-accent px-4 text-small font-bold text-accent-foreground hover:bg-accent-hover"
+              className="pill min-h-11 bg-accent px-4 text-small font-bold text-accent-foreground hover:bg-accent-hover"
             >
               Turn on
             </button>

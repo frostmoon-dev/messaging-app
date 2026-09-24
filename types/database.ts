@@ -466,6 +466,51 @@ export type Database = {
           },
         ]
       }
+      stickers: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          created_by: string
+          id: string
+          image_height: number | null
+          image_path: string
+          image_width: number | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          image_height?: number | null
+          image_path: string
+          image_width?: number | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          image_height?: number | null
+          image_path?: string
+          image_width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stickers_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stickers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

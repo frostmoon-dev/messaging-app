@@ -1,11 +1,11 @@
 "use client";
 
+import { ArrowDownIcon } from "@/components/ui/icons";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { MessageBubble } from "./MessageBubble";
 import { EmptyChat } from "./EmptyChat";
-import { UiMark } from "@/components/ui/UiMark";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { formatDayLabel, isSameDay, minutesApart } from "@/lib/time";
@@ -199,14 +199,13 @@ export function MessageList({
             transition={{ duration: 0.16 }}
             onClick={() => scrollToBottom()}
             className={cn(
-              "p5-button absolute right-4 bottom-3 flex min-h-11 min-w-12 items-center justify-center gap-2 px-4 text-small font-bold",
+              "pill absolute right-4 bottom-3 flex min-h-11 min-w-12 items-center justify-center gap-2 px-4 text-small font-bold",
               unseen ? "bg-accent text-accent-foreground" : "bg-foreground text-background",
             )}
             aria-label={unseen ? `${unseen} new messages. Scroll to latest.` : "Scroll to latest message"}
           >
             {unseen > 0 && <span>{unseen} new</span>}
-            {/* The dialogue box "next" chevron, pointing down to the latest line. */}
-            <UiMark name="chevron" className="h-2.5 w-7 rotate-180 bg-current" />
+            <ArrowDownIcon size={18} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -218,7 +217,7 @@ function DayDivider({ iso }: { iso: string }) {
   return (
     <div className="my-4 flex justify-center px-4" role="separator" aria-label={formatDayLabel(iso)}>
       {/* A small paper tag, like the game's date labels. */}
-      <span className="day-tag p5-button bg-foreground px-3 py-0.5 text-meta font-bold text-background">
+      <span className="day-tag pill bg-foreground px-3 py-0.5 text-meta font-bold text-background">
         {formatDayLabel(iso)}
       </span>
     </div>

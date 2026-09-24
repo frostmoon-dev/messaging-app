@@ -37,7 +37,7 @@ type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Pro
 export function SettingsScreen() {
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex max-w-xl flex-col gap-6 px-5 py-8 sm:px-8">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-8">
         <PageHeader title="Settings" />
         <ProfileSection />
         <ThemeSection />
@@ -182,7 +182,7 @@ function ProfileSection() {
       {pickerOpen && <StatusPicker onClose={() => setPickerOpen(false)} />}
       {pending && (
         <Dialog onClose={uploading ? () => {} : closeCropper} label="Crop your avatar" className="w-full sm:w-[420px]">
-          <div className="border-t-4 border-accent bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             <h2 className="mb-4 text-title font-bold">Crop your avatar</h2>
             <ImageCropper
               src={pending.url}

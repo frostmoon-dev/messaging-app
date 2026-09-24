@@ -1,10 +1,10 @@
 "use client";
 
+import { AlertIcon } from "@/components/ui/icons";
 import { useActionState } from "react";
 import { signIn, type SignInState } from "@/lib/auth/actions";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { DayClock } from "@/components/ui/DayClock";
-import { UiMark } from "@/components/ui/UiMark";
 import { Button } from "@/components/ui/Button";
 import { fieldClass, labelClass } from "@/components/ui/field";
 
@@ -21,10 +21,11 @@ export function LoginForm() {
       </div>
 
       <section className="m-auto w-full max-w-sm" aria-labelledby="login-title">
-        <h1 id="login-title" className="p5-title relative z-10 ml-3 text-display">
+        <h1 id="login-title" className="page-title text-display">
           Sign in
         </h1>
-        <div className="p5-panel -mt-3 bg-panel px-6 pt-9 pb-7 sm:px-7">
+        <span className="ink-stroke mt-3" aria-hidden="true" />
+        <div className="card mt-6 bg-panel p-6 sm:p-7">
           <p className="text-body text-muted-strong">A private line for two people.</p>
 
           <form action={action} className="mt-6 flex flex-col gap-4" noValidate>
@@ -62,8 +63,8 @@ export function LoginForm() {
             </div>
 
             {state.error && (
-              <p id="login-error" role="alert" className="flex items-center gap-2.5 bg-panel-strong px-3 py-2.5 text-small">
-                <UiMark name="alert" className="size-6 bg-danger" />
+              <p id="login-error" role="alert" className="flex items-center gap-2.5 rounded-xl bg-panel-strong px-3 py-2.5 text-small">
+                <AlertIcon size={20} className="shrink-0 text-danger" />
                 {state.error}
               </p>
             )}

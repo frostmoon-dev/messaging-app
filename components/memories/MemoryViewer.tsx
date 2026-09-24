@@ -44,7 +44,7 @@ export function MemoryViewer({
 
   return (
     <Dialog onClose={onClose} label={memory.title} variant="fullscreen" className="w-full max-w-lg px-4">
-      <article className="relative overflow-hidden rounded-[20px] border-t-4 border-accent bg-background-raised pb-5">
+      <article className="relative overflow-hidden rounded-[20px] bg-background-raised pb-5">
         <button
           type="button"
           onClick={onClose}
@@ -84,7 +84,7 @@ export function MemoryViewer({
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className="inline-flex min-h-11 items-center gap-1.5 px-3 text-small text-muted-strong hover:bg-panel-strong hover:text-danger"
+                className="rounded-full inline-flex min-h-11 items-center gap-1.5 px-3 text-small text-muted-strong hover:bg-panel-strong hover:text-danger"
               >
                 <TrashIcon size={16} /> Delete
               </button>

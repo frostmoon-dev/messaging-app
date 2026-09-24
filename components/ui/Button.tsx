@@ -8,10 +8,10 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 // Hover changes colour, never opacity: faded buttons read as disabled.
 const VARIANTS: Record<Variant, string> = {
-  primary: "p5-button bg-accent px-5 font-bold text-accent-foreground hover:bg-accent-hover",
-  secondary: "p5-button bg-panel-strong px-5 text-foreground hover:bg-border",
-  ghost: "bg-transparent text-foreground hover:bg-panel-strong",
-  danger: "bg-transparent text-danger hover:bg-panel-strong",
+  primary: "pill bg-accent px-5 font-bold text-accent-foreground hover:bg-accent-hover",
+  secondary: "pill bg-panel-strong px-5 text-foreground hover:bg-border",
+  ghost: "pill bg-transparent text-foreground hover:bg-panel-strong",
+  danger: "pill bg-transparent text-danger hover:bg-panel-strong",
 };
 
 type ButtonProps = HTMLMotionProps<"button"> & { variant?: Variant };
@@ -54,7 +54,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       whileTap={disabled ? undefined : { scale: 0.92 }}
       transition={{ duration: 0.1 }}
       className={cn(
-        "inline-flex size-11 shrink-0 items-center justify-center text-muted-strong transition-colors",
+        "inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted-strong transition-colors",
         "hover:bg-panel-strong hover:text-foreground disabled:cursor-not-allowed disabled:text-muted",
         active && "text-accent-text",
         className,

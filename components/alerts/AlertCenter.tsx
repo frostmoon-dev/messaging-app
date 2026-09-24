@@ -133,14 +133,14 @@ export function AlertCenter() {
             className="fixed inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] z-50 mx-auto max-w-md"
             role="status"
           >
-            <div className="p5-panel flex items-center gap-3 border-l-4 border-accent bg-panel-strong p-3 shadow-lg">
+            <div className="card flex items-center gap-3 border-l-4 border-accent bg-panel-strong p-3 shadow-lg">
               <MapPinIcon size={20} className="shrink-0 text-accent-text" />
               <p className="flex-1 text-small font-semibold">{toast.text}</p>
               {toast.action === "view" && (
                 <Link
                   href={`/map?alert=${toast.alertId}`}
                   onClick={() => setToast(null)}
-                  className="p5-button flex min-h-11 items-center bg-accent px-4 text-small font-bold text-accent-foreground hover:bg-accent-hover"
+                  className="pill flex min-h-11 items-center bg-accent px-4 text-small font-bold text-accent-foreground hover:bg-accent-hover"
                 >
                   View
                 </Link>
@@ -149,7 +149,7 @@ export function AlertCenter() {
                 <button
                   type="button"
                   onClick={() => void shareNow()}
-                  className="p5-button min-h-11 bg-accent px-4 text-small font-bold text-accent-foreground hover:bg-accent-hover"
+                  className="pill min-h-11 bg-accent px-4 text-small font-bold text-accent-foreground hover:bg-accent-hover"
                 >
                   Share
                 </button>
@@ -171,8 +171,8 @@ export function AlertCenter() {
         // Emergency uses a fixed red in every theme: it is the only colour
         // in the app, so it can't be missed.
         <Dialog onClose={silence} label={`SOS from ${partner.display_name}`} variant="fullscreen" className="w-full max-w-md px-4">
-          <div role="alertdialog" aria-labelledby="sos-title" aria-describedby="sos-body" className="p5-panel bg-[#a8182c] p-6 text-white">
-            <p className="text-small font-bold tracking-wide uppercase">Emergency</p>
+          <div role="alertdialog" aria-labelledby="sos-title" aria-describedby="sos-body" className="card bg-[#a8182c] p-6 text-white">
+            <p className="text-small font-bold">Emergency</p>
             <h2 id="sos-title" className="mt-1 text-display leading-tight font-extrabold">
               SOS from {partner.display_name}
             </h2>
@@ -187,7 +187,7 @@ export function AlertCenter() {
                   <Link
                     href={`/map?alert=${sos.id}`}
                     onClick={silence}
-                    className="p5-button flex min-h-12 items-center justify-center gap-2 bg-white px-5 font-bold text-[#7a1020]"
+                    className="pill flex min-h-12 items-center justify-center gap-2 bg-white px-5 font-bold text-[#7a1020]"
                   >
                     <MapPinIcon size={18} /> See where on the map
                   </Link>
@@ -196,13 +196,13 @@ export function AlertCenter() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={silence}
-                    className="p5-button flex min-h-12 items-center justify-center border-2 border-white px-5 font-bold"
+                    className="pill flex min-h-12 items-center justify-center border-2 border-white px-5 font-bold"
                   >
                     Directions
                   </a>
                 </>
               )}
-              <button type="button" onClick={() => void handle()} className="p5-button min-h-12 bg-[#1b1a1e] px-5 font-bold text-white">
+              <button type="button" onClick={() => void handle()} className="pill min-h-12 bg-[#1b1a1e] px-5 font-bold text-white">
                 I&apos;m on it
               </button>
               <button type="button" onClick={silence} className="min-h-11 text-small font-semibold underline underline-offset-2">

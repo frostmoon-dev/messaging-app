@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ReplyIcon, RetryIcon, TrashIcon } from "@/components/ui/icons";
 import { MessageStatus } from "./MessageStatus";
 import { ReplyQuote } from "./ReplyQuote";
+import { MessageGif, MessageSticker } from "./MessageSticker";
 import { MessageImage } from "./MessageImage";
 import { formatTime } from "@/lib/time";
 import { isEmojiOnly, tokenize } from "@/lib/text";
@@ -55,6 +56,9 @@ function MessageBubbleImpl({
   const hintOpacity = useTransform(x, [0, SWIPE_THRESHOLD], [0, 1]);
   const failed = message.local?.status === "failed";
   const emojiOnly = message.message_type === "text" && isEmojiOnly(message.content);
+  // Stickers and GIFs sit on the chat without a bubble; their `content` is a description, not text to show.
+  const media = message.message_type === "sticker" || message.message_type === "gif";
+  const bare = emojiOnly || media;
   const tokens = useMemo(() => (message.content ? tokenize(message.content) : []), [message.content]);
   const time = formatTime(message.created_at);
   const showMeta = lastInGroup || Boolean(message.local);
@@ -119,11 +123,9 @@ function MessageBubbleImpl({
           <div
             className={cn(
               "relative overflow-hidden",
-              emojiOnly
-                ? "bg-transparent px-1 py-0.5"
+              bare
+                ? cn("bg-transparent", emojiOnly && "px-1 py-0.5")
                 : cn(
-                    // Persona 5 texting screen: white bubbles in, red bubbles out,
-                    // each a slightly uneven four-sided shape.
                     mine ? "bubble-out bg-outgoing text-outgoing-foreground" : "bubble-in bg-incoming text-incoming-foreground",
                     message.message_type === "image" ? "p-1.5" : "px-4 py-2.5",
                   ),
@@ -137,15 +139,29 @@ function MessageBubbleImpl({
                 snippet={replySnippet}
                 authorName={replyAuthorName}
                 onClick={() => onJump(message.reply_to!)}
-                tone={mine ? "outgoing" : "incoming"}
+                className={message.message_type === "image" || media ? "rounded-[14px]" : "rounded-[10px]"}
               />
             )}
 
             {message.message_type === "image" && (
-              <MessageImage message={message} localPreview={localPreview} onOpen={onOpenImage} />
+              <MessageImage
+                message={message}
+                localPreview={localPreview}
+                onOpen={onOpenImage}
+                // Inner corners = bubble corners (20px, 6px at the tail) minus the 6px padding.
+                className={cn(
+                  "rounded-[14px]",
+                  !message.content && (mine ? "rounded-br-[2px]" : "rounded-bl-[2px]"),
+                )}
+              />
             )}
 
-            {message.content && (
+            {message.message_type === "sticker" && <MessageSticker message={message} />}
+            {message.message_type === "gif" && (
+              <MessageGif message={message} tailClass={mine ? "rounded-br-[6px]" : "rounded-bl-[6px]"} />
+            )}
+
+            {message.content && !media && (
               <p
                 className={cn(
                   "whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
@@ -192,14 +208,14 @@ function MessageBubbleImpl({
             <button
               type="button"
               onClick={() => onRetry(message.id)}
-              className="inline-flex min-h-11 items-center gap-1 px-2 font-semibold text-foreground hover:bg-panel-strong"
+              className="rounded-full inline-flex min-h-11 items-center gap-1 px-2 font-semibold text-foreground hover:bg-panel-strong"
             >
               <RetryIcon size={14} /> Retry
             </button>
             <button
               type="button"
               onClick={() => onDiscard(message.id)}
-              className="inline-flex size-11 items-center justify-center text-muted hover:bg-panel-strong hover:text-foreground"
+              className="rounded-full inline-flex size-11 items-center justify-center text-muted hover:bg-panel-strong hover:text-foreground"
               aria-label="Delete unsent message"
             >
               <TrashIcon size={14} />

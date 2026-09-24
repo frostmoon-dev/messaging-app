@@ -50,7 +50,6 @@
   --danger: #ff8e8e;
   --focus: #ececec;
   --frame: #5c5c5c; /* avatar ring: between border and field-border */
-  --title-shadow: #4d4d4d;
   color-scheme: dark;
 }
 
@@ -80,7 +79,6 @@
   --danger: #a8182c;
   --focus: #171717;
   --frame: #a8a6a1; /* avatar ring: warm grey, between border and field-border */
-  --title-shadow: #b3b1ac;
   color-scheme: light;
 }
 
@@ -112,7 +110,6 @@
     --danger: #a8182c;
     --focus: #171717;
     --frame: #a8a6a1;
-    --title-shadow: #b3b1ac;
     color-scheme: light;
   }
 }
@@ -200,10 +197,9 @@ body {
 
 /* ==========================================================================
    Shapes
-   Soft and sleek by default (Ink, Paper): rounded panels, bubbles, avatars
-   and tags, with a Persona 5 edge kept where it helps you find things:
-   slanted buttons, a tilted title label and a slanted selection marker.
-   Text is never slanted, italic or stretched.
+   Taken from the app icon, an ink drawing in a circle: round portraits,
+   pill buttons, evenly rounded cards with a hairline ink line, and one
+   brush stroke under page titles. Nothing is slanted, tilted or clipped.
    ========================================================================== */
 
 @layer components {
@@ -217,51 +213,43 @@ body {
     mask: var(--mark) var(--mark-position, center) / contain no-repeat;
   }
 
-  /* Panels: rounded, with one tighter corner (top right) as a quiet edge. */
-  .p5-panel {
-    border-radius: 18px 5px 18px 18px;
+  /* Cards: evenly rounded, with a hairline "ink line" drawn in the text
+     colour at low strength, like the ring around the app icon. */
+  .card {
+    border-radius: 20px;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 10%, transparent);
   }
 
-  /* Buttons: a slanted slab, the Persona 5 edge. Hover changes colour;
-     nothing fades. */
-  .p5-button {
-    clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  /* Buttons and tags are pills. Hover changes colour; nothing fades. */
+  .pill {
+    border-radius: 9999px;
   }
 
-  /* Page title: one or two heavy capital words on a label, tilted a
-     little, with a block behind. Capitals only for short labels: they read
-     fast at a glance but slow down anything longer. */
-  .p5-title {
-    display: inline-block;
-    position: relative;
-    isolation: isolate;
-    padding: 0.2em 0.45em 0.15em;
+  /* Page title: large, bold, sentence case, with a short rounded ink
+     stroke under it (the one flourish, taken from the drawing's brush). */
+  .page-title {
     font-weight: 800;
-    text-transform: uppercase;
-    line-height: 1;
-    color: var(--background);
-    background: var(--foreground);
-    transform: rotate(-2deg);
-    box-shadow: 6px 6px 0 var(--title-shadow);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  /* Its own element (not ::after) so the title row can centre its action on the text. */
+  .ink-stroke {
+    display: block;
+    width: 32px;
+    height: 4px;
+    border-radius: 9999px;
+    background: currentColor;
   }
 
-  /* Selected menu item: a slanted bar behind upright text. */
-  .p5-cursor {
-    position: relative;
-    isolation: isolate;
-    color: var(--accent-foreground);
-  }
-  .p5-cursor::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: var(--accent);
-    clip-path: polygon(10px 0, 100% 3px, calc(100% - 6px) 100%, 0 calc(100% - 4px));
+  /* Selected menu item: a soft pill behind it. */
+  .nav-current {
+    border-radius: 9999px;
+    background: var(--accent-soft);
+    color: var(--foreground);
   }
 
   /* Portraits are round, like the app icon. */
-  .p5-frame {
+  .portrait {
     border-radius: 9999px;
   }
 
@@ -277,7 +265,6 @@ body {
   /* Small labels (day dividers) are pills. */
   .day-tag {
     border-radius: 9999px;
-    clip-path: none;
   }
 }
 
@@ -323,6 +310,34 @@ body {
 .leaflet-container {
   background: var(--panel-strong);
   font-family: var(--font-sans);
+}
+
+/* Zoom buttons as a rounded pair in the theme colours, like the rest of the app. */
+.leaflet-touch .leaflet-bar,
+.leaflet-bar {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: none;
+}
+.leaflet-bar a,
+.leaflet-touch .leaflet-bar a {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  background: var(--background-raised);
+  color: var(--foreground);
+  border-bottom-color: var(--border);
+}
+.leaflet-bar a:hover {
+  background: var(--panel-strong);
+  color: var(--foreground);
+}
+.leaflet-bar a:first-child,
+.leaflet-bar a:last-child,
+.leaflet-touch .leaflet-bar a:first-child,
+.leaflet-touch .leaflet-bar a:last-child {
+  border-radius: 0;
 }
 
 /* Dark themes dim and invert the (bright) OpenStreetMap tiles so the map

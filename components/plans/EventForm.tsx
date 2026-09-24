@@ -83,7 +83,7 @@ export function EventForm({
     <Dialog onClose={busy ? () => {} : onClose} label={event ? "Edit plan" : "New plan"} className="w-full sm:w-[460px]">
       <form
         onSubmit={save}
-        className="max-h-[90dvh] overflow-y-auto border-t-4 border-accent bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+        className="max-h-[90dvh] overflow-y-auto bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
       >
         <div className="mb-5 flex items-start justify-between">
           <h2 className="text-title font-bold">{event ? "Edit plan" : "New plan"}</h2>
@@ -91,7 +91,7 @@ export function EventForm({
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="-mt-1 -mr-2 flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
+            className="rounded-full -mt-1 -mr-2 flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
             aria-label="Close"
           >
             <CloseIcon size={20} />

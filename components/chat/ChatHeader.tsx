@@ -22,7 +22,7 @@ export function ChatHeader() {
 
   return (
     <header className="relative z-10 shrink-0 border-b border-border bg-background-raised pt-[env(safe-area-inset-top)]">
-      <div className="flex min-h-16 items-center gap-3 px-3 sm:px-5">
+      <div className="flex min-h-16 items-center gap-3 px-4">
         <Link href="/bond" className="shrink-0" aria-label={`Bond with ${partner.display_name}`}>
           <Avatar profile={partner} size="md" online={partnerOnline} />
         </Link>
@@ -51,7 +51,7 @@ export function ChatHeader() {
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="p5-button flex min-h-11 items-center gap-2 bg-panel-strong px-4 text-small font-semibold text-foreground transition-colors hover:bg-border"
+          className="pill flex min-h-11 items-center gap-2 bg-panel-strong px-4 text-small font-semibold text-foreground transition-colors hover:bg-border"
           aria-label={myStatus ? `Your status: ${myStatus.text}. Change status` : "Set your status"}
         >
           {myStatus?.icon && <StatusIcon icon={myStatus.icon} />}

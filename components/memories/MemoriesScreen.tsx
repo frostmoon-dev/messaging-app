@@ -5,8 +5,7 @@ import { AnimatePresence } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { PlusIcon } from "@/components/ui/icons";
-import { UiMark } from "@/components/ui/UiMark";
+import { MemoriesIcon, PlusIcon } from "@/components/ui/icons";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { MemoryCard, memoryAspect } from "./MemoryCard";
 import { MemoryForm } from "./MemoryForm";
@@ -62,8 +61,8 @@ export function MemoriesScreen() {
 
   return (
     <div className="scroll-area h-full overflow-y-auto pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto max-w-4xl px-5 py-8 sm:px-8">
-        <div className="mb-8">
+      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-8 sm:py-8">
+        <div className="mb-6">
           <PageHeader
             title="Memories"
             description="Photos worth keeping. Only the two of you can see them."
@@ -78,7 +77,7 @@ export function MemoriesScreen() {
         </div>
 
         {error && (
-          <div className="p5-panel flex items-center justify-between gap-3 bg-panel p-4" role="alert">
+          <div className="card flex items-center justify-between gap-3 bg-panel p-4" role="alert">
             <span className="text-small text-muted-strong">{error}</span>
             <Button variant="secondary" onClick={() => void load()}>Try again</Button>
           </div>
@@ -94,7 +93,9 @@ export function MemoriesScreen() {
 
         {memories?.length === 0 && (
           <div className="flex flex-col items-center py-16 text-center">
-            <UiMark name="sakura" className="mb-5 size-20 bg-accent" />
+            <span className="mb-5 flex size-20 items-center justify-center rounded-full bg-panel-strong text-muted-strong">
+              <MemoriesIcon size={32} />
+            </span>
             <p className="text-title font-bold">No memories yet</p>
             <p className="mt-2 max-w-xs text-body text-muted-strong">Add a photo, a title and a date.</p>
             <Button className="mt-6" onClick={() => setAdding(true)}>

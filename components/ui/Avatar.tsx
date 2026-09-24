@@ -35,8 +35,8 @@ export function Avatar({ profile, size = "md", online, showStatus = false, class
 
   return (
     <span className={cn("relative inline-flex shrink-0", SIZES[size], className)}>
-      <span className="p5-frame flex size-full bg-frame p-[1.5px]">
-        <span className="p5-frame flex size-full items-center justify-center overflow-hidden bg-panel-strong font-bold text-foreground">
+      <span className="portrait flex size-full bg-frame p-[1.5px]">
+        <span className="portrait flex size-full items-center justify-center overflow-hidden bg-panel-strong font-bold text-foreground">
           {showImage ? (
             // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL from a private bucket
             <img

@@ -54,15 +54,34 @@ function toBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
   return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
 }
 
-/** WebP, or JPEG where the browser can't write WebP (older Safari). */
+/** True when any pixel is see-through (PNG cut-outs, stickers). */
+function hasTransparency(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return false;
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 3; i < data.length; i += 4) if (data[i] < 255) return true;
+  return false;
+}
+
+/**
+ * WebP where the browser can write it. Safari on iPhone can't, so it falls
+ * back to JPEG, or PNG when the image has transparency: JPEG has none and
+ * would turn see-through areas black.
+ */
 async function encode(canvas: HTMLCanvasElement) {
   let blob = await toBlob(canvas, "image/webp", 0.82);
   let contentType = "image/webp";
   let extension = "webp";
   if (!blob || blob.type !== "image/webp") {
-    blob = await toBlob(canvas, "image/jpeg", 0.85);
-    contentType = "image/jpeg";
-    extension = "jpg";
+    if (hasTransparency(canvas)) {
+      blob = await toBlob(canvas, "image/png", 1);
+      contentType = "image/png";
+      extension = "png";
+    } else {
+      blob = await toBlob(canvas, "image/jpeg", 0.85);
+      contentType = "image/jpeg";
+      extension = "jpg";
+    }
   }
   if (!blob) throw new ImageValidationError("Couldn't process that image.");
   if (blob.size > MAX_UPLOAD_BYTES) throw new ImageValidationError("That image is still too large after compression.");

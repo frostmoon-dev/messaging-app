@@ -136,7 +136,7 @@ export function ChatBackgroundSection() {
               className="h-11 flex-1 accent-[var(--accent)]"
             />
           </label>
-          <Button variant="ghost" className="self-start px-3" onClick={() => fileRef.current?.click()}>
+          <Button variant="ghost" className="self-start" onClick={() => fileRef.current?.click()}>
             <ImageIcon size={18} /> Choose another photo
           </Button>
         </div>
@@ -150,7 +150,7 @@ export function ChatBackgroundSection() {
 
       {pending && (
         <Dialog onClose={saving ? () => {} : closeCropper} label="Crop chat background" className="w-full sm:w-[420px]">
-          <div className="max-h-[92dvh] overflow-y-auto border-t-4 border-accent bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="max-h-[92dvh] overflow-y-auto bg-background-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             <h2 className="mb-4 text-title font-bold">Chat background</h2>
             <ImageCropper
               src={pending.url}

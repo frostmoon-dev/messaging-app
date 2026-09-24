@@ -23,7 +23,7 @@ export function Sidebar() {
 
   return (
     <aside className="hidden w-[288px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-background-raised p-4 lg:flex">
-      <section aria-label={`${partner.display_name}'s profile`} className="p5-panel bg-background p-4">
+      <section aria-label={`${partner.display_name}'s profile`} className="card bg-background p-4">
         <div className="flex items-center gap-3">
           <Avatar profile={partner} size="lg" online={partnerOnline} />
           <div className="min-w-0">
@@ -53,8 +53,8 @@ export function Sidebar() {
                   onClick={() => playSound("navigate")}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex min-h-12 items-center gap-3 px-4 text-body transition-colors",
-                    active ? "p5-cursor font-bold" : "text-muted-strong hover:bg-panel-strong hover:text-foreground",
+                    "flex min-h-12 items-center gap-3 rounded-full px-4 text-body transition-colors",
+                    active ? "nav-current font-bold" : "text-muted-strong hover:bg-panel-strong hover:text-foreground",
                   )}
                 >
                   <Icon size={20} />
@@ -75,7 +75,7 @@ export function Sidebar() {
       {bond && (
         <Link
           href="/bond"
-          className="p5-panel block bg-background p-4 transition-colors hover:bg-panel-strong"
+          className="card block bg-background p-4 transition-colors hover:bg-panel-strong"
           aria-label={`Bond rank ${bond.level}, ${bond.title}, ${bond.progress}% to the next rank`}
         >
           <div className="flex items-baseline justify-between gap-2">
