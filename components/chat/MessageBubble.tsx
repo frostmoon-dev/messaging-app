@@ -248,7 +248,7 @@ function MessageBubbleImpl({
           dragElastic={{ left: 0, right: 0.35 }}
           dragSnapToOrigin
           onDragEnd={onDragEnd}
-          style={{ x, touchAction: "pan-y" }}
+          style={{ x, touchAction: "pan-y pinch-zoom" }}
           className="relative min-w-0"
           {...pressHandlers}
         >

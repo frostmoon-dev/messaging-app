@@ -80,12 +80,21 @@ export function MessageList({
   // Swipe left anywhere on the chat to see every message's time, like
   // iMessage. Written straight to CSS variables: no re-render per frame.
   const swipe = useRef<{ x: number; y: number; on: boolean | null } | null>(null);
+  const revealRest = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(revealRest.current), []);
   const setReveal = (px: number, dragging: boolean) => {
     const el = contentRef.current;
     if (!el) return;
+    if (dragging) clearTimeout(revealRest.current);
     el.style.setProperty("--reveal", `${px}px`);
     el.style.setProperty("--reveal-o", String(px / REVEAL_MAX));
+    // "0px 0" (not none) while it slides back, so the return animates; then none.
+    el.style.setProperty("--reveal-x", `${-px}px 0`);
     el.dataset.revealing = String(dragging);
+    if (!dragging && px === 0) {
+      clearTimeout(revealRest.current);
+      revealRest.current = setTimeout(() => el.style.removeProperty("--reveal-x"), 320);
+    }
   };
   const swipeHandlers = {
     onPointerDown: (e: React.PointerEvent) => {
@@ -199,8 +208,8 @@ export function MessageList({
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        // overflow-x hidden: the times wait just off the right edge. pan-y: sideways swipes reach us.
-        className="scroll-area relative flex min-h-0 flex-1 touch-pan-y flex-col-reverse overflow-x-hidden overflow-y-auto overscroll-contain"
+        // overflow-x hidden: the times wait just off the right edge. pan-y: sideways swipes reach us (pinch still zooms).
+        className="scroll-area relative flex min-h-0 flex-1 flex-col-reverse overflow-x-hidden overflow-y-auto overscroll-contain [touch-action:pan-y_pinch-zoom]"
         {...swipeHandlers}
         role="log"
         aria-label={`Conversation with ${partner.display_name}`}

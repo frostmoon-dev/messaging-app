@@ -191,6 +191,13 @@
    Base
    ========================================================================== */
 
+/* No sudden zoom on phones: double-tap never zooms (a double-tap on a
+   message is a heart), but pinch-to-zoom still works for anyone who needs
+   it. Fields keep 16px text (see field.ts); smaller makes iOS zoom in. */
+html {
+  touch-action: manipulation;
+}
+
 html,
 body {
   height: 100%;
@@ -335,6 +342,12 @@ select:focus-visible {
     font-size: 0.9375rem;
     letter-spacing: 0.01em;
   }
+  /* In the message box itself, never below 16px: iOS zooms into smaller
+     fields when you tap them. */
+  #composer.msg-style-whisper,
+  #composer.msg-style-mono {
+    font-size: 1rem;
+  }
 
   /* Portraits are round, like the app icon. */
   .portrait {
@@ -411,7 +424,9 @@ select:focus-visible {
 /* Like iMessage, only your own bubbles slide; theirs stay put and their
    time slides in on its own. */
 .msg-row[data-mine="true"] {
-  translate: calc(var(--reveal, 0px) * -1) 0;
+  /* "none" at rest, so bubbles don't each sit on their own layer (which can
+     make text look soft on iPhone). Set only during a swipe. */
+  translate: var(--reveal-x, none);
   transition: translate 0.28s var(--ease-out);
 }
 [data-revealing="true"] .msg-row {

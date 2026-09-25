@@ -120,7 +120,7 @@ export function EmojiPanel({ onPick, className }: { onPick: (emoji: string) => v
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search emoji"
           autoComplete="off"
-          className="h-9 w-full rounded-full border border-field-border bg-background pr-3 pl-9 text-small outline-none placeholder:text-muted focus:border-accent focus-visible:outline-none"
+          className="h-10 w-full rounded-full border border-field-border bg-background pr-3 pl-9 text-body outline-none placeholder:text-muted focus:border-accent focus-visible:outline-none"
         />
       </div>
 
