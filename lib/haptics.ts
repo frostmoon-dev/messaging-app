@@ -30,8 +30,9 @@ export function setHapticsEnabled(on: boolean) {
 let iosSwitch: HTMLLabelElement | null = null;
 
 function iosTick() {
-  // Clicking the switch moves focus to it, which closes the keyboard while
-  // you're typing. Put focus straight back where it was.
+  // A later tick of a pattern: you may have started typing since.
+  if (isTyping()) return;
+  // Clicking the switch moves focus to it; put focus straight back.
   const focused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   if (!iosSwitch) {
     const label = document.createElement("label");
@@ -49,6 +50,11 @@ function iosTick() {
   if (focused && document.activeElement !== focused) focused.focus({ preventScroll: true });
 }
 
+function isTyping() {
+  const el = document.activeElement;
+  return el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && el.type !== "checkbox") || (el instanceof HTMLElement && el.isContentEditable);
+}
+
 export function haptic(cue: HapticCue) {
   if (typeof window === "undefined" || !isHapticsEnabled()) return;
   const pattern = PATTERNS[cue];
@@ -57,11 +63,11 @@ export function haptic(cue: HapticCue) {
     return;
   }
   if (!/iphone|ipad|ipod/i.test(navigator.userAgent)) return;
-  // iPhone only ticks during a tap or press; outside one (a message
-  // arriving) the switch does nothing but steal focus, so skip it.
-  // Typing counts as a tap, so "receive" is skipped outright: a message
-  // arriving mid-sentence must never touch the keyboard.
-  if (cue === "receive") return;
+  // The switch trick steals focus, and iOS closes the keyboard the moment a
+  // text box loses focus, even if focus comes straight back. So: no ticks
+  // for arriving messages, and none at all while you're typing.
+  if (cue === "receive" || isTyping()) return;
+  // iPhone only ticks during a tap or press; outside one it does nothing.
   if (navigator.userActivation && !navigator.userActivation.isActive) return;
   // One tick per "on" step, at the same rhythm.
   let at = 0;
