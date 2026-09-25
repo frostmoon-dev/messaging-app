@@ -186,14 +186,34 @@ export function MessageList({
     // Keep what sits just above the message box where it is (like native chat
     // apps), instead of letting everything slide with the top edge.
     let lastViewHeight = el.clientHeight;
+    let frame = 0;
+    const settleTimers: ReturnType<typeof setTimeout>[] = [];
+    // Newest message (or the same distance from it as before) back above the
+    // message box. iPhone can keep painting the old position after the chat
+    // area grows (keyboard closing), leaving a big empty space under the last
+    // message; setting the value it already has doesn't repaint, so move by
+    // one pixel first and land on the target in the next frame.
+    const place = () => {
+      const max = el.scrollHeight - el.clientHeight;
+      const target = pinnedRef.current ? max : Math.max(0, max - Math.max(0, gapRef.current));
+      el.scrollTop = target > 0 ? target - 1 : 1;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        el.scrollTop = target;
+      });
+    };
     const pin = () => {
       const grew = el.clientHeight - lastViewHeight;
       lastViewHeight = el.clientHeight;
-      if (pinnedRef.current && performance.now() >= interactingUntil.current) el.scrollTop = el.scrollHeight;
-      // Restore the same distance from the bottom as before the change. (The
-      // browser has already clamped the scroll position by now, so adjusting
-      // by the size change would count it twice.)
-      else if (grew !== 0 && !pinnedRef.current) el.scrollTop = el.scrollHeight - el.clientHeight - gapRef.current;
+      if (grew !== 0) {
+        // The keyboard opened or closed. Even mid-swipe: an empty chat is worse
+        // than a stopped flick. Again once the keyboard animation has finished.
+        place();
+        settleTimers.splice(0).forEach(clearTimeout);
+        settleTimers.push(setTimeout(place, 150), setTimeout(place, 450));
+      } else if (pinnedRef.current && performance.now() >= interactingUntil.current) {
+        el.scrollTop = el.scrollHeight;
+      }
       heightRef.current = el.scrollHeight;
     };
     const touchStart = () => (interactingUntil.current = Infinity);
@@ -212,6 +232,8 @@ export function MessageList({
     el.addEventListener("wheel", wheel, { passive: true });
     return () => {
       observer.disconnect();
+      cancelAnimationFrame(frame);
+      settleTimers.forEach(clearTimeout);
       el.removeEventListener("touchstart", touchStart);
       el.removeEventListener("touchend", touchEnd);
       el.removeEventListener("touchcancel", touchEnd);
