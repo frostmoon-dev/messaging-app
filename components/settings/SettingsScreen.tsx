@@ -31,6 +31,7 @@ import { cn, devLog } from "@/lib/utils";
 import { disablePush, enablePush, pushSupported } from "@/lib/push";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { fieldClass, labelClass } from "@/components/ui/field";
+import type { Profile } from "@/types/app";
 import { Panel } from "./Panel";
 import { ChatBackgroundSection } from "./ChatBackgroundSection";
 import { ChatHistorySection } from "./ChatHistorySection";
@@ -316,6 +317,30 @@ function Toggle({ id, label, description, checked, onChange, disabled }: {
   );
 }
 
+type AlertSettings = Partial<Pick<Profile, "notify_reactions" | "quiet_start" | "quiet_end" | "time_zone">>;
+
+// Quiet hours are stored as minutes after local midnight.
+const DEFAULT_QUIET = { start: 23 * 60, end: 7 * 60 };
+
+function toClock(minutes: number) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+function fromClock(value: string): number | null {
+  const match = /^(\d{2}):(\d{2})/.exec(value);
+  if (!match) return null;
+  const minutes = Number(match[1]) * 60 + Number(match[2]);
+  return minutes >= 0 && minutes < 1440 ? minutes : null;
+}
+
+function localTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
+
 function AlertsSection() {
   const { partner, me, updateMe } = useChat();
   // Read browser-only values after hydration without an effect.
@@ -336,6 +361,32 @@ function AlertsSection() {
       setPreviewError(friendlyError(error, "save"));
     }
   };
+  // Reactions and quiet hours live on your profile too.
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saveProfile = async (next: AlertSettings, previous: AlertSettings) => {
+    setSaveError(null);
+    updateMe(next);
+    const { error } = await createClient().from("profiles").update(next).eq("id", me.id);
+    if (error) {
+      updateMe(previous);
+      setSaveError(friendlyError(error, "save"));
+    }
+  };
+  const quietOn = me.quiet_start != null && me.quiet_end != null;
+  const saveQuiet = (start: number | null, end: number | null) =>
+    void saveProfile(
+      { quiet_start: start, quiet_end: end, time_zone: localTimeZone() },
+      { quiet_start: me.quiet_start ?? null, quiet_end: me.quiet_end ?? null, time_zone: me.time_zone ?? null },
+    );
+  // Travelled since you set quiet hours: keep them in your local time.
+  const staleZone = quietOn && hydrated && me.time_zone !== localTimeZone();
+  useEffect(() => {
+    if (!staleZone) return;
+    const zone = localTimeZone();
+    updateMe({ time_zone: zone });
+    void createClient().from("profiles").update({ time_zone: zone }).eq("id", me.id);
+  }, [staleZone, updateMe, me.id]);
+
   const [permission, setPermission] = useState<ReturnType<typeof notificationPermission> | null>(null);
   const [notifyOn, setNotifyOn] = useState<boolean | null>(null);
 
@@ -395,13 +446,66 @@ function AlertsSection() {
       <Toggle
         id="toggle-preview"
         label="Show message text"
-        description="The pop-up shows what they wrote. Turn off to show only “Sent you a message” on your lock screen."
+        description="The pop-up shows what they wrote. Turn off to show only “Sent you a message” on your lock screen. Photos, GIFs and stickers still say what they are."
         checked={previewOn}
         onChange={(next) => void togglePreview(next)}
       />
       {previewError && (
         <p className="text-small text-danger" role="alert">
           {previewError}
+        </p>
+      )}
+      <Toggle
+        id="toggle-reactions"
+        label="Reactions"
+        description={`A pop-up when ${partner.display_name} reacts to your message.`}
+        checked={me.notify_reactions === true}
+        onChange={(next) => void saveProfile({ notify_reactions: next }, { notify_reactions: !next })}
+      />
+      <Toggle
+        id="toggle-quiet"
+        label="Quiet hours"
+        description="Messages and reactions still arrive, without sound or vibration. SOS, alerts and reminders always ring."
+        checked={quietOn}
+        onChange={(next) => (next ? saveQuiet(DEFAULT_QUIET.start, DEFAULT_QUIET.end) : saveQuiet(null, null))}
+      />
+      {quietOn && (
+        <div className="grid grid-cols-2 gap-3 pb-2">
+          <div>
+            <label htmlFor="quiet-start" className={labelClass}>
+              From
+            </label>
+            <input
+              id="quiet-start"
+              type="time"
+              value={toClock(me.quiet_start ?? DEFAULT_QUIET.start)}
+              onChange={(e) => {
+                const start = fromClock(e.target.value);
+                if (start !== null) saveQuiet(start, me.quiet_end ?? DEFAULT_QUIET.end);
+              }}
+              className={fieldClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="quiet-end" className={labelClass}>
+              To
+            </label>
+            <input
+              id="quiet-end"
+              type="time"
+              value={toClock(me.quiet_end ?? DEFAULT_QUIET.end)}
+              onChange={(e) => {
+                const end = fromClock(e.target.value);
+                if (end !== null) saveQuiet(me.quiet_start ?? DEFAULT_QUIET.start, end);
+              }}
+              className={fieldClass}
+            />
+          </div>
+        </div>
+      )}
+      {saveError && (
+        <p className="text-small text-danger" role="alert">
+          {saveError}
         </p>
       )}
       <Toggle

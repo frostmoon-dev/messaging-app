@@ -26,6 +26,12 @@ export async function resolveAlert(id: string) {
   if (error) throw error;
 }
 
+/** Tells the sender their SOS is on your screen. Only the first call counts. */
+export async function markAlertSeen(id: string) {
+  const { error } = await createClient().rpc("mark_alert_seen", { alert: id });
+  if (error) throw error;
+}
+
 /** A link that opens turn-by-turn directions in the phone's map app. */
 export function directionsUrl(lat: number, lng: number) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat.toFixed(6)},${lng.toFixed(6)}`;

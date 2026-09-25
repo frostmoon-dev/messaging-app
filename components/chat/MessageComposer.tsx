@@ -130,6 +130,18 @@ export function MessageComposer({
     if (replyTo) textareaRef.current?.focus();
   }, [replyTo]);
 
+  // Opened from a message pop-up (/chat?reply=1): the box is ready to type.
+  // iPhone only opens the keyboard after a tap, so there the box is focused
+  // and one tap on it starts typing.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("reply") !== "1") return;
+    params.delete("reply");
+    const rest = params.toString();
+    window.history.replaceState(null, "", rest ? `/chat?${rest}` : "/chat");
+    textareaRef.current?.focus();
+  }, []);
+
   // Revoke preview object URLs when they are replaced or on unmount.
   useEffect(() => {
     if (attachment?.state !== "ready") return;

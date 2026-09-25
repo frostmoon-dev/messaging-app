@@ -11,7 +11,7 @@ import { TypingIndicator } from "./TypingIndicator";
 import { MessageComposer } from "./MessageComposer";
 import { NotificationPrompt } from "./NotificationPrompt";
 import { ImageViewer } from "@/components/ui/ImageViewer";
-import { notificationPermission, promptDismissed } from "@/lib/notifications";
+import { clearChatNotifications, notificationPermission, promptDismissed } from "@/lib/notifications";
 
 export function ChatWindow() {
   const { setChatActive, ensureLoaded, messages } = useChat();
@@ -36,6 +36,16 @@ export function ChatWindow() {
 
   useEffect(() => () => {
     if (highlightTimer.current) clearTimeout(highlightTimer.current);
+  }, []);
+
+  // Pop-ups about this chat are old news once you're looking at it.
+  useEffect(() => {
+    const clear = () => {
+      if (document.visibilityState === "visible") void clearChatNotifications();
+    };
+    clear();
+    document.addEventListener("visibilitychange", clear);
+    return () => document.removeEventListener("visibilitychange", clear);
   }, []);
 
   const jumpTo = useCallback(

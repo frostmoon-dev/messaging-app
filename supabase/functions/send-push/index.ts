@@ -1,5 +1,6 @@
-// send-push: called by the database (pg_net) for a new message, a due
-// calendar reminder or an alert (SOS, "I'm here", "Where are you?").
+// send-push: called by the database (pg_net) for a new message, a reaction,
+// a due calendar reminder, an alert (SOS, "I'm here", "Where are you?"), an
+// SOS repeat, or an answer to an SOS ("saw your SOS", "is on it").
 // Sends a Web Push notification to the right people's devices.
 //
 // Secrets (supabase secrets set ...):
@@ -15,9 +16,12 @@ import webpush from "web-push";
 import {
   buildAlertPayload,
   buildPayload,
-  messagePreview,
+  buildReactionPayload,
   buildReminderPayload,
+  buildSosReplyPayload,
+  inQuietHours,
   isGone,
+  messagePreview,
   parseRequest,
   pickSecretKey,
   safeEqual,
@@ -43,19 +47,23 @@ const db = createClient(env("SUPABASE_URL"), pickSecretKey(env("SUPABASE_SECRET_
 type Target =
   | {
       conversationId: string;
+      /** Everyone in the chat except this person… */
       exclude: string | null;
+      /** …or only this person. */
+      only?: string;
       payload: PushPayload;
-      /** Messages only: what the notification says when the recipient allows a preview. */
+      /** Messages and reactions: the wording for people who allow a preview. */
       preview?: string;
     }
-  | { status: number; error: string };
+  | { status: number; error: string }
+  | { skipped: string };
 
 async function senderName(userId: string) {
   const { data } = await db.from("profiles").select("display_name").eq("id", userId).maybeSingle();
   return data?.display_name ?? null;
 }
 
-/** Finds who the notification is about and what it should say. */
+/** Finds who the notification is for and what it should say. */
 async function resolve(request: PushRequest): Promise<Target> {
   if (request.kind === "message") {
     const { data, error } = await db
@@ -69,8 +77,27 @@ async function resolve(request: PushRequest): Promise<Target> {
     return {
       conversationId: data.conversation_id,
       exclude: data.sender_id,
-      payload: buildPayload(name),
-      preview: buildPayload(name, messagePreview(data)).body,
+      payload: buildPayload(name, messagePreview(data, name, false)),
+      preview: messagePreview(data, name, true),
+    };
+  }
+  if (request.kind === "reaction") {
+    const [message, reaction] = await Promise.all([
+      db.from("messages").select("id, sender_id, conversation_id, content, message_type, deleted_at").eq("id", request.id).maybeSingle(),
+      db.from("message_reactions").select("emoji").eq("message_id", request.id).eq("user_id", request.reactorId).maybeSingle(),
+    ]);
+    if (message.error || reaction.error) return { status: 500, error: "lookup failed" };
+    if (!message.data || message.data.deleted_at) return { skipped: "message gone" };
+    // Taken back (or changed and taken back) before we got here.
+    if (!reaction.data?.emoji) return { skipped: "reaction removed" };
+    if (message.data.sender_id === request.reactorId) return { skipped: "own message" };
+    const name = await senderName(request.reactorId);
+    return {
+      conversationId: message.data.conversation_id,
+      exclude: null,
+      only: message.data.sender_id,
+      payload: buildReactionPayload(message.data, reaction.data.emoji, name, false),
+      preview: buildReactionPayload(message.data, reaction.data.emoji, name, true).body,
     };
   }
   if (request.kind === "event") {
@@ -79,10 +106,31 @@ async function resolve(request: PushRequest): Promise<Target> {
     if (!data) return { status: 404, error: "event not found" };
     return { conversationId: data.conversation_id, exclude: null, payload: buildReminderPayload(data) };
   }
-  const { data, error } = await db.from("alerts").select("id, conversation_id, sender_id, kind").eq("id", request.id).maybeSingle();
+  const { data, error } = await db
+    .from("alerts")
+    .select("id, conversation_id, sender_id, kind, seen_at, seen_by, resolved_at, resolved_by")
+    .eq("id", request.id)
+    .maybeSingle();
   if (error) return { status: 500, error: "lookup failed" };
   if (!data) return { status: 404, error: "alert not found" };
-  return { conversationId: data.conversation_id, exclude: data.sender_id, payload: buildAlertPayload(data, await senderName(data.sender_id)) };
+  if (request.kind === "alert") {
+    // A repeat that lost the race with "seen" or "I'm on it".
+    if (request.repeat > 0 && (data.seen_at || data.resolved_at)) return { skipped: "already seen" };
+    return {
+      conversationId: data.conversation_id,
+      exclude: data.sender_id,
+      payload: buildAlertPayload(data, await senderName(data.sender_id), request.repeat),
+    };
+  }
+  // SOS answers go back to the person who sent the SOS.
+  const answeredBy = request.kind === "sos_seen" ? data.seen_by : data.resolved_by;
+  if (!answeredBy || answeredBy === data.sender_id) return { skipped: "no answer" };
+  return {
+    conversationId: data.conversation_id,
+    exclude: null,
+    only: data.sender_id,
+    payload: buildSosReplyPayload(data, request.kind === "sos_seen" ? "seen" : "handled", await senderName(answeredBy)),
+  };
 }
 
 const reply = (status: number, body: Record<string, unknown>) =>
@@ -96,36 +144,59 @@ Deno.serve(async (req) => {
   if (!vapidReady) return reply(500, { error: "VAPID secrets are not set" });
 
   const request = parseRequest(await req.json().catch(() => null));
-  if (!request) return reply(400, { error: "send exactly one of message_id, event_id, alert_id" });
+  if (!request) {
+    return reply(400, { error: "send exactly one of message_id, event_id, alert_id, sos_seen_id, sos_handled_id, reaction_message_id" });
+  }
 
   const target = await resolve(request);
   if ("error" in target) return reply(target.status, { error: target.error });
+  if ("skipped" in target) return reply(200, { sent: 0, removed: 0, skipped: target.skipped });
 
-  // Messages and alerts go to the other person; reminders go to both of you.
+  // Messages and alerts go to the other person; reminders go to both of you;
+  // reactions and SOS answers go to one person.
   let membersQuery = db.from("conversation_members").select("user_id").eq("conversation_id", target.conversationId);
   if (target.exclude) membersQuery = membersQuery.neq("user_id", target.exclude);
+  if (target.only) membersQuery = membersQuery.eq("user_id", target.only);
   const members = await membersQuery;
   if (members.error) return reply(500, { error: "lookup failed" });
 
   let recipients = (members.data ?? []).map((m) => m.user_id);
 
-  // Messages: skip anyone who is looking at the chat right now (the app
-  // reports that every 30 s), and use each person's preview setting.
+  // Messages and reactions: skip anyone who is looking at the chat right now
+  // (the app reports that every 30 s), use each person's preview setting, and
+  // arrive silently during their quiet hours. Reaction pop-ups are opt-in.
+  const chatty = request.kind === "message" || request.kind === "reaction";
   const showPreview = new Set<string>();
-  if (request.kind === "message") {
+  const quiet = new Set<string>();
+  if (chatty && recipients.length > 0) {
     const { data: prefs, error: prefsError } = await db
       .from("profiles")
-      .select("id, chat_open_until, notification_preview")
+      .select("id, chat_open_until, notification_preview, notify_reactions, quiet_start, quiet_end, time_zone")
       .in("id", recipients);
-    if (!prefsError && prefs) {
-      const now = Date.now();
-      const inChat = new Set(prefs.filter((p) => p.chat_open_until && Date.parse(p.chat_open_until) > now).map((p) => p.id));
-      recipients = recipients.filter((id) => !inChat.has(id));
-      for (const p of prefs) if (p.notification_preview !== false) showPreview.add(p.id);
+    if (prefsError || !prefs) {
+      // Older database without these columns: messages go to everyone with
+      // no preview; reactions (which need the newer database) go nowhere.
+      console.error("preferences lookup failed", prefsError);
+      if (request.kind === "reaction") recipients = [];
+    } else {
+      const now = new Date();
+      const skip = new Set(
+        prefs
+          .filter(
+            (p) =>
+              (p.chat_open_until && Date.parse(p.chat_open_until) > now.getTime()) ||
+              (request.kind === "reaction" && p.notify_reactions !== true),
+          )
+          .map((p) => p.id),
+      );
+      recipients = recipients.filter((id) => !skip.has(id));
+      for (const p of prefs) {
+        if (p.notification_preview !== false) showPreview.add(p.id);
+        if (inQuietHours(p, now)) quiet.add(p.id);
+      }
     }
-    // Older database without these columns: notify everyone, no preview.
   }
-  if (recipients.length === 0) return reply(200, { sent: 0, removed: 0, skipped: "in chat" });
+  if (recipients.length === 0) return reply(200, { sent: 0, removed: 0, skipped: "no one to notify" });
 
   const { data: subscriptions, error: subsError } = await db
     .from("push_subscriptions")
@@ -133,8 +204,11 @@ Deno.serve(async (req) => {
     .in("user_id", recipients);
   if (subsError) return reply(500, { error: "lookup failed" });
 
-  const payloadFor = (userId: string) =>
-    JSON.stringify(target.preview && showPreview.has(userId) ? { ...target.payload, body: target.preview } : target.payload);
+  const payloadFor = (userId: string): PushPayload => ({
+    ...target.payload,
+    ...(target.preview && showPreview.has(userId) ? { body: target.preview } : {}),
+    ...(quiet.has(userId) ? { silent: true } : {}),
+  });
   const gone: string[] = [];
   let sent = 0;
 
@@ -145,11 +219,12 @@ Deno.serve(async (req) => {
         // request itself goes out with the runtime's own fetch.
         const request = webpush.generateRequestDetails(
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          payloadFor(s.user_id),
+          JSON.stringify(payloadFor(s.user_id)),
           {
             TTL: 60 * 60 * 24,
-            // High urgency lets a sleeping phone wake up and show it straight away.
-            urgency: "high",
+            // High urgency lets a sleeping phone wake up and show it straight
+            // away. During quiet hours it can wait for the phone's next wake.
+            urgency: quiet.has(s.user_id) ? "normal" : "high",
             // Unseen pushes with the same topic collapse into one while the
             // phone is offline. Every SOS keeps its own topic.
             topic: target.payload.tag.slice(0, 32).replace(/[^A-Za-z0-9_-]/g, "-"),

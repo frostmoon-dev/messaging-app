@@ -17,7 +17,7 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - **Haptics** (Settings → Alerts, on by default): a soft “lub-dub” heartbeat when you send, react or long-press. Android vibrates the pattern; iPhone gives light ticks during taps only
 - Reconnects on its own and fills any gap in messages
 - **Bond** screen (rank, title, progress, stats, all set by hand), **Memories** scrapbook (photos keep their own shape; crop them when adding), daily status with icons (Free to talk, Busy, Studying, At home, Out, Sleeping, Call me)
-- Pop-up notifications through Web Push, even when the app is closed (asked only after you send something). They show the message text; turn **Show message text** off in Settings to show only “Sent you a message”. No pop-ups while you're in the chat. Optional sounds (off by default)
+- Pop-up notifications through Web Push, even when the app is closed (asked only after you send something). They show the message text; turn **Show message text** off in Settings to show only “Sent you a message”. Photos, GIFs and stickers always say what they are (“Rafie sent a GIF.”). Several messages stack into one pop-up (“Rafie ♡ · 3 new messages”), and tapping it opens the chat with the reply box ready. Optional **quiet hours** (messages arrive without sound; SOS still rings) and **reaction pop-ups** (off by default). No pop-ups while you're in the chat. Optional sounds (off by default)
 - **Plans**: a shared calendar. Either of you adds, edits or deletes; reminders ("1 hour before", "1 day before"…) pop up on both phones
 - **Map**: see each other while sharing is on (live while the app is open), send "I'm here", ask "Where are you?", get directions
 - **SOS**: two taps send an emergency alert with your location. The other phone gets an urgent notification that stays on screen, and a full-screen alarm with a siren if Napyru is open
@@ -125,6 +125,13 @@ Tenor isn't an option: Google shut its API down on 30 June 2026.
 2. `npx supabase functions deploy send-push` so pop-ups show the text, skip you while you're in the chat, and mark messages delivered.
 
 Until step 1 runs, the chat works as before; reactions, edits and styles don't save. Until step 2 runs, pop-ups work as before.
+
+### Quiet hours, reaction pop-ups and SOS answers
+
+1. `npx supabase db push` applies `20261001000000_push_upgrades.sql`: the `quiet_start`, `quiet_end`, `time_zone` and `notify_reactions` profile columns, a reaction trigger, `mark_alert_seen`, and the `napyru-sos-repeats` pg_cron job.
+2. `npx supabase functions deploy send-push`, **after** step 1 (the function reads the new columns).
+
+What it adds: quiet hours and reaction pop-ups in Settings → Alerts; the SOS sender gets “Rafie saw your SOS.” and “Rafie is on it.”; an SOS nobody has seen rings again after 2, 4 and 6 minutes. Message stacking and the reply box live in the service worker, so they arrive with the app itself.
 
 **Limits, honestly:** a web app can only read location while it's open, so live sharing pauses when Napyru is closed ("I'm here" and SOS send the location at that moment). The SOS siren plays only when Napyru is open; when it's closed, the phone shows the urgent notification with its normal sound, and silent mode can mute it. SOS is not a replacement for calling emergency services.
 

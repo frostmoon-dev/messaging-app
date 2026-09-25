@@ -46,6 +46,9 @@ export type Database = {
           resolved_at: string | null
           resolved_by: string | null
           sender_id: string
+          seen_at?: string | null
+          seen_by?: string | null
+          sos_repeats?: number
         }
         Insert: {
           accuracy?: number | null
@@ -418,6 +421,10 @@ export type Database = {
           username: string
           chat_open_until?: string | null
           notification_preview?: boolean
+          notify_reactions?: boolean
+          quiet_start?: number | null
+          quiet_end?: number | null
+          time_zone?: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -441,6 +448,10 @@ export type Database = {
           status_updated_at?: string | null
           username?: string
           notification_preview?: boolean
+          notify_reactions?: boolean
+          quiet_start?: number | null
+          quiet_end?: number | null
+          time_zone?: string | null
         }
         Relationships: []
       }
@@ -622,6 +633,7 @@ export type Database = {
       edit_message: { Args: { msg: string; new_content: string }; Returns: string }
       set_reaction: { Args: { msg: string; reaction: string | null }; Returns: undefined }
       resolve_alert: { Args: { alert: string }; Returns: undefined }
+      mark_alert_seen: { Args: { alert: string }; Returns: undefined }
       save_push_subscription: {
         Args: { sub_auth: string; sub_endpoint: string; sub_p256dh: string }
         Returns: undefined

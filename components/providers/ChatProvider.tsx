@@ -790,7 +790,15 @@ export function ChatProvider({
         const away = document.visibilityState !== "visible" || !chatActiveRef.current;
         playSound("received");
         haptic("receive");
-        if (away) void showMessageNotification(partnerRef.current.display_name, meRef.current.notification_preview === false ? null : row);
+        if (away) {
+          const me = meRef.current;
+          void showMessageNotification(partnerRef.current.display_name, row, {
+            showText: me.notification_preview !== false,
+            quiet_start: me.quiet_start ?? null,
+            quiet_end: me.quiet_end ?? null,
+            time_zone: me.time_zone ?? null,
+          });
+        }
         syncReceipts();
       }
     };

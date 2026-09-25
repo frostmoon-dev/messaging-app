@@ -8,7 +8,7 @@ import { useChat, useLiveTable } from "@/components/providers/ChatProvider";
 import { Dialog } from "@/components/ui/Dialog";
 import { CloseIcon, MapPinIcon } from "@/components/ui/icons";
 import { createClient } from "@/lib/supabase/client";
-import { directionsUrl, resolveAlert, sendAlert } from "@/lib/alerts";
+import { directionsUrl, markAlertSeen, resolveAlert, sendAlert } from "@/lib/alerts";
 import { currentPosition } from "@/lib/location";
 import { startAlarm } from "@/lib/alarm";
 import { playSound } from "@/lib/sound";
@@ -35,6 +35,9 @@ export function AlertCenter() {
   const [toast, setToast] = useState<Toast | null>(null);
   const stopAlarm = useRef<(() => void) | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // SOS ids already reported as seen (theirs) or toasted as seen (yours).
+  const seenSent = useRef(new Set<string>());
+  const seenToasted = useRef(new Set<string>());
 
   const silence = useCallback(() => {
     stopAlarm.current?.();
@@ -81,6 +84,24 @@ export function AlertCenter() {
     };
   }, [conversationId, me.id]);
 
+  // Their SOS is on your screen: tell them, once. Waits until the app is
+  // actually visible, so a phone in a pocket doesn't count as "seen".
+  const sosId = sos?.id ?? null;
+  useEffect(() => {
+    if (!sosId) return;
+    const report = () => {
+      if (document.visibilityState !== "visible" || seenSent.current.has(sosId)) return;
+      seenSent.current.add(sosId);
+      markAlertSeen(sosId).catch((error) => {
+        seenSent.current.delete(sosId);
+        devLog("mark seen failed", error);
+      });
+    };
+    report();
+    document.addEventListener("visibilitychange", report);
+    return () => document.removeEventListener("visibilitychange", report);
+  }, [sosId]);
+
   useLiveTable("alerts", (change) => {
     const alert = change.row as AlertRow;
     const fromPartner = alert.sender_id !== me.id;
@@ -108,6 +129,18 @@ export function AlertCenter() {
       } else if (alert.resolved_by && alert.resolved_by !== me.id) {
         showToast({ id: alert.id, text: `${partner.display_name} saw your SOS and is on it ♡` });
       }
+    }
+
+    if (
+      change.type === "UPDATE" &&
+      alert.kind === "sos" &&
+      !fromPartner &&
+      !alert.resolved_at &&
+      alert.seen_at &&
+      !seenToasted.current.has(alert.id)
+    ) {
+      seenToasted.current.add(alert.id);
+      showToast({ id: `${alert.id}-seen`, text: `${partner.display_name} saw your SOS ♡` });
     }
   });
 
