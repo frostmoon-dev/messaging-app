@@ -55,25 +55,52 @@ export function toPeaks(samples: number[], bars = BARS) {
   return out.map((v) => Math.min(9, Math.round((v / loudest) * 9))).join("");
 }
 
+/** Why the microphone couldn't start, in words that say what to do. */
+function micError(error: unknown) {
+  const name = (error as { name?: string })?.name;
+  if (name === "NotAllowedError" || name === "SecurityError") {
+    return new RecorderError(
+      "The microphone is blocked. On iPhone: Settings → Apps → Safari → Microphone → Allow (or Ask), then close and reopen Napyru.",
+    );
+  }
+  if (name === "NotFoundError" || name === "OverconstrainedError") return new RecorderError("No microphone found on this device.");
+  if (name === "NotReadableError" || name === "AbortError") {
+    return new RecorderError("The microphone is busy (a call or another app?). Try again in a moment.");
+  }
+  return new RecorderError("Couldn't start the microphone. Close and reopen the app, then try again.");
+}
+
 export async function startRecording(): Promise<Recorder> {
   if (!voiceSupported()) throw new RecorderError("Voice messages aren't supported in this browser.");
+
+  // The level meter's audio context is made now, while we're still inside
+  // your tap: iPhone keeps one made later silent.
+  const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const audio = Ctor ? new Ctor() : null;
+  void audio?.resume().catch(() => {});
+
   let stream: MediaStream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-  } catch {
-    throw new RecorderError("Microphone blocked. Allow it for this app in your phone's settings, then try again.");
+  } catch (error) {
+    void audio?.close().catch(() => {});
+    throw micError(error);
   }
 
+  // Preferred format first; if the phone refuses those settings, its default.
   const mimeType = pickFormat();
-  const recorder = new MediaRecorder(stream, mimeType ? { mimeType, audioBitsPerSecond: 48_000 } : undefined);
+  let recorder: MediaRecorder;
+  try {
+    recorder = new MediaRecorder(stream, mimeType ? { mimeType, audioBitsPerSecond: 48_000 } : undefined);
+  } catch {
+    recorder = new MediaRecorder(stream);
+  }
   const chunks: Blob[] = [];
   recorder.ondataavailable = (e) => {
     if (e.data.size) chunks.push(e.data);
   };
 
   // Loudness, sampled 10 times a second, for the waveform and the live meter.
-  const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  const audio = Ctor ? new Ctor() : null;
   const analyser = audio?.createAnalyser() ?? null;
   if (audio && analyser) {
     analyser.fftSize = 1024;
@@ -93,7 +120,16 @@ export async function startRecording(): Promise<Recorder> {
   const timer = setInterval(measure, 100);
 
   const started = performance.now();
-  recorder.start(250);
+  // One piece, delivered at the end: iPhone can write broken MP4 files when
+  // asked for the recording in small slices.
+  try {
+    recorder.start();
+  } catch (error) {
+    clearInterval(timer);
+    stream.getTracks().forEach((t) => t.stop());
+    void audio?.close().catch(() => {});
+    throw micError(error);
+  }
 
   const release = () => {
     clearInterval(timer);
