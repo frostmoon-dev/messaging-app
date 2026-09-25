@@ -350,6 +350,25 @@ export function MessageComposer({
     }
   };
 
+  // The send / mic button.
+  const showMic = canRecord && !editing && !trimmed && attachments.length === 0;
+  const lastSentAt = useRef(-Infinity);
+  // `at`: the tap's own timestamp (ms since the page opened).
+  const pressSend = (at: number) => {
+    if (showMic) {
+      // A double tap on send shouldn't start a recording (the mic appears
+      // the moment the box empties), and opening the mic closes the keyboard.
+      if (at - lastSentAt.current < 1000 || starting) return;
+      void startVoice();
+      return;
+    }
+    if (!canSend) return;
+    lastSentAt.current = at;
+    submit();
+    // Still inside your tap, so iPhone keeps the keyboard up.
+    if (!editing) textareaRef.current?.focus({ preventScroll: true });
+  };
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Enter sends on keyboards; on touch devices Enter makes a new line and
     // the send button sends (native messenger behaviour). Never interrupt
@@ -735,41 +754,41 @@ export function MessageComposer({
           )}
         </div>
 
-        {/* Nothing typed: the mic, like iMessage and WhatsApp. */}
-        {canRecord && !editing && !trimmed && attachments.length === 0 ? (
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={() => void startVoice()}
-            disabled={starting}
-            className="flex size-11 shrink-0 items-center justify-center"
-            aria-label="Record a voice message"
-          >
-            <span className="flex size-9 items-center justify-center rounded-full bg-panel-strong text-foreground">
-              <MicIcon size={20} />
-            </span>
-          </motion.button>
-        ) : (
+        {/* One button that changes its icon: the mic when nothing's typed (like
+            iMessage), send otherwise. One element, not two swapping places,
+            so a quick second tap after sending can't land on a fresh mic. */}
         <motion.button
-          type="submit"
-          disabled={!canSend}
-          whileTap={canSend ? { scale: 0.92 } : undefined}
-          // Keep the keyboard open on mobile after tapping send.
+          type="button"
+          whileTap={showMic || canSend ? { scale: 0.92 } : undefined}
+          // Never let the tap move focus: the box keeps it, so the keyboard stays.
           onPointerDown={(e) => e.preventDefault()}
-          // A round arrow-up, like iMessage, in a 44px target.
+          onMouseDown={(e) => e.preventDefault()}
+          // iPhone moves focus when the finger lifts; act here and cancel that.
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            pressSend(e.timeStamp);
+          }}
+          // Mouse and keyboard.
+          onClick={(e) => pressSend(e.timeStamp)}
+          // aria-disabled, not disabled: a disabled button lets the tap fall
+          // through to the page, which closes the keyboard on iPhone.
+          aria-disabled={!showMic && !canSend}
           className="group/send flex size-11 shrink-0 items-center justify-center"
-          aria-label={editing ? "Save edit" : "Send message"}
+          aria-label={showMic ? "Record a voice message" : editing ? "Save edit" : "Send message"}
         >
           <span
             className={cn(
               "flex size-9 items-center justify-center rounded-full transition-colors",
-              canSend ? "bg-love text-love-foreground group-hover/send:bg-love/90" : "bg-panel-strong text-muted",
+              showMic
+                ? "bg-panel-strong text-foreground"
+                : canSend
+                  ? "bg-love text-love-foreground group-hover/send:bg-love/90"
+                  : "bg-panel-strong text-muted",
             )}
           >
-            {editing ? <CheckIcon size={18} /> : <ArrowUpIcon size={20} strokeWidth={2.6} />}
+            {showMic ? <MicIcon size={20} /> : editing ? <CheckIcon size={18} /> : <ArrowUpIcon size={20} strokeWidth={2.6} />}
           </span>
         </motion.button>
-        )}
       </form>
       )}
       <AnimatePresence initial={false}>
