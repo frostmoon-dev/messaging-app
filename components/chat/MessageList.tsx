@@ -152,10 +152,13 @@ export function MessageList({
     el.scrollTo({ top: el.scrollHeight, behavior: smooth && !reduce ? "smooth" : "auto" });
   }, []);
 
+  // How far you are from the newest message, as of your last scroll.
+  const gapRef = useRef(0);
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    const bottom = distanceFromBottom(el) < BOTTOM_THRESHOLD;
+    gapRef.current = distanceFromBottom(el);
+    const bottom = gapRef.current < BOTTOM_THRESHOLD;
     pinnedRef.current = bottom;
     setAtBottom(bottom);
     if (bottom) setUnseen(0);
@@ -179,8 +182,18 @@ export function MessageList({
     const el = scrollRef.current;
     const content = contentRef.current;
     if (!loaded || !el || !content) return;
+    // The chat area itself changes height when the keyboard opens or closes.
+    // Keep what sits just above the message box where it is (like native chat
+    // apps), instead of letting everything slide with the top edge.
+    let lastViewHeight = el.clientHeight;
     const pin = () => {
+      const grew = el.clientHeight - lastViewHeight;
+      lastViewHeight = el.clientHeight;
       if (pinnedRef.current && performance.now() >= interactingUntil.current) el.scrollTop = el.scrollHeight;
+      // Restore the same distance from the bottom as before the change. (The
+      // browser has already clamped the scroll position by now, so adjusting
+      // by the size change would count it twice.)
+      else if (grew !== 0 && !pinnedRef.current) el.scrollTop = el.scrollHeight - el.clientHeight - gapRef.current;
       heightRef.current = el.scrollHeight;
     };
     const touchStart = () => (interactingUntil.current = Infinity);

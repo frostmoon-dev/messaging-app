@@ -250,7 +250,7 @@ function MessageBubbleImpl({
           dragSnapToOrigin
           onDragEnd={onDragEnd}
           style={{ x, touchAction: "pan-y pinch-zoom" }}
-          className="relative min-w-0"
+          className="relative min-w-0 max-w-full"
           {...pressHandlers}
         >
           <EffectBubble effect={effect} play={play}>
@@ -306,7 +306,7 @@ function MessageBubbleImpl({
             {message.content && !media && (
               <p
                 className={cn(
-                  "whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
+                  "whitespace-pre-wrap wrap-anywhere",
                   emojiOnly ? "text-4xl leading-tight" : styled || "text-body leading-[1.45]",
                   message.message_type === "image" && "px-2 pt-1.5 pb-1",
                   effect === "ink" && !deleted && "effect-ink cursor-pointer",

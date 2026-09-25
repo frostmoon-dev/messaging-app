@@ -40,7 +40,7 @@ export function ReplyQuote({
       {/* A rounded bar inside the box instead of a square left border, so every corner stays round. */}
       <span className="absolute top-1.5 bottom-1.5 left-1.5 w-[3px] rounded-full bg-current" aria-hidden="true" />
       <span className="block text-meta font-bold">{authorName}</span>
-      <span className="line-clamp-2 break-words [overflow-wrap:anywhere]">{snippetText(snippet)}</span>
+      <span className="line-clamp-2 wrap-anywhere">{snippetText(snippet)}</span>
     </button>
   );
 }
