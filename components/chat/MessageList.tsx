@@ -169,6 +169,26 @@ export function MessageList({
     }
   }, [messages, me.id, atBottom, scrollToBottom]);
 
+  // Stay pinned to the newest message while photos and GIFs finish loading
+  // (and on arriving at the chat). Chrome keeps a reversed list pinned on its
+  // own; iPhone Safari can leave a gap at the bottom when media changes size.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const pin = () => {
+      if (Math.abs(el.scrollTop) < BOTTOM_THRESHOLD) el.scrollTop = 0;
+    };
+    const frame = requestAnimationFrame(pin);
+    // load and loadedmetadata don't bubble, so listen while they travel down.
+    el.addEventListener("load", pin, true);
+    el.addEventListener("loadedmetadata", pin, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("load", pin, true);
+      el.removeEventListener("loadedmetadata", pin, true);
+    };
+  }, [loaded]);
+
   // A Slam shakes the whole chat for a moment, like iMessage.
   useEffect(() => {
     const onSlam = () => {
