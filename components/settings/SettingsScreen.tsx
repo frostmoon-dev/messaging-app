@@ -471,7 +471,7 @@ function AlertsSection() {
       />
       {quietOn && (
         <div className="grid grid-cols-2 gap-3 pb-2">
-          <div>
+          <div className="min-w-0">
             <label htmlFor="quiet-start" className={labelClass}>
               From
             </label>
@@ -486,7 +486,7 @@ function AlertsSection() {
               className={fieldClass}
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label htmlFor="quiet-end" className={labelClass}>
               To
             </label>

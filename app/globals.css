@@ -216,6 +216,22 @@ select:focus-visible {
   outline: none;
 }
 
+/* iPhone Safari gives date and time fields a built-in minimum width, so two
+   side by side spill out of their row. Let them shrink like other fields,
+   and keep the value left-aligned. */
+@layer base {
+  input[type="date"],
+  input[type="time"] {
+    min-width: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
+}
+
 /* ==========================================================================
    Shapes
    Taken from the app icon, an ink drawing in a circle: round portraits,

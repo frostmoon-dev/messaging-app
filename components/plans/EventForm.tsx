@@ -113,13 +113,13 @@ export function EventForm({
         />
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div>
+          <div className="min-w-0">
             <label htmlFor="plan-date" className={labelClass}>
               Date
             </label>
             <input id="plan-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={fieldClass} required />
           </div>
-          <div>
+          <div className="min-w-0">
             <label htmlFor="plan-time" className={labelClass}>
               Time
             </label>
