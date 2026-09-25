@@ -80,6 +80,7 @@ type ChatData = {
   loadOlder: () => Promise<void>;
   reload: () => Promise<void>;
   sendText: (text: string, replyTo: string | null, style?: MessageStyle | null, effect?: MessageEffect | null) => boolean;
+  sendImages: (images: PreparedImage[], caption: string, replyTo: string | null) => void;
   /** Your own text message within 15 minutes. Throws if the server refuses. */
   editMessage: (id: string, text: string) => Promise<void>;
   /** message id → person id → emoji. */
@@ -475,8 +476,10 @@ export function ChatProvider({
     [conversationId, session.me.id, persist, stopTyping],
   );
 
-  const sendImage = useCallback(
-    (image: PreparedImage, caption: string, replyTo: string | null) => {
+  // Adds a photo to the chat straight away and to the outbox. `at` keeps a
+  // batch in the order it was picked.
+  const queueImage = useCallback(
+    (image: PreparedImage, caption: string, replyTo: string | null, at = new Date()) => {
       const id = uuid();
       const text = caption.trim().slice(0, 4000);
       const row: NewMessage = {
@@ -497,16 +500,43 @@ export function ChatProvider({
         message: {
           ...row,
           sender_id: session.me.id,
-          created_at: new Date().toISOString(),
+          created_at: at.toISOString(),
           delivered_at: null,
           read_at: null,
           local: { status: "sending", progress: 0, previewUrl },
         },
       });
+      return id;
+    },
+    [conversationId, session.me.id],
+  );
+
+  const sendImage = useCallback(
+    (image: PreparedImage, caption: string, replyTo: string | null) => {
+      const id = queueImage(image, caption, replyTo);
       stopTyping();
       void persist(id);
     },
-    [conversationId, session.me.id, persist, stopTyping],
+    [queueImage, persist, stopTyping],
+  );
+
+  /**
+   * Several photos at once, like WhatsApp: the caption and reply go with the
+   * first. They're sent one after another, so they arrive in the order picked.
+   */
+  const sendImages = useCallback(
+    (images: PreparedImage[], caption: string, replyTo: string | null) => {
+      if (!images.length) return;
+      const start = Date.now();
+      const ids = images.map((image, i) =>
+        queueImage(image, i === 0 ? caption : "", i === 0 ? replyTo : null, new Date(start + i)),
+      );
+      stopTyping();
+      void (async () => {
+        for (const id of ids) await persist(id);
+      })();
+    },
+    [queueImage, persist, stopTyping],
   );
 
   const sendMedia = useCallback(
@@ -1059,6 +1089,7 @@ export function ChatProvider({
       reactions,
       react,
       sendImage,
+      sendImages,
       sendMedia,
       retry,
       deleteMessage,
@@ -1077,7 +1108,7 @@ export function ChatProvider({
       setBond,
     }),
     [
-      me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, editMessage, reactions, react, sendImage,
+      me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, editMessage, reactions, react, sendImage, sendImages,
       sendMedia, retry, deleteMessage, clearHistory, hideMessage, pinned, setPinned, starred, toggleStar, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
     ],
   );

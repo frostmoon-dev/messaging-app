@@ -6,6 +6,7 @@ import { useChat, usePresence } from "@/components/providers/ChatProvider";
 import {
   CheckIcon,
   CloseIcon,
+  PlusIcon,
   EditIcon,
   ImageIcon,
   KeyboardIcon,
@@ -27,14 +28,24 @@ import { MAX_MESSAGE_LENGTH } from "@/lib/messages/validation";
 import { ImageValidationError, prepareImage, type PreparedImage } from "@/lib/storage/image";
 import { useIsTouch } from "@/lib/hooks/useMediaQuery";
 import { MESSAGES } from "@/lib/errors";
-import { cn, devLog } from "@/lib/utils";
+import { cn, devLog, uuid } from "@/lib/utils";
 
 const MAX_TEXTAREA_HEIGHT = 144;
 
-type Attachment =
-  | { state: "processing"; name: string }
+/** One picked photo. The original file is kept so switching HD can redo it. */
+type Attachment = {
+  key: string;
+  file: File;
+  /** Bumps on each (re)preparation, so a slow old one can't overwrite a newer result. */
+  version: number;
+} & (
+  | { state: "processing" }
   | { state: "ready"; image: PreparedImage; previewUrl: string }
-  | { state: "error"; message: string };
+  | { state: "error"; message: string }
+);
+
+// Like WhatsApp's tray, with a sane limit for one go.
+const MAX_PHOTOS = 10;
 
 export function MessageComposer({
   replyTo,
@@ -50,7 +61,7 @@ export function MessageComposer({
   onCancelEdit: () => void;
   onSent: () => void;
 }) {
-  const { sendText, sendImage, sendMedia, editMessage, getSnippet, me, partner } = useChat();
+  const { sendText, sendImages, sendMedia, editMessage, getSnippet, me, partner } = useChat();
   const [style, setStyle] = useState<MessageStyle | null>(null);
   const [effect, setEffect] = useState<MessageEffect | null>(null);
   const [stylesOpen, setStylesOpen] = useState(false);
@@ -63,7 +74,10 @@ export function MessageComposer({
   const { notifyTyping, stopTyping } = usePresence();
   const isTouch = useIsTouch();
   const [text, setText] = useState("");
-  const [attachment, setAttachment] = useState<Attachment | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [hd, setHd] = useState(false);
+  const readyImages = attachments.filter((a): a is Attachment & { state: "ready" } => a.state === "ready");
+  const preparing = attachments.some((a) => a.state === "processing");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -72,7 +86,7 @@ export function MessageComposer({
   const tooLong = text.length > MAX_MESSAGE_LENGTH;
   const canSend = editing
     ? !tooLong && trimmed.length > 0 && !saving
-    : !tooLong && (attachment?.state === "ready" || (trimmed.length > 0 && attachment?.state !== "processing"));
+    : !tooLong && !preparing && (readyImages.length > 0 || trimmed.length > 0);
 
   // Starting an edit puts the message in the box (and keeps your draft for after).
   const editingId = editing?.id ?? null;
@@ -144,25 +158,76 @@ export function MessageComposer({
     textareaRef.current?.focus();
   }, []);
 
-  // Revoke preview object URLs when they are replaced or on unmount.
+  // Preview links are revoked when a photo leaves the tray or the composer goes.
+  const previewUrls = useRef(new Set<string>());
   useEffect(() => {
-    if (attachment?.state !== "ready") return;
-    const url = attachment.previewUrl;
-    return () => URL.revokeObjectURL(url);
-  }, [attachment]);
+    const urls = previewUrls.current;
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+  const dropPreview = (a: Attachment | undefined) => {
+    if (a?.state === "ready") {
+      URL.revokeObjectURL(a.previewUrl);
+      previewUrls.current.delete(a.previewUrl);
+    }
+  };
 
-  const attachFile = async (file: File) => {
-    setAttachment({ state: "processing", name: file.name });
+  // Photos are prepared one at a time: each full-size photo needs tens of MB
+  // while it's resized, and several at once can crash Safari on iPhone.
+  const prepareQueue = useRef<Promise<void>>(Promise.resolve());
+  const prepare = (key: string, file: File, version: number, highRes: boolean) => {
+    prepareQueue.current = prepareQueue.current.then(() => prepareNow(key, file, version, highRes));
+    return prepareQueue.current;
+  };
+
+  /** Prepares one photo (again, when HD changes) and puts the result in the tray. */
+  const prepareNow = async (key: string, file: File, version: number, highRes: boolean) => {
     try {
-      const image = await prepareImage(file);
-      setAttachment({ state: "ready", image, previewUrl: URL.createObjectURL(image.blob) });
+      const image = await prepareImage(file, { hd: highRes });
+      const previewUrl = URL.createObjectURL(image.blob);
+      previewUrls.current.add(previewUrl);
+      setAttachments((list) => {
+        const current = list.find((a) => a.key === key);
+        // Removed, or re-prepared since: this result is stale.
+        if (!current || current.version !== version) {
+          URL.revokeObjectURL(previewUrl);
+          previewUrls.current.delete(previewUrl);
+          return list;
+        }
+        dropPreview(current);
+        return list.map((a) => (a.key === key ? { key, file, version, state: "ready", image, previewUrl } : a));
+      });
     } catch (error) {
       devLog("image prepare failed", error);
-      setAttachment({
-        state: "error",
-        message: error instanceof ImageValidationError ? error.message : MESSAGES.upload,
-      });
+      const message = error instanceof ImageValidationError ? error.message : MESSAGES.upload;
+      setAttachments((list) =>
+        list.map((a) => (a.key === key && a.version === version ? { key, file, version, state: "error", message } : a)),
+      );
     }
+  };
+
+  const attachFiles = (files: File[]) => {
+    const room = MAX_PHOTOS - attachments.length;
+    const added = files.slice(0, Math.max(0, room)).map((file) => ({ key: uuid(), file, version: 1, state: "processing" as const }));
+    if (!added.length) return;
+    setAttachments((list) => [...list, ...added]);
+    for (const a of added) void prepare(a.key, a.file, 1, hd);
+  };
+
+  const removeAttachment = (key: string) => {
+    dropPreview(attachments.find((a) => a.key === key));
+    setAttachments((list) => list.filter((a) => a.key !== key));
+  };
+
+  // HD on or off: prepare every photo again at the new size.
+  const toggleHd = () => {
+    const next = !hd;
+    setHd(next);
+    const redo = attachments.map((a): Attachment => {
+      dropPreview(a);
+      return { key: a.key, file: a.file, version: a.version + 1, state: "processing" };
+    });
+    setAttachments(redo);
+    for (const a of redo) void prepare(a.key, a.file, a.version, next);
   };
 
   const submit = () => {
@@ -185,9 +250,16 @@ export function MessageComposer({
         });
       return;
     }
-    if (attachment?.state === "ready") {
-      sendImage(attachment.image, trimmed, replyTo);
-      setAttachment(null);
+    if (readyImages.length > 0) {
+      sendImages(
+        readyImages.map((a) => a.image),
+        trimmed,
+        replyTo,
+      );
+      // Sent photos leave the tray; failed ones stay so you can see why.
+      readyImages.forEach(dropPreview);
+      setAttachments((list) => list.filter((a) => a.state === "error"));
+      setHd(false);
     } else if (!sendText(text, replyTo, style, effect)) {
       return;
     }
@@ -213,10 +285,10 @@ export function MessageComposer({
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const file = [...e.clipboardData.files].find((f) => f.type.startsWith("image/"));
-    if (file) {
+    const files = [...e.clipboardData.files].filter((f) => f.type.startsWith("image/"));
+    if (files.length) {
       e.preventDefault();
-      void attachFile(file);
+      attachFiles(files);
     }
   };
 
@@ -332,42 +404,90 @@ export function MessageComposer({
           </motion.div>
         )}
 
-        {attachment && (
+        {attachments.length > 0 && (
           <motion.div
-            key="attachment"
+            key="attachments"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.16 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center gap-3 px-4 pt-3">
-              {attachment.state === "ready" && (
-                // eslint-disable-next-line @next/next/no-img-element -- local blob preview
-                <img
-                  src={attachment.previewUrl}
-                  alt="Selected photo preview"
-                  className="h-16 w-auto max-w-28 object-cover"
-                />
-              )}
-              {attachment.state === "processing" && <div className="skeleton h-16 w-20" aria-hidden="true" />}
-              <p
-                className={cn("flex-1 text-small", attachment.state === "error" ? "text-danger" : "text-muted-strong")}
-                role={attachment.state === "error" ? "alert" : "status"}
-              >
-                {attachment.state === "processing" && "Preparing photo…"}
-                {attachment.state === "ready" && "Photo ready. Add a caption or send."}
-                {attachment.state === "error" && attachment.message}
+            {/* The tray, like WhatsApp's: what you picked, before it goes. */}
+            <div className="flex items-center justify-between gap-3 px-4 pt-3">
+              <p className="text-small text-muted-strong" role="status">
+                {preparing
+                  ? "Preparing…"
+                  : `${readyImages.length} ${readyImages.length === 1 ? "photo" : "photos"}${attachments.length > readyImages.length ? " · some couldn't be used" : ""}`}
               </p>
-              <button
-                type="button"
-                onClick={() => setAttachment(null)}
-                className="rounded-full flex size-11 items-center justify-center text-muted-strong hover:bg-panel-strong hover:text-foreground"
-                aria-label="Remove photo"
-              >
-                <CloseIcon size={18} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={toggleHd}
+                  aria-pressed={hd}
+                  className={cn(
+                    "pill flex min-h-9 items-center border-2 px-3 text-meta font-bold transition-colors",
+                    hd ? "border-love bg-love-soft text-foreground" : "border-field-border text-muted-strong hover:text-foreground",
+                  )}
+                  title={hd ? "Full size" : "Smaller and quicker to send"}
+                >
+                  HD
+                  <span className="sr-only">{hd ? ": sending full size" : ": off, sending smaller photos"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    attachments.forEach(dropPreview);
+                    setAttachments([]);
+                    setHd(false);
+                  }}
+                  className="-mr-2.5 flex size-11 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong hover:text-foreground"
+                  aria-label="Remove all photos"
+                >
+                  <CloseIcon size={18} />
+                </button>
+              </div>
             </div>
+            <ul className="scroll-area flex gap-2 overflow-x-auto px-4 pt-2 pb-1" aria-label="Photos to send">
+              {attachments.map((a, i) => (
+                <li key={a.key} className="relative size-16 shrink-0">
+                  {a.state === "ready" ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- local blob preview
+                    <img src={a.previewUrl} alt={`Photo ${i + 1}`} className="size-full rounded-xl object-cover" />
+                  ) : a.state === "processing" ? (
+                    <span className="skeleton block size-full rounded-xl" aria-label={`Photo ${i + 1}, preparing`} />
+                  ) : (
+                    <span
+                      className="flex size-full items-center justify-center rounded-xl border-2 border-danger p-1 text-center text-[0.6875rem] leading-tight text-danger"
+                      title={a.message}
+                    >
+                      Can&apos;t use
+                      <span className="sr-only">: {a.message}</span>
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(a.key)}
+                    className="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full bg-foreground text-background shadow-[var(--shadow-raised)]"
+                    aria-label={`Remove photo ${i + 1}`}
+                  >
+                    <CloseIcon size={12} />
+                  </button>
+                </li>
+              ))}
+              {attachments.length < MAX_PHOTOS && (
+                <li className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="flex size-16 items-center justify-center rounded-xl border-2 border-dashed border-field-border text-muted-strong hover:bg-panel-strong hover:text-foreground"
+                    aria-label="Add more photos"
+                  >
+                    <PlusIcon size={22} />
+                  </button>
+                </li>
+              )}
+            </ul>
           </motion.div>
         )}
       </AnimatePresence>
@@ -386,10 +506,12 @@ export function MessageComposer({
           className="sr-only"
           tabIndex={-1}
           aria-hidden="true"
+          // Several at once: iPhone's picker then shows numbered ticks.
+          multiple
           onChange={(e) => {
-            const file = e.target.files?.[0];
+            const files = [...(e.target.files ?? [])];
             e.target.value = "";
-            if (file) void attachFile(file);
+            attachFiles(files);
           }}
         />
         {!editing && (<>
@@ -436,7 +558,7 @@ export function MessageComposer({
             }}
             onKeyDown={onKeyDown}
             onPaste={onPaste}
-            placeholder={attachment?.state === "ready" ? "Add a caption" : `Message ${partner.display_name}`}
+            placeholder={attachments.length ? "Add a caption" : `Message ${partner.display_name}`}
             enterKeyHint={isTouch ? "enter" : "send"}
             autoComplete="off"
             className={cn(

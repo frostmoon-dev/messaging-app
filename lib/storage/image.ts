@@ -3,6 +3,9 @@ import type { Rect } from "./crop";
 export const MAX_INPUT_BYTES = 25 * 1024 * 1024; // what we accept from the picker
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // matches the bucket limit
 const MAX_DIMENSION = 1920;
+// HD: full size for any phone photo (a 12 MP iPhone photo is 4032 px), and
+// still within what iPhone Safari's canvas can draw.
+const HD_DIMENSION = 4096;
 
 const DIRECT_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 // HEIC is accepted as *input* when the browser can decode it (Safari); we
@@ -68,8 +71,8 @@ function hasTransparency(canvas: HTMLCanvasElement) {
  * back to JPEG, or PNG when the image has transparency: JPEG has none and
  * would turn see-through areas black.
  */
-async function encode(canvas: HTMLCanvasElement, opaque: "jpeg" | "png" = "jpeg") {
-  let blob = await toBlob(canvas, "image/webp", 0.82);
+async function encode(canvas: HTMLCanvasElement, opaque: "jpeg" | "png" = "jpeg", hd = false) {
+  let blob = await toBlob(canvas, "image/webp", hd ? 0.92 : 0.82);
   let contentType = "image/webp";
   let extension = "webp";
   if (!blob || blob.type !== "image/webp") {
@@ -78,7 +81,7 @@ async function encode(canvas: HTMLCanvasElement, opaque: "jpeg" | "png" = "jpeg"
       contentType = "image/png";
       extension = "png";
     } else {
-      blob = await toBlob(canvas, "image/jpeg", 0.85);
+      blob = await toBlob(canvas, "image/jpeg", hd ? 0.92 : 0.85);
       contentType = "image/jpeg";
       extension = "jpg";
     }
@@ -89,11 +92,11 @@ async function encode(canvas: HTMLCanvasElement, opaque: "jpeg" | "png" = "jpeg"
 }
 
 /**
- * Resizes to ≤1920px and re-encodes (WebP, JPEG fallback). Re-encoding also
- * strips EXIF metadata such as GPS location. GIFs are kept as-is so they stay
- * animated.
+ * Resizes to ≤1920px (≤4096px and higher quality with `hd`) and re-encodes
+ * (WebP, JPEG fallback). Re-encoding also strips EXIF metadata such as GPS
+ * location. GIFs are kept as-is so they stay animated.
  */
-export async function prepareImage(file: File): Promise<PreparedImage> {
+export async function prepareImage(file: File, { hd = false }: { hd?: boolean } = {}): Promise<PreparedImage> {
   validateImageFile(file);
   const decoded = await decode(file);
 
@@ -103,7 +106,7 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
       return { blob: file, width: decoded.width, height: decoded.height, contentType: "image/gif", extension: "gif" };
     }
 
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(decoded.width, decoded.height));
+    const scale = Math.min(1, (hd ? HD_DIMENSION : MAX_DIMENSION) / Math.max(decoded.width, decoded.height));
     const width = Math.max(1, Math.round(decoded.width * scale));
     const height = Math.max(1, Math.round(decoded.height * scale));
 
@@ -115,7 +118,7 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(decoded.source, 0, 0, width, height);
 
-    const { blob, contentType, extension } = await encode(canvas);
+    const { blob, contentType, extension } = await encode(canvas, "jpeg", hd);
     return { blob, width, height, contentType, extension };
   } finally {
     decoded.close();
