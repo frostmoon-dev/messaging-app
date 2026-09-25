@@ -50,6 +50,7 @@ export function Sidebar() {
               <li key={href}>
                 <Link
                   href={href}
+                  prefetch={true}
                   onClick={() => playSound("navigate")}
                   aria-current={active ? "page" : undefined}
                   className={cn(

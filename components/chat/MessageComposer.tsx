@@ -152,15 +152,15 @@ export function MessageComposer({
   }, [replyTo]);
 
   // Opened from a message pop-up (/chat?reply=1): the box is ready to type.
-  // iPhone only opens the keyboard after a tap, so there the box is focused
-  // and one tap on it starts typing.
+  // Not on iPhone: it can't open the keyboard without a tap, and a focused
+  // box with no keyboard left the tab bar hidden.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("reply") !== "1") return;
     params.delete("reply");
     const rest = params.toString();
     window.history.replaceState(null, "", rest ? `/chat?${rest}` : "/chat");
-    textareaRef.current?.focus();
+    if (!/iphone|ipad|ipod/i.test(navigator.userAgent)) textareaRef.current?.focus();
   }, []);
 
   // Preview links are revoked when a photo leaves the tray or the composer goes.

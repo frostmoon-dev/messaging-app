@@ -170,19 +170,40 @@ export function MessageList({
   }, [loaded]);
 
   // Whenever anything changes size (a photo or GIF loads, the keyboard opens,
-  // a reaction appears), stay on the newest message if you were there.
+  // a reaction appears), stay on the newest message if you were there. Not
+  // while your finger is on the chat or a flick is still gliding: jumping
+  // then stops the scroll dead and feels stuck.
   const heightRef = useRef(0);
+  const interactingUntil = useRef(0);
   useEffect(() => {
     const el = scrollRef.current;
     const content = contentRef.current;
     if (!loaded || !el || !content) return;
-    const observer = new ResizeObserver(() => {
-      if (pinnedRef.current) el.scrollTop = el.scrollHeight;
+    const pin = () => {
+      if (pinnedRef.current && performance.now() >= interactingUntil.current) el.scrollTop = el.scrollHeight;
       heightRef.current = el.scrollHeight;
-    });
+    };
+    const touchStart = () => (interactingUntil.current = Infinity);
+    // A flick keeps gliding for a moment after the finger lifts.
+    const touchEnd = () => {
+      interactingUntil.current = performance.now() + 700;
+      setTimeout(pin, 720);
+    };
+    const wheel = () => (interactingUntil.current = performance.now() + 300);
+    const observer = new ResizeObserver(pin);
     observer.observe(el);
     observer.observe(content);
-    return () => observer.disconnect();
+    el.addEventListener("touchstart", touchStart, { passive: true });
+    el.addEventListener("touchend", touchEnd, { passive: true });
+    el.addEventListener("touchcancel", touchEnd, { passive: true });
+    el.addEventListener("wheel", wheel, { passive: true });
+    return () => {
+      observer.disconnect();
+      el.removeEventListener("touchstart", touchStart);
+      el.removeEventListener("touchend", touchEnd);
+      el.removeEventListener("touchcancel", touchEnd);
+      el.removeEventListener("wheel", wheel);
+    };
   }, [loaded]);
 
   // Older messages loaded above: keep what you were reading in place.

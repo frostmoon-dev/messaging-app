@@ -24,6 +24,9 @@ export function BottomNav() {
             <li key={href}>
               <Link
                 href={href}
+                // Fetch every tab ahead of time (kept 5 min), so switching is
+                // instant instead of waiting on the server with a skeleton.
+                prefetch={true}
                 onClick={() => playSound("navigate")}
                 aria-current={active ? "page" : undefined}
                 className={cn(
