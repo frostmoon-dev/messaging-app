@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { useChat, useLiveTable } from "@/components/providers/ChatProvider";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { CheckIcon, ChevronLeftIcon, CloseIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon } from "@/components/ui/icons";
 import { fieldClass } from "@/components/ui/field";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
@@ -13,13 +12,8 @@ import { haptic } from "@/lib/haptics";
 import { cn, uuid } from "@/lib/utils";
 import type { ListItemRow, ListRow } from "@/types/app";
 
-// Quick starts: most couples need these.
-const PRESETS = [
-  { emoji: "🛒", title: "Groceries" },
-  { emoji: "✅", title: "To-do" },
-  { emoji: "✨", title: "Bucket list" },
-  { emoji: "💡", title: "Date ideas" },
-];
+// Suggested first lists (plain names; you can also type your own).
+const SUGGESTIONS = ["Groceries", "To-do", "Bucket list", "Date ideas"];
 
 const byCreated = <T extends { created_at: string }>(a: T, b: T) => a.created_at.localeCompare(b.created_at);
 
@@ -86,12 +80,12 @@ export function SharedLists() {
     }
   };
 
-  const createList = (title: string, emoji: string | null) => {
+  const createList = (title: string) => {
     const row: ListRow = {
       id: uuid(),
       conversation_id: conversationId,
       title: title.trim().slice(0, 40),
-      emoji,
+      emoji: null,
       created_by: me.id,
       created_at: new Date().toISOString(),
     };
@@ -105,7 +99,7 @@ export function SharedLists() {
         setLists((prev) => prev?.filter((l) => l.id !== row.id) ?? null);
         setOpenId(null);
       },
-      () => createClient().from("lists").insert({ id: row.id, conversation_id: row.conversation_id, title: row.title, emoji: row.emoji }),
+      () => createClient().from("lists").insert({ id: row.id, conversation_id: row.conversation_id, title: row.title }),
     );
   };
 
@@ -166,9 +160,9 @@ export function SharedLists() {
 
   if (lists === null && !error) {
     return (
-      <div className="grid grid-cols-2 gap-3" aria-busy="true" aria-label="Loading lists">
+      <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading lists">
         {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-24 w-full rounded-[18px]" />
+          <Skeleton key={i} className="h-14 w-full rounded-[18px]" />
         ))}
       </div>
     );
@@ -213,91 +207,112 @@ function ListOverview({
   lists: ListRow[];
   items: ListItemRow[];
   onOpen: (id: string) => void;
-  onCreate: (title: string, emoji: string | null) => void;
+  onCreate: (title: string) => void;
 }) {
+  const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const counts = useMemo(() => {
-    const map = new Map<string, { left: number; done: number }>();
+    const map = new Map<string, { left: number; total: number }>();
     for (const i of items) {
-      const c = map.get(i.list_id) ?? { left: 0, done: 0 };
-      if (i.done_at) c.done++;
-      else c.left++;
+      const c = map.get(i.list_id) ?? { left: 0, total: 0 };
+      c.total++;
+      if (!i.done_at) c.left++;
       map.set(i.list_id, c);
     }
     return map;
   }, [items]);
   const taken = new Set(lists.map((l) => l.title.toLowerCase()));
-  const presets = PRESETS.filter((p) => !taken.has(p.title.toLowerCase()));
+  const suggestions = SUGGESTIONS.filter((t) => !taken.has(t.toLowerCase()));
+
+  const create = (title: string) => {
+    onCreate(title);
+    setName("");
+    setAdding(false);
+  };
 
   return (
     <section aria-label="Lists" className="flex flex-col gap-4">
-      {lists.length > 0 && (
-        <ul className="grid grid-cols-2 gap-3">
+      <div className="card overflow-hidden bg-panel">
+        {lists.length === 0 && !adding && <p className="px-4 pt-4 pb-1 text-small text-muted-strong">No lists yet.</p>}
+        <ul className="divide-y divide-border">
           {lists.map((l) => {
-            const c = counts.get(l.id) ?? { left: 0, done: 0 };
+            const c = counts.get(l.id) ?? { left: 0, total: 0 };
             return (
               <li key={l.id}>
                 <button
                   type="button"
                   onClick={() => onOpen(l.id)}
-                  className="card flex h-full min-h-24 w-full flex-col items-start gap-1 bg-panel p-4 text-left transition-colors hover:bg-panel-strong"
+                  className="flex min-h-14 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-panel-strong"
                 >
-                  <span className="text-[1.5rem] leading-none" aria-hidden="true">
-                    {l.emoji ?? "📝"}
-                  </span>
-                  <span className="mt-1 line-clamp-2 font-bold">{l.title}</span>
-                  <span className="text-meta text-muted">
-                    {c.left === 0 && c.done === 0 ? "Empty" : `${c.left} to go${c.done ? ` · ${c.done} done` : ""}`}
-                  </span>
+                  <span className="min-w-0 flex-1 truncate font-semibold">{l.title}</span>
+                  <span className="shrink-0 text-small text-muted">{c.total === 0 ? "Empty" : c.left === 0 ? "All done" : `${c.left} left`}</span>
+                  <ChevronRightIcon size={18} className="shrink-0 text-muted" />
                 </button>
               </li>
             );
           })}
-        </ul>
-      )}
-
-      <div className="card bg-panel p-4">
-        <p className="mb-3 font-semibold">{lists.length ? "New list" : "Start a list together"}</p>
-        {presets.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {presets.map((p) => (
-              <button
-                key={p.title}
-                type="button"
-                onClick={() => onCreate(p.title, p.emoji)}
-                className="pill flex min-h-10 items-center gap-2 border-2 border-field-border px-3.5 text-small font-semibold text-muted-strong hover:text-foreground"
+          <li>
+            {adding ? (
+              <form
+                className="flex items-center gap-2 p-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  create(name);
+                }}
               >
-                <span aria-hidden="true">{p.emoji}</span>
-                {p.title}
+                <label htmlFor="new-list" className="sr-only">
+                  List name
+                </label>
+                <input
+                  id="new-list"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={40}
+                  placeholder="List name"
+                  className={fieldClass}
+                  autoComplete="off"
+                  autoFocus
+                />
+                <Button type="submit" disabled={!name.trim()}>
+                  Create
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setAdding(false)}
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong"
+                  aria-label="Cancel"
+                >
+                  <CloseIcon size={16} />
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAdding(true)}
+                className="flex min-h-14 w-full items-center gap-3 px-4 text-left font-semibold text-accent-text transition-colors hover:bg-panel-strong"
+              >
+                <PlusIcon size={18} /> New list
               </button>
-            ))}
-          </div>
-        )}
-        <form
-          className="flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onCreate(name, null);
-            setName("");
-          }}
-        >
-          <label htmlFor="new-list" className="sr-only">
-            List name
-          </label>
-          <input
-            id="new-list"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={40}
-            placeholder="Or name your own"
-            className={fieldClass}
-            autoComplete="off"
-          />
-          <Button type="submit" disabled={!name.trim()}>
-            Create
-          </Button>
-        </form>
+            )}
+          </li>
+        </ul>
       </div>
+
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-small text-muted-strong">Suggestions:</span>
+          {suggestions.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => create(t)}
+              className="pill min-h-10 border border-border px-3.5 text-small font-semibold text-muted-strong hover:bg-panel-strong hover:text-foreground"
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -331,22 +346,21 @@ function ListDetail({
 
   return (
     <section aria-labelledby="list-title" className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={onBack}
-          className="-ml-2 flex size-11 items-center justify-center rounded-full hover:bg-panel-strong"
+          className="-ml-2.5 flex size-11 items-center justify-center rounded-full hover:bg-panel-strong"
           aria-label="All lists"
         >
           <ChevronLeftIcon size={22} />
         </button>
         <h2 id="list-title" className="min-w-0 flex-1 truncate text-title font-bold">
-          <span aria-hidden="true">{list.emoji ?? "📝"} </span>
           {list.title}
         </h2>
       </div>
 
-      {/* Add stays open after each item, for quick lists like groceries. */}
+      {/* Stays open after each item, for quick lists like groceries. */}
       <form
         className="flex gap-2"
         onSubmit={(e) => {
@@ -375,48 +389,48 @@ function ListDetail({
         </Button>
       </form>
 
-      {items.length === 0 && <p className="py-6 text-center text-small text-muted-strong">Nothing here yet. Add the first item above.</p>}
-
-      <ul className="flex flex-col gap-1.5">
-        <AnimatePresence initial={false}>
-          {todo.map((item) => (
-            <Item key={item.id} item={item} who={who} onToggle={onToggle} onRemove={onRemove} />
-          ))}
-        </AnimatePresence>
-      </ul>
+      {items.length === 0 ? (
+        <p className="text-small text-muted-strong">Nothing on this list yet.</p>
+      ) : (
+        todo.length > 0 && (
+          <ul className="card divide-y divide-border overflow-hidden bg-panel">
+            {todo.map((item) => (
+              <Item key={item.id} item={item} who={who} onToggle={onToggle} onRemove={onRemove} />
+            ))}
+          </ul>
+        )
+      )}
 
       {done.length > 0 && (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-small font-semibold text-muted-strong">Done · {done.length}</h3>
+            <h3 className="text-small font-semibold text-muted-strong">Done ({done.length})</h3>
             <button type="button" onClick={() => onClearDone(done)} className="min-h-11 px-2 text-small font-semibold text-muted-strong hover:text-foreground">
-              Clear done
+              Clear
             </button>
           </div>
-          <ul className="flex flex-col gap-1.5">
-            <AnimatePresence initial={false}>
-              {done.map((item) => (
-                <Item key={item.id} item={item} who={who} onToggle={onToggle} onRemove={onRemove} />
-              ))}
-            </AnimatePresence>
+          <ul className="card divide-y divide-border overflow-hidden bg-panel">
+            {done.map((item) => (
+              <Item key={item.id} item={item} who={who} onToggle={onToggle} onRemove={onRemove} />
+            ))}
           </ul>
         </div>
       )}
 
-      <div className="pt-4">
+      <div className="pt-2">
         {confirming ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-small">Delete “{list.title}” and everything on it for both of you?</span>
+            <span className="text-small">Delete this list for both of you?</span>
             <Button variant="danger" onClick={onDelete}>
               Delete
             </Button>
             <Button variant="ghost" onClick={() => setConfirming(false)}>
-              Keep
+              Cancel
             </Button>
           </div>
         ) : (
-          <button type="button" onClick={() => setConfirming(true)} className="flex min-h-11 items-center gap-2 text-small font-semibold text-danger">
-            <TrashIcon size={16} /> Delete list
+          <button type="button" onClick={() => setConfirming(true)} className="min-h-11 text-small font-semibold text-danger">
+            Delete list
           </button>
         )}
       </div>
@@ -437,29 +451,22 @@ function Item({
 }) {
   const done = Boolean(item.done_at);
   return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.15 }}
-      className="card flex items-center gap-1 bg-panel pr-1"
-    >
+    <li className="flex items-center">
       <button
         type="button"
         role="checkbox"
         aria-checked={done}
         onClick={() => onToggle(item)}
-        className="flex min-h-12 min-w-0 flex-1 items-center gap-3 py-2 pl-3 text-left"
+        className="flex min-h-12 min-w-0 flex-1 items-center gap-3 py-2.5 pl-4 text-left"
       >
         <span
           className={cn(
-            "flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+            "flex size-[22px] shrink-0 items-center justify-center rounded-full border-2 transition-colors",
             done ? "border-love bg-love text-love-foreground" : "border-field-border",
           )}
           aria-hidden="true"
         >
-          {done && <CheckIcon size={14} strokeWidth={3} />}
+          {done && <CheckIcon size={13} strokeWidth={3} />}
         </span>
         <span className="min-w-0">
           <span className={cn("block break-words", done && "text-muted line-through")}>{item.text}</span>
@@ -469,11 +476,11 @@ function Item({
       <button
         type="button"
         onClick={() => onRemove(item)}
-        className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground"
+        className="mr-1 flex size-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-panel-strong hover:text-foreground"
         aria-label={`Remove ${item.text}`}
       >
-        <CloseIcon size={16} />
+        <CloseIcon size={14} />
       </button>
-    </motion.li>
+    </li>
   );
 }

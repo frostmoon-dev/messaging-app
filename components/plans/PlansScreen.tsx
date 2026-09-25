@@ -119,7 +119,7 @@ function Plans() {
         description={
           tab === "calendar"
             ? `Shared with ${partner.display_name}. Reminders go to both of you.`
-            : `Shared with ${partner.display_name}. Tick things off together, live.`
+            : `Shared with ${partner.display_name}.`
         }
         action={
           tab === "calendar" ? (
