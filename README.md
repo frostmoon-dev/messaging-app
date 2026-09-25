@@ -18,12 +18,15 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - Reconnects on its own and fills any gap in messages
 - **Bond** screen (rank, title, progress, stats, all set by hand), **Memories** scrapbook (photos keep their own shape; crop them when adding), daily status with icons (Free to talk, Busy, Studying, At home, Out, Sleeping, Call me)
 - Pop-up notifications through Web Push, even when the app is closed (asked only after you send something). They show the message text; turn **Show message text** off in Settings to show only “Sent you a message”. Photos, GIFs and stickers always say what they are (“Rafie sent a GIF.”). Several messages stack into one pop-up (“Rafie ♡ · 3 new messages”), and tapping it opens the chat with the reply box ready. Optional **quiet hours** (messages arrive without sound; SOS still rings) and **reaction pop-ups** (off by default). No pop-ups while you're in the chat. Optional sounds (off by default)
+- **Thinking of you:** tap the heart in the chat header. Their phone gives a soft heartbeat and a pop-up, “Rafie is thinking of you.”
+- **Anniversaries:** 1 month, 100 days, 6 months, every year, 500 days and every 1,000 days, counted from **Together since** on the Bond screen. Both phones get a pop-up at about 09:00, and the Bond screen shows the next one
+- **On this day:** memories from this date in earlier years, at the top of Memories and as a 09:00 pop-up
 - **Plans**: a shared calendar. Either of you adds, edits or deletes; reminders ("1 hour before", "1 day before"…) pop up on both phones
 - **Map**: see each other while sharing is on (live while the app is open), send "I'm here", ask "Where are you?", get directions
 - **SOS**: two taps send an emergency alert with your location. The other phone gets an urgent notification that stays on screen, and a full-screen alarm with a siren if Napyru is open
 - Notifications read like "Rafie ♡ · See you at 8?" (or "Sent you a message" with previews off)
 - Look taken from the app icon (an ink drawing in a circle): round portraits, pill buttons, evenly rounded cards with a hairline ink line, one brush stroke under page titles
-- Themes: **Ink** (default: soft black and white), **Paper** (the light version of Ink), Automatic (Ink at night, Paper by day). The only colours are green for "online" and red for danger
+- Themes: **Ink** (default: warm charcoal and off-white), **Paper** (the light version of Ink), Automatic (Ink at night, Paper by day). Colours carry meaning only: honey for the moments between you, green for "online", red for danger
 - **Chat background** (Settings): plain, dots, grid, slash, or your own photo, cropped and dimmed. Saved on the device only; the photo is never uploaded
 - Photo cropper (drag, pinch or slider to zoom) for memories, your avatar and the chat background
 - Colours are checked by `npm run contrast` (WCAG 2.2) and follow eye-comfort rules; see "Colour" below. Mobile-first layout with keyboard-safe composer
@@ -134,6 +137,14 @@ Until step 1 runs, the chat works as before; reactions, edits and styles don't s
 What it adds: quiet hours and reaction pop-ups in Settings → Alerts; the SOS sender gets “Rafie saw your SOS.” and “Rafie is on it.”; an SOS nobody has seen rings again after 2, 4 and 6 minutes. Message stacking and the reply box live in the service worker, so they arrive with the app itself.
 
 **Limits, honestly:** a web app can only read location while it's open, so live sharing pauses when Napyru is closed ("I'm here" and SOS send the location at that moment). The SOS siren plays only when Napyru is open; when it's closed, the phone shows the urgent notification with its normal sound, and silent mode can mute it. SOS is not a replacement for calling emergency services.
+
+
+### Thinking of you, anniversaries and On this day
+
+1. `npx supabase db push` applies `20261002000000_couple_moments.sql`: the `love` alert kind, the `moments_sent` table, `memories_on_this_day`, and the hourly `napyru-moments` pg_cron job.
+2. `npx supabase functions deploy send-push`, **after** step 1.
+
+Moments go out on the first hourly run after 09:00 in your time zone (saved each time the app opens), once each. Set **Together since** in Bond → Edit for anniversaries.
 
 ## Colour
 

@@ -192,6 +192,12 @@ export const PinIcon = (p: IconProps) => (
 );
 
 /** Outline star; pass fill="currentColor" for a starred one. */
+export const HeartIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 20s-7-4.4-8.9-8.8C1.8 8 3.8 4.8 7 4.8c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.2 0 5.2 3.2 3.9 6.4C19 15.6 12 20 12 20Z" />
+  </Svg>
+);
+
 export const StarIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9Z" />

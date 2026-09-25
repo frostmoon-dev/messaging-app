@@ -16,7 +16,7 @@ export function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-export type PushKind = "message" | "reaction" | "reminder" | "sos" | "sos_reply" | "here" | "where";
+export type PushKind = "message" | "reaction" | "reminder" | "sos" | "sos_reply" | "here" | "where" | "love" | "moment";
 
 export type PushPayload = {
   kind: PushKind;
@@ -37,7 +37,9 @@ export type PushRequest =
   | { kind: "sos_seen"; id: string }
   | { kind: "sos_handled"; id: string }
   /** `id` is the message that got the reaction. */
-  | { kind: "reaction"; id: string; reactorId: string };
+  | { kind: "reaction"; id: string; reactorId: string }
+  /** The hourly check for anniversaries and "On this day". */
+  | { kind: "moments" };
 
 export function parseRequest(body: unknown): PushRequest | null {
   if (!body || typeof body !== "object") return null;
@@ -52,6 +54,7 @@ export function parseRequest(body: unknown): PushRequest | null {
     isUuid(b.reaction_message_id) && isUuid(b.reactor_id)
       ? ({ kind: "reaction", id: b.reaction_message_id, reactorId: b.reactor_id } as const)
       : null,
+    b.moments === true ? ({ kind: "moments" } as const) : null,
   ].filter((x) => x !== null);
   return found.length === 1 ? found[0] : null;
 }
@@ -128,7 +131,7 @@ export function buildReminderPayload(event: { id: string; title: string; remind_
 }
 
 export function buildAlertPayload(
-  alert: { id: string; kind: "sos" | "here" | "where" },
+  alert: { id: string; kind: "sos" | "here" | "where" | "love" },
   senderName: string | null | undefined,
   repeat = 0,
 ): PushPayload {
@@ -141,6 +144,10 @@ export function buildAlertPayload(
       url: `/map?alert=${alert.id}`,
       tag: `sos-${alert.id}`,
     };
+  }
+  if (alert.kind === "love") {
+    // One pop-up at a time: a second tap replaces it instead of stacking.
+    return { kind: "love", title: `${name} ${HEART}`, body: `${name} is thinking of you.`, url: "/chat", tag: "love" };
   }
   if (alert.kind === "here") {
     return { kind: "here", title: `${name} ${HEART}`, body: "Shared where they are", url: `/map?alert=${alert.id}`, tag: "location" };
@@ -222,6 +229,29 @@ export function inQuietHours(profile: QuietHours, now = new Date()): boolean {
   const t = minutesInZone(now, profile.time_zone);
   if (t === null) return false;
   return start < end ? t >= start && t < end : t >= start || t < end;
+}
+
+/** "1 year together ♡": sent to both of you on the day. */
+export function buildMilestonePayload(milestone: { key: string; label: string }, sinceText: string): PushPayload {
+  return {
+    kind: "moment",
+    title: `${milestone.label} together ${HEART}`,
+    body: `Since ${sinceText}. Happy ${milestone.label.includes("year") ? "anniversary" : milestone.label}!`,
+    url: "/bond",
+    tag: `moment-${milestone.key}`.slice(0, 64),
+  };
+}
+
+/** "On this day ♡ · 2 years ago: Beach day" (+ how many more that day). */
+export function buildOnThisDayPayload(first: { id: string; title: string }, ago: string, more: number): PushPayload {
+  const title = first.title.trim().slice(0, 80) || "A memory";
+  return {
+    kind: "moment",
+    title: `On this day ${HEART}`,
+    body: `${ago}: ${title}${more > 0 ? ` (and ${more} more)` : ""}`,
+    url: `/memories?m=${first.id}`,
+    tag: "on-this-day",
+  };
 }
 
 /** The push service says this address no longer exists: delete it. */

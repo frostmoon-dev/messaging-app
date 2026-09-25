@@ -634,6 +634,10 @@ export type Database = {
       set_reaction: { Args: { msg: string; reaction: string | null }; Returns: undefined }
       resolve_alert: { Args: { alert: string }; Returns: undefined }
       mark_alert_seen: { Args: { alert: string }; Returns: undefined }
+      memories_on_this_day: {
+        Args: { conv: string; today: string }
+        Returns: Database["public"]["Tables"]["memories"]["Row"][]
+      }
       save_push_subscription: {
         Args: { sub_auth: string; sub_endpoint: string; sub_p256dh: string }
         Returns: undefined

@@ -378,14 +378,6 @@ function AlertsSection() {
       { quiet_start: start, quiet_end: end, time_zone: localTimeZone() },
       { quiet_start: me.quiet_start ?? null, quiet_end: me.quiet_end ?? null, time_zone: me.time_zone ?? null },
     );
-  // Travelled since you set quiet hours: keep them in your local time.
-  const staleZone = quietOn && hydrated && me.time_zone !== localTimeZone();
-  useEffect(() => {
-    if (!staleZone) return;
-    const zone = localTimeZone();
-    updateMe({ time_zone: zone });
-    void createClient().from("profiles").update({ time_zone: zone }).eq("id", me.id);
-  }, [staleZone, updateMe, me.id]);
 
   const [permission, setPermission] = useState<ReturnType<typeof notificationPermission> | null>(null);
   const [notifyOn, setNotifyOn] = useState<boolean | null>(null);

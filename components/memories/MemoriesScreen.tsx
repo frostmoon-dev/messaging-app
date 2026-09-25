@@ -12,6 +12,9 @@ import { MemoryForm } from "./MemoryForm";
 import { MemoryViewer } from "./MemoryViewer";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
+import { todayDateOnly } from "@/lib/time";
+import { devLog } from "@/lib/utils";
+import { yearsAgo } from "@/supabase/functions/send-push/moments";
 import type { MemoryRow } from "@/types/app";
 
 const WIDE = "(min-width: 640px)";
@@ -40,6 +43,41 @@ export function MemoriesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [viewing, setViewing] = useState<MemoryRow | null>(null);
+  // Memories from this day in earlier years.
+  const [onThisDay, setOnThisDay] = useState<MemoryRow[]>([]);
+  const today = todayDateOnly();
+
+  useEffect(() => {
+    let cancelled = false;
+    void createClient()
+      .rpc("memories_on_this_day", { conv: conversationId, today })
+      .then(({ data, error: err }) => {
+        if (err) devLog("on this day failed", err);
+        else if (!cancelled) setOnThisDay(data ?? []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, today]);
+
+  // /memories?m=<id> (from the "On this day" pop-up) opens that memory.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("m");
+    if (!id) return;
+    window.history.replaceState(null, "", "/memories");
+    let cancelled = false;
+    void createClient()
+      .from("memories")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data) setViewing(data);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const load = useCallback(async () => {
     setError(null);
@@ -81,6 +119,24 @@ export function MemoriesScreen() {
             <span className="text-small text-muted-strong">{error}</span>
             <Button variant="secondary" onClick={() => void load()}>Try again</Button>
           </div>
+        )}
+
+        {onThisDay.length > 0 && (
+          <section className="mb-8" aria-labelledby="on-this-day">
+            <h2 id="on-this-day" className="mb-3 text-title font-bold">
+              On this day <span className="text-love">♡</span>
+            </h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {onThisDay.map((m) => (
+                <div key={m.id} className="min-w-0">
+                  <p className="mb-1.5 text-small font-semibold text-love">{yearsAgo(m.memory_date, today)}</p>
+                  <ul>
+                    <MemoryCard memory={m} onOpen={() => setViewing(m)} />
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         {memories === null && !error && (
@@ -136,6 +192,7 @@ export function MemoriesScreen() {
           onClose={() => setViewing(null)}
           onDeleted={(id) => {
             setMemories((prev) => prev?.filter((m) => m.id !== id) ?? null);
+            setOnThisDay((prev) => prev.filter((m) => m.id !== id));
             setViewing(null);
           }}
         />

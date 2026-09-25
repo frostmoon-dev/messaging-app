@@ -6,13 +6,14 @@ import { useChat } from "@/components/providers/ChatProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { EditIcon } from "@/components/ui/icons";
+import { EditIcon, HeartIcon } from "@/components/ui/icons";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { BondEditor } from "./BondEditor";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { daysSince, formatLongDate, todayDateOnly } from "@/lib/time";
 import { friendlyError } from "@/lib/errors";
+import { formatDateOnly, milestoneOn, nextMilestone } from "@/supabase/functions/send-push/moments";
 import type { Profile } from "@/types/app";
 
 type Stats = {
@@ -103,6 +104,8 @@ export function BondScreen() {
           </p>
         </section>
 
+        {bond?.together_since && <Milestones since={bond.together_since} />}
+
         <section aria-labelledby="bond-record">
           <h2 id="bond-record" className="mb-3 text-title font-bold">
             Your record
@@ -136,6 +139,41 @@ export function BondScreen() {
 
       {editing && bond && <BondEditor bond={bond} onClose={() => setEditing(false)} />}
     </div>
+  );
+}
+
+/** Today's anniversary, or the next one and how far away it is. */
+function Milestones({ since }: { since: string }) {
+  const today = todayDateOnly();
+  const now = milestoneOn(since, today);
+  const next = now ? null : nextMilestone(since, today);
+  if (!now && !next) return null;
+  return (
+    <section className="card flex items-center gap-4 bg-panel p-4" aria-label="Anniversaries">
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-love-soft text-love">
+        <HeartIcon size={24} fill={now ? "currentColor" : "none"} />
+      </span>
+      <div className="min-w-0">
+        {now ? (
+          <>
+            <p className="text-title font-bold">{now.label} together today ♡</p>
+            <p className="text-small text-muted-strong">Since {formatDateOnly(since)}.</p>
+          </>
+        ) : (
+          next && (
+            <>
+              <p className="text-small text-muted-strong">Next</p>
+              <p className="text-title font-bold">
+                {next.label} together
+              </p>
+              <p className="text-small text-muted-strong">
+                {next.daysLeft === 1 ? "Tomorrow" : `In ${next.daysLeft} days`}, on {formatDateOnly(next.date)}
+              </p>
+            </>
+          )
+        )}
+      </div>
+    </section>
   );
 }
 

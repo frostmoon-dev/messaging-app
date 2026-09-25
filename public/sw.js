@@ -7,7 +7,7 @@
  *   with the reply box ready.
  * Private data is never cached: only the offline page and icons are stored.
  */
-const CACHE = "napyru-shell-v19";
+const CACHE = "napyru-shell-v20";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/badge-96.png"];
 
 self.addEventListener("install", (event) => {
@@ -36,8 +36,10 @@ self.addEventListener("fetch", (event) => {
 const CAN_SKIP_WHEN_FOCUSED = /Chrome\//.test(self.navigator.userAgent) && !/CriOS|EdgiOS|FxiOS/.test(self.navigator.userAgent);
 
 // Pop-ups that the open app already shows in its own way.
-const SKIP_WHEN_FOCUSED = new Set(["message", "reaction", "sos_reply"]);
+const SKIP_WHEN_FOCUSED = new Set(["message", "reaction", "sos_reply", "love"]);
 const MESSAGE_TAG = "new-message";
+// "Thinking of you": the same lub-dub as the app's haptics.
+const HEARTBEAT = [18, 60, 10, 110, 18, 60, 10];
 const MAX_LINES = 5;
 
 /**
@@ -100,7 +102,7 @@ self.addEventListener("push", (event) => {
         // SOS stays on screen until dismissed and buzzes hard; everything
         // else is a short double tap.
         requireInteraction: sos,
-        vibrate: silent ? undefined : sos ? [600, 200, 600, 200, 600, 200, 600] : [80, 40, 80],
+        vibrate: silent ? undefined : sos ? [600, 200, 600, 200, 600, 200, 600] : kind === "love" ? HEARTBEAT : [80, 40, 80],
         timestamp: Date.now(),
         data: { url, kind, count: stack?.count, lines: stack?.lines },
       });

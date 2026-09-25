@@ -6,17 +6,18 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat, useLiveTable } from "@/components/providers/ChatProvider";
 import { Dialog } from "@/components/ui/Dialog";
-import { CloseIcon, MapPinIcon } from "@/components/ui/icons";
+import { CloseIcon, HeartIcon, MapPinIcon } from "@/components/ui/icons";
 import { createClient } from "@/lib/supabase/client";
 import { directionsUrl, markAlertSeen, resolveAlert, sendAlert } from "@/lib/alerts";
 import { currentPosition } from "@/lib/location";
 import { startAlarm } from "@/lib/alarm";
 import { playSound } from "@/lib/sound";
+import { haptic } from "@/lib/haptics";
 import { formatTime } from "@/lib/time";
 import { devLog } from "@/lib/utils";
 import type { AlertRow } from "@/types/app";
 
-type Toast = { id: string; text: string; action?: "view" | "share"; alertId?: string };
+type Toast = { id: string; text: string; action?: "view" | "share"; alertId?: string; icon?: "heart" };
 
 /**
  * Always mounted inside the app. Shows an incoming SOS full screen with the
@@ -113,6 +114,9 @@ export function AlertCenter() {
         silence();
         stopAlarm.current = startAlarm();
         setAlarmOn(true);
+      } else if (alert.kind === "love") {
+        haptic("heart");
+        showToast({ id: alert.id, text: `${partner.display_name} is thinking of you ♡`, icon: "heart" });
       } else if (alert.kind === "here") {
         playSound("received");
         showToast({ id: alert.id, text: `${partner.display_name} ♡ shared where they are`, action: "view", alertId: alert.id });
@@ -202,7 +206,11 @@ export function AlertCenter() {
             role="status"
           >
             <div className="card flex items-center gap-3 border-l-4 border-accent bg-panel-strong p-3 shadow-[var(--shadow-float)]">
-              <MapPinIcon size={20} className="shrink-0 text-accent-text" />
+              {toast.icon === "heart" ? (
+                <HeartIcon size={20} fill="currentColor" className="shrink-0 text-love" />
+              ) : (
+                <MapPinIcon size={20} className="shrink-0 text-accent-text" />
+              )}
               <p className="flex-1 text-small font-semibold">{toast.text}</p>
               {toast.action === "view" && (
                 <Link

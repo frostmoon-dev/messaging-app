@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useChat, usePresence } from "@/components/providers/ChatProvider";
 import { Avatar } from "@/components/ui/Avatar";
@@ -11,7 +12,10 @@ import { formatLastSeen } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { ConnectionBanner } from "./ConnectionBanner";
 import { PinnedBar } from "./PinnedBar";
-import { StarIcon } from "@/components/ui/icons";
+import { HeartIcon, StarIcon } from "@/components/ui/icons";
+import { sendAlert } from "@/lib/alerts";
+import { haptic } from "@/lib/haptics";
+import { devLog } from "@/lib/utils";
 import { FavouritesSheet } from "@/components/settings/FavouritesSheet";
 
 /**
@@ -20,13 +24,33 @@ import { FavouritesSheet } from "@/components/settings/FavouritesSheet";
  * --chat-header-h on the chat for the list's top padding.
  */
 export function ChatHeader({ onJump }: { onJump: (id: string) => void }) {
-  const { partner, me } = useChat();
+  const { partner, me, conversationId } = useChat();
   const { partnerOnline, partnerTyping, partnerLastSeen } = usePresence();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [favouritesOpen, setFavouritesOpen] = useState(false);
   const ref = useRef<HTMLElement>(null);
   const status = activeStatus(partner);
   const myStatus = activeStatus(me);
+  // "Thinking of you": the heart fills for a moment, then resets.
+  const [love, setLove] = useState<"idle" | "sent" | "failed">("idle");
+  const loveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (loveTimer.current) clearTimeout(loveTimer.current);
+  }, []);
+
+  const sendLove = async () => {
+    haptic("heart");
+    setLove("sent");
+    if (loveTimer.current) clearTimeout(loveTimer.current);
+    loveTimer.current = setTimeout(() => setLove("idle"), 2500);
+    try {
+      await sendAlert(conversationId, "love");
+    } catch (error) {
+      // Usually the flood guard (3 a minute).
+      devLog("thinking of you failed", error);
+      setLove("failed");
+    }
+  };
 
   useEffect(() => {
     const header = ref.current;
@@ -78,6 +102,51 @@ export function ChatHeader({ onJump }: { onJump: (id: string) => void }) {
               </>
             )}
           </p>
+        </div>
+
+        {/* "Thinking of you": one tap, a heartbeat on their phone. */}
+        <div className="relative shrink-0">
+          <motion.button
+            type="button"
+            onClick={() => void sendLove()}
+            whileTap={{ scale: 0.85 }}
+            className={cn(
+              "flex size-11 items-center justify-center rounded-full transition-colors hover:bg-panel-strong/60",
+              love === "sent" ? "text-love" : "text-foreground",
+            )}
+            aria-label={`Send ${partner.display_name} a “thinking of you”`}
+          >
+            <motion.span
+              key={love}
+              initial={love === "sent" ? { scale: 0.6 } : false}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 520, damping: 14 }}
+              className="flex"
+            >
+              <HeartIcon size={22} fill={love === "sent" ? "currentColor" : "none"} />
+            </motion.span>
+          </motion.button>
+          <AnimatePresence>
+            {love !== "idle" && (
+              <motion.span
+                key={love}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className={cn(
+                  "pointer-events-none absolute top-full left-1/2 z-30 mt-1 -translate-x-1/2 rounded-full bg-panel-strong px-2.5 py-1 text-meta font-semibold whitespace-nowrap shadow-[var(--shadow-raised)]",
+                  love === "failed" ? "text-danger" : "text-love",
+                )}
+                aria-hidden="true"
+              >
+                {love === "failed" ? "Try again in a minute" : "Sent ♡"}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <span className="sr-only" aria-live="polite">
+            {love === "sent" ? `Sent. ${partner.display_name} will feel a heartbeat.` : love === "failed" ? "Couldn't send. Try again in a minute." : ""}
+          </span>
         </div>
 
         {/* Your favourites (only you see them). */}

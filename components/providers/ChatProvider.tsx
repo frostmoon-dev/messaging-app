@@ -1008,6 +1008,27 @@ export function ChatProvider({
   const localPreview = useCallback((id: string) => previews.current.get(id), []);
   const updateMe = useCallback((patch: Partial<Profile>) => setMe((prev) => ({ ...prev, ...patch })), []);
 
+  // Keep your time zone on your profile, so quiet hours and anniversary
+  // pop-ups (09:00) follow your local time, also after travelling.
+  const myZone = me.time_zone ?? null;
+  useEffect(() => {
+    let zone: string | null = null;
+    try {
+      zone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+    } catch {
+      return;
+    }
+    if (!zone || zone === myZone) return;
+    void supabase
+      .from("profiles")
+      .update({ time_zone: zone })
+      .eq("id", session.me.id)
+      .then(({ error }) => {
+        if (error) devLog("time zone save failed", error);
+        else updateMe({ time_zone: zone });
+      });
+  }, [myZone, supabase, session.me.id, updateMe]);
+
   const unreadCount = useMemo(
     () => state.messages.filter((m) => m.sender_id === partner.id && !m.read_at).length,
     [state.messages, partner.id],

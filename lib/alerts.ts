@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Position } from "./location";
 import type { AlertRow } from "@/types/app";
 
-export type AlertKind = "sos" | "here" | "where";
+export type AlertKind = "sos" | "here" | "where" | "love";
 
 /** Sends an alert to the other person. The database notifies them by push. */
 export async function sendAlert(conversationId: string, kind: AlertKind, pos?: Position | null): Promise<AlertRow> {
