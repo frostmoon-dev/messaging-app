@@ -280,6 +280,10 @@ export function MessageComposer({
   // ------------------------------------------------------------ voice messages
   const canRecord = useSyncExternalStore(subscribeNoop, voiceSupported, () => false);
   const [recorder, setRecorder] = useState<Recorder | null>(null);
+  // The live recorder, for cleanup when you leave the chat. Only that: tying
+  // cleanup to `recorder` cancelled the recording the moment you tapped send
+  // (the bar closing), so the send waited forever and nothing went out.
+  const recorderRef = useRef<Recorder | null>(null);
   const [starting, setStarting] = useState(false);
   const [recElapsed, setRecElapsed] = useState(0);
   const [recLevel, setRecLevel] = useState(0);
@@ -294,6 +298,7 @@ export function MessageComposer({
       const rec = await startRecording();
       haptic("press");
       setRecElapsed(0);
+      recorderRef.current = rec;
       setRecorder(rec);
     } catch (error) {
       setRecError(error instanceof RecorderError ? error.message : "Couldn't start recording.");
@@ -318,16 +323,18 @@ export function MessageComposer({
   }, [recorder]);
 
   // Leaving the chat mid-recording throws it away (and frees the microphone).
-  useEffect(() => () => recorder?.cancel(), [recorder]);
+  useEffect(() => () => recorderRef.current?.cancel(), []);
 
   const cancelVoice = () => {
-    recorder?.cancel();
+    recorderRef.current?.cancel();
+    recorderRef.current = null;
     setRecorder(null);
   };
 
   const sendVoiceNow = async () => {
-    if (!recorder) return;
-    const rec = recorder;
+    const rec = recorderRef.current;
+    if (!rec) return;
+    recorderRef.current = null;
     setRecorder(null);
     try {
       const recording = await rec.stop();
