@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { CopyIcon, EditIcon, PinIcon, PlusIcon, ReplyIcon, StarIcon, TrashIcon } from "@/components/ui/icons";
+import { CopyIcon, EditIcon, PinIcon, PlusIcon, ReplyIcon, RetryIcon, StarIcon, TrashIcon } from "@/components/ui/icons";
+import { effectLabel, REPLAY_EVENT } from "@/lib/messages/effects";
 import { EmojiPanel, rememberEmoji } from "./EmojiPanel";
 import { haptic } from "@/lib/haptics";
 import { useChat } from "@/components/providers/ChatProvider";
@@ -196,6 +197,17 @@ export function MessageActions({
                     onClick={() => {
                       onEdit(message.id);
                       onClose();
+                    }}
+                  />
+                )}
+                {effectLabel(message.effect) && message.effect !== "ink" && (
+                  <Action
+                    icon={<RetryIcon size={20} />}
+                    label={`Replay ${effectLabel(message.effect)}`}
+                    onClick={() => {
+                      onClose();
+                      // After the sheet closes, so you see it play.
+                      setTimeout(() => window.dispatchEvent(new CustomEvent(REPLAY_EVENT, { detail: message.id })), 250);
                     }}
                   />
                 )}

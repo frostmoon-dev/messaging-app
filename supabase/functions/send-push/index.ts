@@ -63,26 +63,40 @@ type Target =
   | { status: number; error: string }
   | { skipped: string };
 
-async function senderName(userId: string) {
-  const { data } = await db.from("profiles").select("display_name").eq("id", userId).maybeSingle();
-  return data?.display_name ?? null;
+/**
+ * Who a pop-up is from: their name, and their avatar as a link that works
+ * for an hour (the avatars bucket is private). No avatar → the app icon.
+ */
+async function sender(userId: string): Promise<{ name: string | null; icon?: string }> {
+  const { data } = await db.from("profiles").select("display_name, avatar_url").eq("id", userId).maybeSingle();
+  const name = data?.display_name ?? null;
+  if (!data?.avatar_url) return { name };
+  const { data: signed, error } = await db.storage.from("avatars").createSignedUrl(data.avatar_url, 60 * 60);
+  if (error || !signed?.signedUrl) {
+    console.error("avatar link failed", error);
+    return { name };
+  }
+  return { name, icon: signed.signedUrl };
 }
+
+const withIcon = (payload: PushPayload, who: { icon?: string }): PushPayload => (who.icon ? { ...payload, icon: who.icon } : payload);
 
 /** Finds who the notification is for and what it should say. */
 async function resolve(request: Exclude<PushRequest, { kind: "moments" }>): Promise<Target> {
   if (request.kind === "message") {
     const { data, error } = await db
       .from("messages")
-      .select("sender_id, conversation_id, content, message_type")
+      .select("sender_id, conversation_id, content, message_type, effect")
       .eq("id", request.id)
       .maybeSingle();
     if (error) return { status: 500, error: "lookup failed" };
     if (!data) return { status: 404, error: "message not found" };
-    const name = await senderName(data.sender_id);
+    const who = await sender(data.sender_id);
+    const name = who.name;
     return {
       conversationId: data.conversation_id,
       exclude: data.sender_id,
-      payload: buildPayload(name, messagePreview(data, name, false)),
+      payload: withIcon(buildPayload(name, messagePreview(data, name, false)), who),
       preview: messagePreview(data, name, true),
     };
   }
@@ -96,12 +110,13 @@ async function resolve(request: Exclude<PushRequest, { kind: "moments" }>): Prom
     // Taken back (or changed and taken back) before we got here.
     if (!reaction.data?.emoji) return { skipped: "reaction removed" };
     if (message.data.sender_id === request.reactorId) return { skipped: "own message" };
-    const name = await senderName(request.reactorId);
+    const who = await sender(request.reactorId);
+    const name = who.name;
     return {
       conversationId: message.data.conversation_id,
       exclude: null,
       only: message.data.sender_id,
-      payload: buildReactionPayload(message.data, reaction.data.emoji, name, false),
+      payload: withIcon(buildReactionPayload(message.data, reaction.data.emoji, name, false), who),
       preview: buildReactionPayload(message.data, reaction.data.emoji, name, true).body,
     };
   }
@@ -124,7 +139,10 @@ async function resolve(request: Exclude<PushRequest, { kind: "moments" }>): Prom
     return {
       conversationId: data.conversation_id,
       exclude: data.sender_id,
-      payload: buildAlertPayload(data, await senderName(data.sender_id), request.repeat),
+      payload: await (async () => {
+        const who = await sender(data.sender_id);
+        return withIcon(buildAlertPayload(data, who.name, request.repeat), who);
+      })(),
     };
   }
   // SOS answers go back to the person who sent the SOS.
@@ -134,7 +152,10 @@ async function resolve(request: Exclude<PushRequest, { kind: "moments" }>): Prom
     conversationId: data.conversation_id,
     exclude: null,
     only: data.sender_id,
-    payload: buildSosReplyPayload(data, request.kind === "sos_seen" ? "seen" : "handled", await senderName(answeredBy)),
+    payload: await (async () => {
+      const who = await sender(answeredBy);
+      return withIcon(buildSosReplyPayload(data, request.kind === "sos_seen" ? "seen" : "handled", who.name), who);
+    })(),
   };
 }
 

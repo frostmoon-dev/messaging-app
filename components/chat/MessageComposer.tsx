@@ -10,7 +10,7 @@ import {
   ImageIcon,
   KeyboardIcon,
   ReplyIcon,
-  SendIcon,
+  ArrowUpIcon,
   SmileIcon,
   StickerIcon,
   TextStyleIcon,
@@ -18,6 +18,7 @@ import {
 import { StickerPicker } from "./StickerPicker";
 import { EmojiPanel } from "./EmojiPanel";
 import { STYLE_OPTIONS, styleClass } from "@/lib/messages/styles";
+import { EFFECT_OPTIONS, type MessageEffect } from "@/lib/messages/effects";
 import type { MessageStyle } from "@/lib/messages/api";
 import { friendlyError } from "@/lib/errors";
 import type { ChatMessage } from "@/types/app";
@@ -51,6 +52,7 @@ export function MessageComposer({
 }) {
   const { sendText, sendImage, sendMedia, editMessage, getSnippet, me, partner } = useChat();
   const [style, setStyle] = useState<MessageStyle | null>(null);
+  const [effect, setEffect] = useState<MessageEffect | null>(null);
   const [stylesOpen, setStylesOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -186,11 +188,12 @@ export function MessageComposer({
     if (attachment?.state === "ready") {
       sendImage(attachment.image, trimmed, replyTo);
       setAttachment(null);
-    } else if (!sendText(text, replyTo, style)) {
+    } else if (!sendText(text, replyTo, style, effect)) {
       return;
     }
     setText("");
     setStyle(null);
+    setEffect(null);
     setStylesOpen(false);
     onCancelReply();
     onSent();
@@ -260,7 +263,8 @@ export function MessageComposer({
             transition={{ duration: 0.16 }}
             className="overflow-hidden"
           >
-            <div className="scroll-area flex gap-2 overflow-x-auto px-4 pt-2 pb-0.5" role="radiogroup" aria-label="Message style">
+            <p className="px-4 pt-2 text-meta font-semibold text-muted-strong" id="style-label">Style</p>
+            <div className="scroll-area flex gap-2 overflow-x-auto px-4 pt-1 pb-0.5" role="radiogroup" aria-labelledby="style-label">
               {STYLE_OPTIONS.map((option) => (
                 <button
                   key={option.label}
@@ -277,6 +281,26 @@ export function MessageComposer({
                   <span className={cn("leading-none", styleClass(option.id) || "text-body")} aria-hidden="true">
                     {option.sample}
                   </span>
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {/* Send effects, like iMessage's: they play when it arrives. */}
+            <p className="px-4 pt-2 text-meta font-semibold text-muted-strong" id="effect-label">Effect</p>
+            <div className="scroll-area flex gap-2 overflow-x-auto px-4 pt-1 pb-0.5" role="radiogroup" aria-labelledby="effect-label">
+              {EFFECT_OPTIONS.map((option) => (
+                <button
+                  key={option.label}
+                  type="button"
+                  role="radio"
+                  aria-checked={effect === option.id}
+                  onPointerDown={(e) => e.preventDefault()}
+                  onClick={() => setEffect(option.id)}
+                  className={cn(
+                    "pill flex min-h-10 shrink-0 items-center border-2 px-3.5 text-small font-semibold transition-colors",
+                    effect === option.id ? "border-love bg-love-soft text-foreground" : "border-field-border text-muted-strong hover:text-foreground",
+                  )}
+                >
                   {option.label}
                 </button>
               ))}
@@ -434,9 +458,9 @@ export function MessageComposer({
                 onClick={() => setStylesOpen((open) => !open)}
                 className={cn(
                   "flex size-10 items-center justify-center rounded-full transition-colors hover:bg-panel-strong",
-                  style || stylesOpen ? "text-foreground" : "text-muted-strong",
+                  effect ? "text-love" : style || stylesOpen ? "text-foreground" : "text-muted-strong",
                 )}
-                aria-label={style ? `Message style: ${STYLE_OPTIONS.find((o) => o.id === style)?.label}` : "Message style"}
+                aria-label={style || effect ? `Style and effect: ${[STYLE_OPTIONS.find((o) => o.id === style)?.label, EFFECT_OPTIONS.find((o) => o.id === effect)?.label].filter(Boolean).join(", ")}` : "Message style and effect"}
                 aria-expanded={stylesOpen}
               >
                 <TextStyleIcon size={20} />
@@ -472,13 +496,18 @@ export function MessageComposer({
           whileTap={canSend ? { scale: 0.92 } : undefined}
           // Keep the keyboard open on mobile after tapping send.
           onPointerDown={(e) => e.preventDefault()}
-          className={cn(
-            "pill flex h-11 w-13 shrink-0 items-center justify-center transition-colors",
-            canSend ? "bg-love text-love-foreground hover:bg-love/90" : "bg-panel-strong text-muted",
-          )}
+          // A round arrow-up, like iMessage, in a 44px target.
+          className="group/send flex size-11 shrink-0 items-center justify-center"
           aria-label={editing ? "Save edit" : "Send message"}
         >
-          {editing ? <CheckIcon size={20} /> : <SendIcon size={20} />}
+          <span
+            className={cn(
+              "flex size-9 items-center justify-center rounded-full transition-colors",
+              canSend ? "bg-love text-love-foreground group-hover/send:bg-love/90" : "bg-panel-strong text-muted",
+            )}
+          >
+            {editing ? <CheckIcon size={18} /> : <ArrowUpIcon size={20} strokeWidth={2.6} />}
+          </span>
         </motion.button>
       </form>
       <AnimatePresence initial={false}>

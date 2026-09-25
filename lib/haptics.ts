@@ -30,6 +30,9 @@ export function setHapticsEnabled(on: boolean) {
 let iosSwitch: HTMLLabelElement | null = null;
 
 function iosTick() {
+  // Clicking the switch moves focus to it, which closes the keyboard while
+  // you're typing. Put focus straight back where it was.
+  const focused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   if (!iosSwitch) {
     const label = document.createElement("label");
     label.setAttribute("aria-hidden", "true");
@@ -43,6 +46,7 @@ function iosTick() {
     iosSwitch = label;
   }
   iosSwitch.click();
+  if (focused && document.activeElement !== focused) focused.focus({ preventScroll: true });
 }
 
 export function haptic(cue: HapticCue) {
@@ -53,6 +57,12 @@ export function haptic(cue: HapticCue) {
     return;
   }
   if (!/iphone|ipad|ipod/i.test(navigator.userAgent)) return;
+  // iPhone only ticks during a tap or press; outside one (a message
+  // arriving) the switch does nothing but steal focus, so skip it.
+  // Typing counts as a tap, so "receive" is skipped outright: a message
+  // arriving mid-sentence must never touch the keyboard.
+  if (cue === "receive") return;
+  if (navigator.userActivation && !navigator.userActivation.isActive) return;
   // One tick per "on" step, at the same rhythm.
   let at = 0;
   pattern.forEach((ms, i) => {

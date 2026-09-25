@@ -12,7 +12,8 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - **Opens instantly:** the newest messages and photo links are kept on the device (wiped on sign-out), then refreshed from the server
 - **Edit** your own text messages for 15 minutes (shows “edited” on both phones)
 - **Reactions:** double-tap a message for a ❤️ (with a heart burst), or long-press for more reactions and any emoji
-- **Message styles:** tap **Aa** in the message box for Script, Big, Whisper or Typewriter
+- **Message styles and effects:** tap **Aa** in the message box for Script, Big, Whisper or Typewriter, and an effect that plays when it arrives on both phones: Slam (the chat shakes too), Loud, Gentle, Invisible ink (tap to read; hidden on the lock screen too), Shake, Ripple, Bloom, or Heartbeat (a honey glow, and a buzz on Android). Replay it from the message's options
+- **Looks like iMessage:** bubbles with a tail on the last one of a run, reactions on the bubble's top corner, “Delivered” / “Seen 14:02” under your newest message only, a centred “Today 10:43” after a break of an hour, and **swipe left** on the chat to see every message's time
 - **Emoji panel** in the message box (the smiley): categories, search and recently used, like the iPhone keyboard
 - **Haptics** (Settings → Alerts, on by default): a soft “lub-dub” heartbeat when you send, react or long-press. Android vibrates the pattern; iPhone gives light ticks during taps only
 - Reconnects on its own and fills any gap in messages
@@ -145,6 +146,14 @@ What it adds: quiet hours and reaction pop-ups in Settings → Alerts; the SOS s
 2. `npx supabase functions deploy send-push`, **after** step 1.
 
 Moments go out on the first hourly run after 09:00 in your time zone (saved each time the app opens), once each. Set **Together since** in Bond → Edit for anniversaries.
+
+
+### Send effects and avatar pop-ups
+
+1. `npx supabase db push` applies `20261003000000_message_effects.sql` (the `effect` column).
+2. `npx supabase functions deploy send-push`, **after** step 1: pop-ups name the effect ("I got the job (sent with Slam)"), keep invisible ink hidden, and show the sender's avatar (Android and desktop; iPhone always shows the app icon).
+
+Until step 1 runs, messages with an effect are sent without it.
 
 ## Colour
 

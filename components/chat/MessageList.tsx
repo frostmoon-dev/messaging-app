@@ -8,12 +8,17 @@ import { MessageBubble } from "./MessageBubble";
 import { EmptyChat } from "./EmptyChat";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
-import { formatDayLabel, isSameDay, minutesApart } from "@/lib/time";
+import { formatDayLabel, formatTime, isSameDay, minutesApart } from "@/lib/time";
 import { useIsTouch } from "@/lib/hooks/useMediaQuery";
 import { cn, devLog } from "@/lib/utils";
+import { SLAM_EVENT } from "@/lib/messages/effects";
 
 const GROUP_GAP_MINUTES = 5;
+// Like iMessage: a centred "Today 10:43" only after a break this long.
+const TIME_HEADER_GAP_MINUTES = 60;
 const BOTTOM_THRESHOLD = 96;
+// How far the chat slides when you swipe left to see times.
+const REVEAL_MAX = 64;
 
 export function MessageList({
   highlightedId,
@@ -48,12 +53,19 @@ export function MessageList({
   } = useChat();
   const isTouch = useIsTouch();
 
-  // "Seen 14:02" goes under your newest message once they've read it.
-  const seen = useMemo(() => {
+  // Like iMessage, one line under your newest message: "Delivered", or
+  // "Seen 14:02" once they've read it. Nothing under older ones.
+  const receipt = useMemo(() => {
     const newestMine = messages.findLast((m) => m.sender_id === me.id);
-    return newestMine && !newestMine.local && !newestMine.deleted_at && newestMine.read_at
-      ? { id: newestMine.id, at: newestMine.read_at }
-      : null;
+    if (!newestMine || newestMine.local || newestMine.deleted_at) return null;
+    // Only while it's still the latest thing said, as iMessage does.
+    if (messages.at(-1)?.id !== newestMine.id && !newestMine.read_at) return null;
+    const label = newestMine.read_at
+      ? `Seen ${formatTime(newestMine.read_at)}`
+      : newestMine.delivered_at
+        ? "Delivered"
+        : "Sent";
+    return { id: newestMine.id, label };
   }, [messages, me.id]);
 
   const onReact = useCallback(
@@ -62,7 +74,42 @@ export function MessageList({
   );
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
+
+  // Swipe left anywhere on the chat to see every message's time, like
+  // iMessage. Written straight to CSS variables: no re-render per frame.
+  const swipe = useRef<{ x: number; y: number; on: boolean | null } | null>(null);
+  const setReveal = (px: number, dragging: boolean) => {
+    const el = contentRef.current;
+    if (!el) return;
+    el.style.setProperty("--reveal", `${px}px`);
+    el.style.setProperty("--reveal-o", String(px / REVEAL_MAX));
+    el.dataset.revealing = String(dragging);
+  };
+  const swipeHandlers = {
+    onPointerDown: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") return;
+      swipe.current = { x: e.clientX, y: e.clientY, on: null };
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      const s = swipe.current;
+      if (!s) return;
+      const dx = e.clientX - s.x;
+      const dy = e.clientY - s.y;
+      // Decide once: a leftward sideways move reveals; anything else scrolls or replies.
+      if (s.on === null && Math.hypot(dx, dy) > 8) s.on = dx < 0 && Math.abs(dx) > Math.abs(dy) * 1.2;
+      if (s.on) setReveal(Math.min(REVEAL_MAX, Math.max(0, -dx)), true);
+    },
+    onPointerUp: () => {
+      if (swipe.current?.on) setReveal(0, false);
+      swipe.current = null;
+    },
+    onPointerCancel: () => {
+      if (swipe.current?.on) setReveal(0, false);
+      swipe.current = null;
+    },
+  };
   const [atBottom, setAtBottom] = useState(true);
   const [unseen, setUnseen] = useState(0);
   // Only messages newer than what was on screen at first load get an entrance.
@@ -107,6 +154,19 @@ export function MessageList({
     }
   }, [messages, me.id, atBottom, scrollToBottom]);
 
+  // A Slam shakes the whole chat for a moment, like iMessage.
+  useEffect(() => {
+    const onSlam = () => {
+      const el = contentRef.current;
+      if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      el.classList.remove("chat-slam");
+      void el.offsetWidth; // restart the animation
+      el.classList.add("chat-slam");
+    };
+    window.addEventListener(SLAM_EVENT, onSlam);
+    return () => window.removeEventListener(SLAM_EVENT, onSlam);
+  }, []);
+
   // Load older messages when the top sentinel scrolls into view.
   useEffect(() => {
     const target = topRef.current;
@@ -139,7 +199,9 @@ export function MessageList({
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="scroll-area relative flex min-h-0 flex-1 flex-col-reverse overflow-y-auto overscroll-contain"
+        // overflow-x hidden: the times wait just off the right edge. pan-y: sideways swipes reach us.
+        className="scroll-area relative flex min-h-0 flex-1 touch-pan-y flex-col-reverse overflow-x-hidden overflow-y-auto overscroll-contain"
+        {...swipeHandlers}
         role="log"
         aria-label={`Conversation with ${partner.display_name}`}
         aria-live="polite"
@@ -148,7 +210,7 @@ export function MessageList({
       >
         {/* pb-12: room at the end for the typing bubble that floats there. */}
         {/* The header floats over the top (frosted), so the list starts below it. */}
-        <div className="flex flex-col pt-[calc(var(--chat-header-h,0px)+1rem)] pb-12">
+        <div ref={contentRef} className="flex flex-col pt-[calc(var(--chat-header-h,0px)+1rem)] pb-12">
           <div ref={topRef} aria-hidden="true" />
           {hasMore && (
             <div className="flex justify-center py-3">
@@ -172,6 +234,7 @@ export function MessageList({
             const prev = messages[i - 1];
             const next = messages[i + 1];
             const newDay = !prev || !isSameDay(prev.created_at, m.created_at);
+            const timeHeader = newDay || minutesApart(prev.created_at, m.created_at) >= TIME_HEADER_GAP_MINUTES;
             const firstInGroup =
               newDay || prev.sender_id !== m.sender_id || minutesApart(prev.created_at, m.created_at) > GROUP_GAP_MINUTES;
             const lastInGroup =
@@ -184,7 +247,7 @@ export function MessageList({
 
             return (
               <Fragment key={m.id}>
-                {newDay && <DayDivider iso={m.created_at} />}
+                {timeHeader && <TimeHeader iso={m.created_at} />}
                 <MessageBubble
                   message={m}
                   mine={mine}
@@ -207,7 +270,7 @@ export function MessageList({
                   myId={me.id}
                   reactions={reactions[m.id]}
                   onReact={onReact}
-                  seenAt={seen?.id === m.id ? seen.at : null}
+                  receipt={receipt?.id === m.id ? receipt.label : null}
                 />
               </Fragment>
             );
@@ -239,12 +302,14 @@ export function MessageList({
   );
 }
 
-function DayDivider({ iso }: { iso: string }) {
+/** Centred "Today 10:43", like iMessage: the day in bold, the time in plain. */
+function TimeHeader({ iso }: { iso: string }) {
+  const day = formatDayLabel(iso);
+  const time = formatTime(iso);
   return (
-    <div className="my-4 flex justify-center px-4" role="separator" aria-label={formatDayLabel(iso)}>
-      {/* A small paper tag, like the game's date labels. */}
-      <span className="day-tag pill bg-foreground px-3 py-0.5 text-meta font-bold text-background">
-        {formatDayLabel(iso)}
+    <div className="mt-5 mb-1 flex justify-center px-4" role="separator" aria-label={`${day} ${time}`}>
+      <span className="chat-meta text-meta text-muted">
+        <span className="font-semibold text-muted-strong">{day}</span> {time}
       </span>
     </div>
   );

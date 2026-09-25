@@ -99,6 +99,11 @@ export const ArrowDownIcon = (p: IconProps) => (
     <path d="M12 4v15M5.5 13l6.5 6.5 6.5-6.5" />
   </Svg>
 );
+export const ArrowUpIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 20V5M5.5 11 12 4.5l6.5 6.5" />
+  </Svg>
+);
 export const PlusIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M12 4.5v15M4.5 12h15" />

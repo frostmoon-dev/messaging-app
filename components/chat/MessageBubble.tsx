@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { Avatar } from "@/components/ui/Avatar";
 import { MoreIcon, PinIcon, ReplyIcon, RetryIcon, StarIcon, TrashIcon } from "@/components/ui/icons";
@@ -9,6 +9,7 @@ import { ReplyQuote } from "./ReplyQuote";
 import { MessageGif, MessageSticker } from "./MessageSticker";
 import { MessageImage } from "./MessageImage";
 import { HeartBurst } from "./HeartBurst";
+import { EffectBubble, EffectLetters, isLetterEffect, useMessageEffect } from "./MessageEffect";
 import { formatTime } from "@/lib/time";
 import { haptic } from "@/lib/haptics";
 import { styleClass } from "@/lib/messages/styles";
@@ -42,8 +43,8 @@ type Props = {
   /** person id → emoji. */
   reactions?: Readonly<Record<string, string>>;
   onReact: (id: string, emoji: string | null) => void;
-  /** Your newest message, once they've read it: "Seen 14:02". */
-  seenAt?: string | null;
+  /** Under your newest message, like iMessage: "Delivered" or "Seen 14:02". */
+  receipt?: string | null;
 };
 
 const HEART = "❤️";
@@ -75,7 +76,7 @@ function MessageBubbleImpl({
   myId,
   reactions,
   onReact,
-  seenAt,
+  receipt,
 }: Props) {
   const x = useMotionValue(0);
   const hintOpacity = useTransform(x, [0, SWIPE_THRESHOLD], [0, 1]);
@@ -86,6 +87,18 @@ function MessageBubbleImpl({
   const canOpenActions = !message.local;
   const myReaction = reactions?.[myId] ?? null;
   const [burst, setBurst] = useState(0);
+  const { effect, play, playing } = useMessageEffect(message.id, message.effect, animateIn, mine);
+  // Invisible ink: hidden until tapped, then hides again after a while.
+  const [inkRevealed, setInkRevealed] = useState(false);
+  const inkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const revealInk = () => {
+    setInkRevealed(true);
+    if (inkTimer.current) clearTimeout(inkTimer.current);
+    inkTimer.current = setTimeout(() => setInkRevealed(false), 10_000);
+  };
+  useEffect(() => () => {
+    if (inkTimer.current) clearTimeout(inkTimer.current);
+  }, []);
 
   // Double-tap (or double-click) a message: heart it, or take the heart back.
   const toggleHeart = () => {
@@ -159,10 +172,11 @@ function MessageBubbleImpl({
   const bare = (emojiOnly || media) && !deleted;
   const tokens = useMemo(() => (message.content ? tokenize(message.content) : []), [message.content]);
   const time = formatTime(message.created_at);
-  // The time shows under the last message of a group, and on any pinned or starred one (for its mark).
+  // Like iMessage, times stay hidden (swipe left on the chat to see them).
+  // A line under the bubble only for sending, "Delivered"/"Seen", and marks.
   const edited = Boolean(message.edited_at) && !deleted;
-  const showMeta =
-    lastInGroup || Boolean(message.local) || Boolean(seenAt) || (!deleted && (Boolean(message.pinned_at) || starred || edited));
+  const showMeta = Boolean(message.local) || Boolean(receipt) || (!deleted && (Boolean(message.pinned_at) || starred || edited));
+  const tail = lastInGroup && !bare && !deleted;
   // Each emoji once, with how many of you picked it.
   const reactionList = useMemo(() => {
     const counts = new Map<string, number>();
@@ -176,20 +190,27 @@ function MessageBubbleImpl({
     if (info.offset.x > SWIPE_THRESHOLD) onReply(message.id);
   };
 
-  // Only new messages move, and only a little: enough to notice, not to wait for.
-  const entrance = animateIn ? { opacity: 0, y: 8 } : false;
+  // Only new messages move, and only a little: enough to notice, not to wait
+  // for. Yours springs up from the message box, like iMessage.
+  const sending = animateIn && mine && Boolean(message.local);
+  const entrance = animateIn ? (sending ? { opacity: 0, y: 28, scale: 0.94 } : { opacity: 0, y: 8 }) : false;
 
   return (
     <motion.div
       id={`msg-${message.id}`}
+      data-mine={mine}
       initial={entrance}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.16, ease: [0.2, 0.8, 0.2, 1] }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={sending ? { type: "spring", stiffness: 520, damping: 34 } : { duration: 0.16, ease: [0.2, 0.8, 0.2, 1] }}
       className={cn(
         // message-touch: no text selection or callout on touch screens (long-press opens the options; Copy is there).
-        "message-touch group relative flex w-full items-end gap-2 px-4",
+        // msg-row: slides left when you swipe to see times.
+        "msg-row message-touch group relative flex w-full items-end gap-2 px-4",
         mine ? "justify-end" : "justify-start",
-        firstInGroup ? "mt-4" : "mt-1",
+        // A run of messages sits close together, like iMessage.
+        firstInGroup ? "mt-4" : "mt-0.5",
+        // Room for a reaction on the top corner.
+        reactionCount > 0 && !deleted && (firstInGroup ? "pt-3" : "pt-4"),
       )}
     >
       {/* Brief highlight after jumping to a replied message. */}
@@ -231,6 +252,7 @@ function MessageBubbleImpl({
           className="relative min-w-0"
           {...pressHandlers}
         >
+          <EffectBubble effect={effect} play={play}>
           <div
             className={cn(
               "relative overflow-hidden",
@@ -240,6 +262,7 @@ function MessageBubbleImpl({
                 ? cn("bg-transparent", emojiOnly && "px-1 py-0.5")
                 : cn(
                     mine ? "bubble-out bg-outgoing text-outgoing-foreground" : "bubble-in bg-incoming text-incoming-foreground",
+                    tail && "bubble-tail",
                     message.message_type === "image" ? "p-1.5" : "px-4 py-2.5",
                   ),
               failed && "opacity-70",
@@ -265,17 +288,17 @@ function MessageBubbleImpl({
                 message={message}
                 localPreview={localPreview}
                 onOpen={onOpenImage}
-                // Inner corners = bubble corners (20px, 6px at the tail) minus the 6px padding.
+                // Inner corners = bubble corners (18px, 6px at the tail) minus the 6px padding.
                 className={cn(
-                  "rounded-[14px]",
-                  !message.content && (mine ? "rounded-br-[2px]" : "rounded-bl-[2px]"),
+                  "rounded-[12px]",
+                  tail && !message.content && (mine ? "rounded-br-[2px]" : "rounded-bl-[2px]"),
                 )}
               />
             )}
 
             {!deleted && message.message_type === "sticker" && <MessageSticker message={message} />}
             {!deleted && message.message_type === "gif" && (
-              <MessageGif message={message} tailClass={mine ? "rounded-br-[6px]" : "rounded-bl-[6px]"} />
+              <MessageGif message={message} tailClass={lastInGroup ? (mine ? "rounded-br-[6px]" : "rounded-bl-[6px]") : ""} />
             )}
 
             {message.content && !media && (
@@ -284,9 +307,16 @@ function MessageBubbleImpl({
                   "whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
                   emojiOnly ? "text-4xl leading-tight" : styled || "text-body leading-[1.45]",
                   message.message_type === "image" && "px-2 pt-1.5 pb-1",
+                  effect === "ink" && !deleted && "effect-ink cursor-pointer",
                 )}
+                data-revealed={effect === "ink" ? inkRevealed : undefined}
+                onClick={effect === "ink" && !deleted ? revealInk : undefined}
               >
-                {tokens.map((t, i) =>
+                {effect === "ink" && !deleted && !inkRevealed && <span className="sr-only">Invisible ink. Tap to read. </span>}
+                <span className={effect === "ink" && !deleted ? "ink-text" : undefined}>
+                {playing && isLetterEffect(effect) && !tokens.some((t) => t.type === "link") ? (
+                  <EffectLetters text={message.content} effect={effect} play={play} />
+                ) : tokens.map((t, i) =>
                   t.type === "link" ? (
                     <a
                       key={i}
@@ -301,39 +331,44 @@ function MessageBubbleImpl({
                     <span key={i}>{t.value}</span>
                   ),
                 )}
+                </span>
               </p>
             )}
           </div>
+          {tail && <BubbleTail mine={mine} />}
+          </EffectBubble>
           <AnimatePresence>{burst > 0 && <HeartBurst key={burst} />}</AnimatePresence>
-        </motion.div>
 
-        {reactionCount > 0 && !deleted && (
-          <motion.button
-            type="button"
-            key={reactionList.map(([e]) => e).join("")}
-            initial={{ scale: 0.4, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 520, damping: 18 }}
-            onClick={() => onActions(message.id)}
-            className={cn(
-              "chat-meta relative z-10 -mt-2.5 flex min-h-7 items-center gap-0.5 rounded-full bg-love-soft px-2 text-[0.9375rem] leading-none",
-              "shadow-[inset_0_0_0_1.5px_var(--love),var(--shadow-raised)]",
-              mine ? "mr-2" : "ml-2",
-            )}
-            aria-label={`Reactions: ${reactionList.map(([e, n]) => (n > 1 ? `${e} ×${n}` : e)).join(", ")}. Open options`}
-          >
-            {reactionList.map(([e]) => (
-              <span key={e} aria-hidden="true">
-                {e}
-              </span>
-            ))}
-            {reactionCount > 1 && reactionList.length === 1 && (
-              <span className="ml-0.5 font-mono text-meta font-semibold text-muted-strong" aria-hidden="true">
-                {reactionCount}
-              </span>
-            )}
-          </motion.button>
-        )}
+          {/* Tapback: on the top corner of the bubble, like iMessage. */}
+          {reactionCount > 0 && !deleted && (
+            <motion.button
+              type="button"
+              key={reactionList.map(([e]) => e).join("")}
+              initial={{ scale: 0.4, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 520, damping: 18 }}
+              onClick={() => onActions(message.id)}
+              onPointerDown={(e) => e.stopPropagation()}
+              className={cn(
+                "absolute -top-4 z-10 flex min-h-8 items-center gap-0.5 rounded-full bg-love-soft px-2 text-[0.9375rem] leading-none",
+                "shadow-[inset_0_0_0_1.5px_var(--love),var(--shadow-raised)]",
+                mine ? "-left-3" : "-right-3",
+              )}
+              aria-label={`Reactions: ${reactionList.map(([e, n]) => (n > 1 ? `${e} ×${n}` : e)).join(", ")}. Open options`}
+            >
+              {reactionList.map(([e]) => (
+                <span key={e} aria-hidden="true">
+                  {e}
+                </span>
+              ))}
+              {reactionCount > 1 && reactionList.length === 1 && (
+                <span className="ml-0.5 font-mono text-meta font-semibold text-muted-strong" aria-hidden="true">
+                  {reactionCount}
+                </span>
+              )}
+            </motion.button>
+          )}
+        </motion.div>
 
         {showMeta && (
           <div
@@ -355,12 +390,12 @@ function MessageBubbleImpl({
               </span>
             )}
             {edited && <span className="font-sans">edited</span>}
-            <time dateTime={message.created_at}>{time}</time>
-            {mine && <MessageStatus message={message} />}
-            {seenAt && <span className="font-sans font-semibold text-love">Seen {formatTime(seenAt)}</span>}
+            {message.local && <MessageStatus message={message} />}
+            {receipt && (
+              <span className={cn("font-sans font-semibold", receipt.startsWith("Seen") ? "text-love" : "text-muted")}>{receipt}</span>
+            )}
           </div>
         )}
-        {!showMeta && <span className="sr-only">{time}</span>}
 
         {failed && (
           <div className="chat-meta mt-1 flex flex-wrap items-center gap-1 text-small text-danger" role="alert">
@@ -383,6 +418,11 @@ function MessageBubbleImpl({
           </div>
         )}
       </div>
+
+      {/* Comes in from the right edge when you swipe left on the chat. */}
+      <time dateTime={message.created_at} className="msg-time chat-meta text-right font-mono text-meta text-muted">
+        {time}
+      </time>
 
       {/* Mouse and keyboard: Reply and "…" (more) appear on hover or focus. Phones use swipe and long-press. */}
       {canAct && (
@@ -413,6 +453,35 @@ function MessageBubbleImpl({
         </div>
       )}
     </motion.div>
+  );
+}
+
+/**
+ * The iMessage-style tail on the last bubble of a run. Drawn over the
+ * bubble's tightened corner; incoming bubbles also get their hairline edge.
+ */
+function BubbleTail({ mine }: { mine: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 14 20"
+      width={14}
+      height={20}
+      aria-hidden="true"
+      className={cn("pointer-events-none absolute bottom-0 overflow-visible", mine ? "-right-1.5 -scale-x-100" : "-left-1.5")}
+    >
+      <path
+        d="M6 9 L6 11.5 C6 16 3.6 18.9 0 20 C5.2 20.6 9.6 19.6 12 17.6 C12.8 19 13.4 20 14 20 L14 9 Z"
+        fill={mine ? "var(--outgoing)" : "var(--incoming)"}
+      />
+      {!mine && (
+        <path
+          d="M6.5 9 L6.5 11.5 C6.5 16.2 4 19 0 20 C5.2 20.6 9.6 19.6 12 17.6 C12.8 19 13.4 19.5 14.5 19.5"
+          fill="none"
+          stroke="var(--incoming-shadow)"
+          strokeWidth={1}
+        />
+      )}
+    </svg>
   );
 }
 

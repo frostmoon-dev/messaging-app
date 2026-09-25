@@ -7,7 +7,7 @@
  *   with the reply box ready.
  * Private data is never cached: only the offline page and icons are stored.
  */
-const CACHE = "napyru-shell-v20";
+const CACHE = "napyru-shell-v21";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/badge-96.png"];
 
 self.addEventListener("install", (event) => {
@@ -83,6 +83,8 @@ self.addEventListener("push", (event) => {
   // A message opens the chat with the keyboard ready to answer.
   if (kind === "message") url = "/chat?reply=1";
   const tag = typeof data.tag === "string" ? data.tag : MESSAGE_TAG;
+  // The sender's avatar (a short-lived https link from send-push), else the app icon.
+  const icon = typeof data.icon === "string" && data.icon.startsWith("https://") ? data.icon : "/icons/icon-192.png";
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (clients) => {
@@ -97,7 +99,7 @@ self.addEventListener("push", (event) => {
         // Quiet hours: it appears, but doesn't buzz or ring.
         renotify: !silent,
         silent,
-        icon: "/icons/icon-192.png",
+        icon,
         badge: "/icons/badge-96.png",
         // SOS stays on screen until dismissed and buzzes hard; everything
         // else is a short double tap.

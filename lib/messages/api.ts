@@ -1,3 +1,4 @@
+import type { MessageEffect } from "./effects";
 import type { BrowserSupabase } from "@/lib/supabase/client";
 import type { MessageRow, ReplySnippet } from "@/types/app";
 
@@ -83,7 +84,7 @@ export async function fetchSnippets(supabase: BrowserSupabase, ids: string[]): P
 export type NewMessage = Pick<
   MessageRow,
   "id" | "conversation_id" | "content" | "message_type" | "image_url" | "image_width" | "image_height" | "reply_to"
-> & { style?: MessageStyle | null };
+> & { style?: MessageStyle | null; effect?: MessageEffect | null };
 
 export const MESSAGE_STYLES = ["script", "big", "whisper", "mono"] as const;
 export type MessageStyle = (typeof MESSAGE_STYLES)[number];

@@ -354,6 +354,7 @@ export type Database = {
           pinned_by?: string | null
           edited_at?: string | null
           style?: string | null
+          effect?: string | null
         }
         Insert: {
           content?: string | null
@@ -369,6 +370,7 @@ export type Database = {
           reply_to?: string | null
           sender_id?: string
           style?: string | null
+          effect?: string | null
         }
         Update: {
           content?: string | null

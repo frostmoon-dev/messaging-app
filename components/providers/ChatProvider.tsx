@@ -47,6 +47,7 @@ import { uploadWithProgress } from "@/lib/storage/upload";
 import type { PreparedImage } from "@/lib/storage/image";
 import { friendlyError } from "@/lib/errors";
 import { devLog, uuid } from "@/lib/utils";
+import type { MessageEffect } from "@/lib/messages/effects";
 import { playSound } from "@/lib/sound";
 import { showMessageNotification } from "@/lib/notifications";
 import type { BondRow, ChatMessage, MessageRow, Profile, ReplySnippet, Session } from "@/types/app";
@@ -78,7 +79,7 @@ type ChatData = {
   bond: BondRow | null;
   loadOlder: () => Promise<void>;
   reload: () => Promise<void>;
-  sendText: (text: string, replyTo: string | null, style?: MessageStyle | null) => boolean;
+  sendText: (text: string, replyTo: string | null, style?: MessageStyle | null, effect?: MessageEffect | null) => boolean;
   /** Your own text message within 15 minutes. Throws if the server refuses. */
   editMessage: (id: string, text: string) => Promise<void>;
   /** message id → person id → emoji. */
@@ -388,9 +389,10 @@ export function ChatProvider({
 
       try {
         const saved = await insertMessage(supabase, item.row).catch((error: { code?: string }) => {
-          // Database without message styles yet: send it plain instead of failing.
-          if (item.row.style && (error?.code === "PGRST204" || error?.code === "42703")) {
+          // Database without message styles or effects yet: send it plain instead of failing.
+          if ((item.row.style || item.row.effect) && (error?.code === "PGRST204" || error?.code === "42703")) {
             delete item.row.style;
+            delete item.row.effect;
             return insertMessage(supabase, item.row);
           }
           throw error;
@@ -437,7 +439,7 @@ export function ChatProvider({
   }, [session.me.id]);
 
   const sendText = useCallback(
-    (text: string, replyTo: string | null, style?: MessageStyle | null) => {
+    (text: string, replyTo: string | null, style?: MessageStyle | null, effect?: MessageEffect | null) => {
       const result = validateMessageText(text);
       if (!result.ok) return false;
       const id = uuid();
@@ -452,6 +454,7 @@ export function ChatProvider({
         reply_to: replyTo,
         // Only sent when chosen, so plain messages still work before the database update.
         ...(style ? { style } : {}),
+        ...(effect ? { effect } : {}),
       };
       outbox.current.set(id, { row });
       dispatch({

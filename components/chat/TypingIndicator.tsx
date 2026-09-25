@@ -23,8 +23,11 @@ export function TypingIndicator() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             // Same shape as an incoming bubble, holding three dots.
-            className="bubble-in ml-11 inline-flex h-9 items-center gap-1 bg-incoming px-3.5"
+            className="bubble-in relative ml-11 inline-flex h-9 items-center gap-1 bg-incoming px-3.5"
           >
+            {/* iMessage's thought-bubble trail. */}
+            <span className="absolute -bottom-0.5 -left-0.5 size-2.5 rounded-full bg-incoming shadow-[inset_0_0_0_1px_var(--incoming-shadow)]" aria-hidden="true" />
+            <span className="absolute -bottom-2 -left-2 size-1.5 rounded-full bg-incoming shadow-[inset_0_0_0_1px_var(--incoming-shadow)]" aria-hidden="true" />
             <span className="flex gap-1">
               {[0, 1, 2].map((i) => (
                 <span

@@ -26,6 +26,8 @@ export type PushPayload = {
   tag: string;
   /** Quiet hours: show it without sound or vibration. */
   silent?: boolean;
+  /** The sender's avatar (a short-lived link), shown as the pop-up's picture. */
+  icon?: string;
 };
 
 /** What the database asked for: exactly one thing. */
@@ -65,6 +67,16 @@ function cleanName(name: string | null | undefined) {
   return (name ?? "").trim().slice(0, 40) || "Someone";
 }
 
+const EFFECT_NAMES: Record<string, string> = {
+  slam: "Slam",
+  loud: "Loud",
+  gentle: "Gentle",
+  shake: "Shake",
+  ripple: "Ripple",
+  bloom: "Bloom",
+  heartbeat: "Heartbeat",
+};
+
 function oneLine(text: string | null | undefined, max: number) {
   const t = (text ?? "").replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
@@ -77,12 +89,16 @@ function oneLine(text: string | null | undefined, max: number) {
  * on a lock screen when the recipient turned previews off.
  */
 export function messagePreview(
-  message: { message_type: string; content: string | null },
+  message: { message_type: string; content: string | null; effect?: string | null },
   senderName: string | null | undefined,
   showText = true,
 ): string {
   const name = cleanName(senderName);
+  // Invisible ink stays hidden on the lock screen too.
+  if (message.effect === "ink") return `${name} sent a message with invisible ink.`;
   const text = oneLine(message.content, 140);
+  const effect = EFFECT_NAMES[message.effect ?? ""];
+  if (message.message_type === "text" && showText && text && effect) return `${text} (sent with ${effect})`;
   switch (message.message_type) {
     case "image":
       return showText && text ? `${name} sent a photo: ${text}` : `${name} sent a photo.`;
