@@ -1003,9 +1003,12 @@ export function ChatProvider({
     [syncReceipts, beat],
   );
 
+  // A lookup table, so finding each reply's quoted message isn't a search
+  // through the whole history (that made long chats slower per render).
+  const messagesById = useMemo(() => new Map(state.messages.map((m) => [m.id, m])), [state.messages]);
   const getSnippet = useCallback(
-    (id: string): ReplySnippet | undefined => state.messages.find((m) => m.id === id) ?? snippets[id],
-    [state.messages, snippets],
+    (id: string): ReplySnippet | undefined => messagesById.get(id) ?? snippets[id],
+    [messagesById, snippets],
   );
 
   const localPreview = useCallback((id: string) => previews.current.get(id), []);

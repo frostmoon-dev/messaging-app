@@ -80,6 +80,9 @@ export function ChatWindow() {
     return () => clearTimeout(t);
   }, [jumpTo]);
 
+  // Stable, so the memoised bubbles don't all re-render when the chat does.
+  const openImage = useCallback((src: string, alt: string) => setViewer({ src, alt }), []);
+
   const onSent = useCallback(() => {
     if (notificationPermission() === "default" && !promptDismissed()) setAskNotify(true);
   }, []);
@@ -96,7 +99,7 @@ export function ChatWindow() {
           highlightedId={highlighted}
           onReply={setReplyTo}
           onJump={jumpTo}
-          onOpenImage={(src, alt) => setViewer({ src, alt })}
+          onOpenImage={openImage}
           onActions={setActionsFor}
         />
         <AnimatePresence>

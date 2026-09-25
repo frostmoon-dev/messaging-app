@@ -19,26 +19,27 @@ export const loadSession = cache(async (): Promise<SessionResult> => {
   if (!userId) return { status: "signed-out" };
   const email = (claimsData.claims.email as string | undefined) ?? null;
 
-  const { data: membership } = await supabase
-    .from("conversation_members")
-    .select("conversation_id")
-    .eq("user_id", userId)
-    .order("joined_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!membership) return { status: "not-linked", email };
-
-  const conversationId = membership.conversation_id;
-  const [{ data: members }, { data: bond }] = await Promise.all([
-    supabase.from("conversation_members").select("user_id").eq("conversation_id", conversationId),
-    supabase.from("bond").select("*").eq("conversation_id", conversationId).maybeSingle(),
+  // One round trip: every membership you can see (yours and your partner's,
+  // thanks to RLS) with its profile, and the bond, fetched side by side.
+  // They used to be three queries in a row.
+  const [{ data: rows }, { data: bonds }] = await Promise.all([
+    supabase
+      .from("conversation_members")
+      .select("conversation_id, user_id, joined_at, profiles(*)")
+      .order("joined_at", { ascending: true }),
+    supabase.from("bond").select("*"),
   ]);
 
-  const ids = (members ?? []).map((m) => m.user_id);
-  const { data: profiles } = await supabase.from("profiles").select("*").in("id", ids);
-  const me = profiles?.find((p) => p.id === userId);
-  const partner = profiles?.find((p) => p.id !== userId);
+  const mine = (rows ?? []).find((r) => r.user_id === userId);
+  if (!mine) return { status: "not-linked", email };
+  const conversationId = mine.conversation_id;
+  const inConversation = (rows ?? []).filter((r) => r.conversation_id === conversationId);
+  const profileOf = (r: (typeof inConversation)[number]) => (Array.isArray(r.profiles) ? r.profiles[0] : r.profiles) ?? null;
+  const me = profileOf(mine);
+  const partnerRow = inConversation.find((r) => r.user_id !== userId);
+  const partner = partnerRow ? profileOf(partnerRow) : null;
   if (!me || !partner) return { status: "not-linked", email };
+  const bond = (bonds ?? []).find((b) => b.conversation_id === conversationId);
 
   return { status: "ok", session: { me, partner, conversationId }, bond: bond ?? null };
 });

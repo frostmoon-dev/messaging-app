@@ -53,6 +53,12 @@ export function MessageList({
   } = useChat();
   const isTouch = useIsTouch();
 
+  // Bubbles only show a name and photo. Profiles change every 30 s (last
+  // seen), so hand bubbles objects that change only when those two do;
+  // otherwise every bubble would redraw twice a minute for nothing.
+  const meAuthor = useMemo(() => me, [me.id, me.display_name, me.avatar_url]); // eslint-disable-line react-hooks/exhaustive-deps
+  const partnerAuthor = useMemo(() => partner, [partner.id, partner.display_name, partner.avatar_url]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Like iMessage, one line under your newest message: "Delivered", or
   // "Seen 14:02" once they've read it. Nothing under older ones.
   const receipt = useMemo(() => {
@@ -265,7 +271,7 @@ export function MessageList({
                   animateIn={Boolean(m.local) || (baseline !== null && m.created_at > baseline)}
                   highlighted={highlightedId === m.id}
                   swipeEnabled={isTouch}
-                  author={mine ? me : partner}
+                  author={mine ? meAuthor : partnerAuthor}
                   replySnippet={snippet}
                   replyAuthorName={snippet ? (snippet.sender_id === me.id ? "You" : partner.display_name) : ""}
                   localPreview={m.message_type === "image" ? localPreview(m.id) : undefined}

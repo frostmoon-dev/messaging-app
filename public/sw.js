@@ -7,7 +7,7 @@
  *   with the reply box ready.
  * Private data is never cached: only the offline page and icons are stored.
  */
-const CACHE = "napyru-shell-v21";
+const CACHE = "napyru-shell-v22";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/badge-96.png"];
 
 self.addEventListener("install", (event) => {
@@ -17,17 +17,28 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim()),
+    Promise.all([
+      caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))),
+      // Navigation preload: the page request starts while this worker is
+      // still waking up, instead of after. Faster cold opens.
+      self.registration.navigationPreload?.enable().catch(() => {}),
+    ]).then(() => self.clients.claim()),
   );
 });
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.mode !== "navigate") return; // leave API, Supabase and assets alone
-  event.respondWith(fetch(request).catch(() => caches.match("/offline.html")));
+  event.respondWith(
+    (async () => {
+      try {
+        const preloaded = await event.preloadResponse;
+        return preloaded || (await fetch(request));
+      } catch {
+        return caches.match("/offline.html");
+      }
+    })(),
+  );
 });
 
 // Chromium browsers let a push go without a notification while the app is
