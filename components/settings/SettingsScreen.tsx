@@ -12,6 +12,7 @@ import { signOut, setTheme } from "@/lib/auth/actions";
 import { THEMES, SCHEME_COLORS, THEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME } from "@/lib/themes";
 import { isSoundEnabled, playSound, setSoundEnabled } from "@/lib/sound";
 import { haptic, isHapticsEnabled, setHapticsEnabled } from "@/lib/haptics";
+import { startAlarm } from "@/lib/alarm";
 import {
   notificationPermission,
   notificationsEnabled,
@@ -522,7 +523,48 @@ function AlertsSection() {
           if (next) playSound("received");
         }}
       />
+      <AlarmTest />
     </Panel>
+  );
+}
+
+/** Plays the SOS alarm for 3 seconds, so you know how loud it is. */
+function AlarmTest() {
+  const [testing, setTesting] = useState(false);
+  const stopRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => () => stopRef.current?.(), []);
+
+  const toggle = () => {
+    if (stopRef.current) {
+      stopRef.current();
+      stopRef.current = null;
+      setTesting(false);
+      return;
+    }
+    const stop = startAlarm();
+    stopRef.current = stop;
+    setTesting(true);
+    setTimeout(() => {
+      if (stopRef.current !== stop) return;
+      stop();
+      stopRef.current = null;
+      setTesting(false);
+    }, 3000);
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-4 py-2">
+      <div className="min-w-0">
+        <p className="font-semibold">SOS alarm</p>
+        <p className="text-small text-muted-strong">
+          Very loud while the app is open. It follows your volume: an app can&apos;t turn it up.
+        </p>
+      </div>
+      <Button variant="secondary" onClick={toggle} className="shrink-0">
+        {testing ? "Stop" : "Test"}
+      </Button>
+    </div>
   );
 }
 

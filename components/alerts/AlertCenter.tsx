@@ -10,7 +10,7 @@ import { CloseIcon, HeartIcon, MapPinIcon } from "@/components/ui/icons";
 import { createClient } from "@/lib/supabase/client";
 import { directionsUrl, markAlertSeen, resolveAlert, sendAlert } from "@/lib/alerts";
 import { currentPosition } from "@/lib/location";
-import { startAlarm } from "@/lib/alarm";
+import { primeAlarm, startAlarm } from "@/lib/alarm";
 import { playSound } from "@/lib/sound";
 import { haptic } from "@/lib/haptics";
 import { formatTime } from "@/lib/time";
@@ -59,6 +59,19 @@ export function AlertCenter() {
     },
     [silence],
   );
+
+  // iPhone only allows sound after a tap: unlock the alarm on your first
+  // tap, so an SOS that arrives later can sound by itself.
+  useEffect(() => {
+    const events = ["touchend", "click", "keydown"] as const;
+    const unlock = () => {
+      void primeAlarm().then((ok) => {
+        if (ok) events.forEach((name) => window.removeEventListener(name, unlock, true));
+      });
+    };
+    events.forEach((name) => window.addEventListener(name, unlock, true));
+    return () => events.forEach((name) => window.removeEventListener(name, unlock, true));
+  }, []);
 
   // Opened from an SOS notification, or the SOS arrived while the app was
   // closed: show the latest unhandled one (from the last hour) without the siren.
