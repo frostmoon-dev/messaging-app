@@ -104,6 +104,12 @@ export const ArrowUpIcon = (p: IconProps) => (
     <path d="M12 20V5M5.5 11 12 4.5l6.5 6.5" />
   </Svg>
 );
+export const MicIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="9" y="3" width="6" height="11.5" rx="3" />
+    <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+  </Svg>
+);
 export const PlusIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M12 4.5v15M4.5 12h15" />

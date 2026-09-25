@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
-export type Bucket = "chat-images" | "memories" | "avatars" | "stickers";
+export type Bucket = "chat-images" | "memories" | "avatars" | "stickers" | "voice";
 
 export class UploadError extends Error {
   constructor(message: string, readonly status?: number) {

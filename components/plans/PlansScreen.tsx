@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { BellIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "@/components/ui/icons";
 import { EventForm } from "./EventForm";
+import { SharedLists } from "./SharedLists";
+import { readPref, writePref } from "@/lib/prefs";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { dateKey, monthGrid, reminderLabel, sameDay } from "@/lib/plans";
@@ -40,6 +42,15 @@ function Plans() {
   const [events, setEvents] = useState<EventRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<EventRow | "new" | null>(null);
+  // Calendar or Lists; remembered on this phone. /plans?tab=lists opens Lists.
+  const [tab, setTab] = useState<"calendar" | "lists">(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "lists") return "lists";
+    return readPref("plans-tab") === "lists" ? "lists" : "calendar";
+  });
+  const pickTab = (next: "calendar" | "lists") => {
+    setTab(next);
+    writePref("plans-tab", next === "lists" ? "lists" : null);
+  };
 
   const grid = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
 
@@ -105,13 +116,42 @@ function Plans() {
     <>
       <PageHeader
         title="Plans"
-        description={`Shared with ${partner.display_name}. Reminders go to both of you.`}
+        description={
+          tab === "calendar"
+            ? `Shared with ${partner.display_name}. Reminders go to both of you.`
+            : `Shared with ${partner.display_name}. Tick things off together, live.`
+        }
         action={
-          <Button onClick={() => setEditing("new")}>
-            <PlusIcon size={18} /> Add
-          </Button>
+          tab === "calendar" ? (
+            <Button onClick={() => setEditing("new")}>
+              <PlusIcon size={18} /> Add
+            </Button>
+          ) : undefined
         }
       />
+
+      <div className="flex gap-1 self-start rounded-full bg-panel-strong p-1" role="tablist" aria-label="Plans">
+        {(["calendar", "lists"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => pickTab(t)}
+            className={cn(
+              "min-h-10 rounded-full px-5 text-small font-bold transition-colors",
+              tab === t ? "bg-background text-foreground shadow-[var(--shadow-raised)]" : "text-muted-strong hover:text-foreground",
+            )}
+          >
+            {t === "calendar" ? "Calendar" : "Lists"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "lists" ? (
+        <SharedLists />
+      ) : (
+      <>
 
       {error && (
         <div className="card flex items-center justify-between gap-3 bg-panel p-4" role="alert">
@@ -215,6 +255,9 @@ function Plans() {
             ))}
           </ul>
         </section>
+      )}
+
+      </>
       )}
 
       {editing && (

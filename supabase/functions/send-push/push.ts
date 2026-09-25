@@ -106,6 +106,8 @@ export function messagePreview(
       return `${name} sent a sticker.`;
     case "gif":
       return `${name} sent a GIF.`;
+    case "voice":
+      return `${name} sent a voice message.`;
     default:
       return (showText && text) || "Sent you a message";
   }
@@ -193,6 +195,8 @@ function reactionTarget(message: { message_type: string; content: string | null 
       return "your sticker";
     case "gif":
       return "your GIF";
+    case "voice":
+      return "your voice message";
     default: {
       const text = oneLine(message.content, 60);
       return showText && text ? `\u201c${text}\u201d` : "your message";

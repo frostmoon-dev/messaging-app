@@ -48,6 +48,7 @@ import type { PreparedImage } from "@/lib/storage/image";
 import { friendlyError } from "@/lib/errors";
 import { devLog, uuid } from "@/lib/utils";
 import type { MessageEffect } from "@/lib/messages/effects";
+import type { Recording } from "@/lib/audio/recorder";
 import { playSound } from "@/lib/sound";
 import { showMessageNotification } from "@/lib/notifications";
 import type { BondRow, ChatMessage, MessageRow, Profile, ReplySnippet, Session } from "@/types/app";
@@ -81,6 +82,7 @@ type ChatData = {
   reload: () => Promise<void>;
   sendText: (text: string, replyTo: string | null, style?: MessageStyle | null, effect?: MessageEffect | null) => boolean;
   sendImages: (images: PreparedImage[], caption: string, replyTo: string | null) => void;
+  sendVoice: (recording: Recording, replyTo: string | null) => void;
   /** Your own text message within 15 minutes. Throws if the server refuses. */
   editMessage: (id: string, text: string) => Promise<void>;
   /** message id → person id → emoji. */
@@ -123,7 +125,7 @@ type Presence = {
   stopTyping: () => void;
 };
 
-export type LiveTable = "events" | "locations" | "alerts";
+export type LiveTable = "events" | "locations" | "alerts" | "lists" | "list_items";
 export type LiveChange = { type: "INSERT" | "UPDATE" | "DELETE"; row: Record<string, unknown> };
 type Live = { subscribe: (table: LiveTable, listener: (change: LiveChange) => void) => () => void };
 
@@ -368,7 +370,7 @@ export function ChatProvider({
         if (item.image && !item.image.uploaded) {
           let lastReported = 0;
           await uploadWithProgress(
-            "chat-images",
+            item.row.message_type === "voice" ? "voice" : "chat-images",
             item.row.image_url!,
             item.image.blob,
             item.image.contentType,
@@ -539,6 +541,42 @@ export function ChatProvider({
     [queueImage, persist, stopTyping],
   );
 
+  /** A voice message: shows at once (playable from the phone), uploads, then saves. */
+  const sendVoice = useCallback(
+    (recording: Recording, replyTo: string | null) => {
+      const id = uuid();
+      const row: NewMessage = {
+        id,
+        conversation_id: conversationId,
+        content: null,
+        message_type: "voice",
+        image_url: `${conversationId}/${id}.${recording.extension}`,
+        image_width: null,
+        image_height: null,
+        reply_to: replyTo,
+        audio_duration_ms: recording.durationMs,
+        audio_peaks: recording.peaks,
+      };
+      const previewUrl = URL.createObjectURL(recording.blob);
+      previews.current.set(id, previewUrl);
+      outbox.current.set(id, { row, image: { blob: recording.blob, contentType: recording.contentType, uploaded: false } });
+      dispatch({
+        type: "addLocal",
+        message: {
+          ...row,
+          sender_id: session.me.id,
+          created_at: new Date().toISOString(),
+          delivered_at: null,
+          read_at: null,
+          local: { status: "sending", progress: 0, previewUrl },
+        },
+      });
+      stopTyping();
+      void persist(id);
+    },
+    [conversationId, session.me.id, persist, stopTyping],
+  );
+
   const sendMedia = useCallback(
     (media: MediaToSend, replyTo: string | null) => {
       const id = uuid();
@@ -682,8 +720,8 @@ export function ChatProvider({
         rows: [{ ...original, deleted_at: new Date().toISOString(), content: null, image_url: null, image_width: null, image_height: null }],
       });
       try {
-        const photo = await deleteMessageRpc(supabase, id);
-        if (photo) await supabase.storage.from("chat-images").remove([photo]);
+        const file = await deleteMessageRpc(supabase, id);
+        if (file) await supabase.storage.from(original.message_type === "voice" ? "voice" : "chat-images").remove([file]);
       } catch (error) {
         dispatch({ type: "upsert", rows: [{ ...original, deleted_at: null }] });
         throw error;
@@ -879,6 +917,22 @@ export function ChatProvider({
       .on("postgres_changes", { event: "*", schema: "public", table: "events", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
         emitLive("events", payload),
       )
+      // Shared lists. Deletes can't be filtered by conversation (they carry only
+      // the id), so they come unfiltered; screens ignore ids they don't show.
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "lists", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
+        emitLive("lists", payload),
+      )
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "lists", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
+        emitLive("lists", payload),
+      )
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "lists" }, (payload) => emitLive("lists", payload))
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "list_items", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
+        emitLive("list_items", payload),
+      )
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "list_items", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
+        emitLive("list_items", payload),
+      )
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "list_items" }, (payload) => emitLive("list_items", payload))
       .on("postgres_changes", { event: "*", schema: "public", table: "locations", filter: `conversation_id=eq.${conversationId}` }, (payload) =>
         emitLive("locations", payload),
       )
@@ -1090,6 +1144,7 @@ export function ChatProvider({
       react,
       sendImage,
       sendImages,
+      sendVoice,
       sendMedia,
       retry,
       deleteMessage,
@@ -1108,7 +1163,7 @@ export function ChatProvider({
       setBond,
     }),
     [
-      me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, editMessage, reactions, react, sendImage, sendImages,
+      me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, editMessage, reactions, react, sendImage, sendImages, sendVoice,
       sendMedia, retry, deleteMessage, clearHistory, hideMessage, pinned, setPinned, starred, toggleStar, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
     ],
   );

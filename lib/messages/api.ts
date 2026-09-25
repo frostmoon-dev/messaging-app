@@ -84,7 +84,7 @@ export async function fetchSnippets(supabase: BrowserSupabase, ids: string[]): P
 export type NewMessage = Pick<
   MessageRow,
   "id" | "conversation_id" | "content" | "message_type" | "image_url" | "image_width" | "image_height" | "reply_to"
-> & { style?: MessageStyle | null; effect?: MessageEffect | null };
+> & { style?: MessageStyle | null; effect?: MessageEffect | null; audio_duration_ms?: number | null; audio_peaks?: string | null };
 
 export const MESSAGE_STYLES = ["script", "big", "whisper", "mono"] as const;
 export type MessageStyle = (typeof MESSAGE_STYLES)[number];

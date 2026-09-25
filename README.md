@@ -12,6 +12,7 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - **Opens instantly:** the newest messages and photo links are kept on the device (wiped on sign-out), then refreshed from the server
 - **Edit** your own text messages for 15 minutes (shows “edited” on both phones)
 - **Reactions:** double-tap a message for a ❤️ (with a heart burst), or long-press for more reactions and any emoji
+- **Voice messages:** with nothing typed, the send button is a mic. Tap to record (up to 5 minutes), 🗑 to cancel, ↑ to send. The bubble shows a waveform that fills as it plays, the length, and 1× / 1.5× / 2× speed
 - **Photos like WhatsApp:** pick up to 10 at once (iPhone's own picker, with numbered ticks), check them in a tray above the message box (✕ to drop one, + to add more), add one caption (it goes with the first photo), and turn on **HD** to send full size (up to 4096 px) instead of the quicker 1920 px. They arrive in the order you picked. A web app can't show your camera roll inside its own panel; iPhone only allows its own picker
 - **Message styles and effects:** tap **Aa** in the message box for Script, Big, Whisper or Typewriter, and an effect that plays when it arrives on both phones: Slam (the chat shakes too), Loud, Gentle, Invisible ink (tap to read; hidden on the lock screen too), Shake, Ripple, Bloom, or Heartbeat (a honey glow, and a buzz on Android). Replay it from the message's options
 - **Looks like iMessage:** bubbles with a tail on the last one of a run, reactions on the bubble's top corner, “Delivered” / “Seen 14:02” under your newest message only, a centred “Today 10:43” after a break of an hour, and **swipe left** on the chat to see every message's time
@@ -23,7 +24,7 @@ A private messenger for exactly two people. Calm, readable, and built around the
 - **Thinking of you:** tap the heart in the chat header. Their phone gives a soft heartbeat and a pop-up, “Rafie is thinking of you.”
 - **Anniversaries:** 1 month, 100 days, 6 months, every year, 500 days and every 1,000 days, counted from **Together since** on the Bond screen. Both phones get a pop-up at about 09:00, and the Bond screen shows the next one
 - **On this day:** memories from this date in earlier years, at the top of Memories and as a 09:00 pop-up
-- **Plans**: a shared calendar. Either of you adds, edits or deletes; reminders ("1 hour before", "1 day before"…) pop up on both phones
+- **Plans**: a shared calendar. Either of you adds, edits or deletes; reminders ("1 hour before", "1 day before"…) pop up on both phones **Lists** (Plans → Lists): groceries, to-dos, a bucket list or date ideas; either of you adds, ticks ("Ticked by Rafie") or clears items, live on both phones
 - **Map**: see each other while sharing is on (live while the app is open), send "I'm here", ask "Where are you?", get directions
 - **SOS**: two taps send an emergency alert with your location. The other phone gets an urgent notification that stays on screen, and a full-screen alarm with a siren if Napyru is open
 - Notifications read like "Rafie ♡ · See you at 8?" (or "Sent you a message" with previews off)
@@ -148,6 +149,12 @@ What it adds: quiet hours and reaction pop-ups in Settings → Alerts; the SOS s
 
 Moments go out on the first hourly run after 09:00 in your time zone (saved each time the app opens), once each. Set **Together since** in Bond → Edit for anniversaries.
 
+
+### Voice messages and lists
+
+1. `npx supabase db push` applies `20261004000000_voice_and_lists.sql`: the `voice` message type and its private `voice` bucket (5 MB per recording), and the `lists` / `list_items` tables with live updates.
+2. `npx supabase functions deploy send-push` so pop-ups say "Rafie sent a voice message."
+3. Redeploy the app: its security headers now allow the microphone for this site.
 
 ### Send effects and avatar pop-ups
 

@@ -9,6 +9,7 @@ export function snippetText(snippet: ReplySnippet | undefined) {
   if (snippet.message_type === "image") return snippet.content ? `Photo: ${snippet.content}` : "Photo";
   if (snippet.message_type === "sticker") return "Sticker";
   if (snippet.message_type === "gif") return snippet.content ? `GIF: ${snippet.content}` : "GIF";
+  if (snippet.message_type === "voice") return "Voice message";
   return snippet.content ?? "";
 }
 

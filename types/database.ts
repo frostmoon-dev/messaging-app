@@ -239,6 +239,56 @@ export type Database = {
           },
         ]
       }
+      lists: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          created_by: string
+          emoji: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          created_by?: string
+          emoji?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          emoji?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      list_items: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          created_by: string
+          done_at: string | null
+          done_by: string | null
+          id: string
+          list_id: string
+          text: string
+        }
+        Insert: {
+          conversation_id?: string
+          created_at?: string
+          created_by?: string
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          list_id: string
+          text: string
+        }
+        Update: {
+          done_at?: string | null
+          text?: string
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           accuracy: number | null
@@ -355,6 +405,8 @@ export type Database = {
           edited_at?: string | null
           style?: string | null
           effect?: string | null
+          audio_duration_ms?: number | null
+          audio_peaks?: string | null
         }
         Insert: {
           content?: string | null
@@ -371,6 +423,8 @@ export type Database = {
           sender_id?: string
           style?: string | null
           effect?: string | null
+          audio_duration_ms?: number | null
+          audio_peaks?: string | null
         }
         Update: {
           content?: string | null

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat, usePresence } from "@/components/providers/ChatProvider";
 import {
@@ -12,6 +12,8 @@ import {
   KeyboardIcon,
   ReplyIcon,
   ArrowUpIcon,
+  TrashIcon,
+  MicIcon,
   SmileIcon,
   StickerIcon,
   TextStyleIcon,
@@ -29,8 +31,11 @@ import { ImageValidationError, prepareImage, type PreparedImage } from "@/lib/st
 import { useIsTouch } from "@/lib/hooks/useMediaQuery";
 import { MESSAGES } from "@/lib/errors";
 import { cn, devLog, uuid } from "@/lib/utils";
+import { haptic } from "@/lib/haptics";
+import { formatDuration, MAX_VOICE_MS, RecorderError, startRecording, voiceSupported, type Recorder } from "@/lib/audio/recorder";
 
 const MAX_TEXTAREA_HEIGHT = 144;
+const subscribeNoop = () => () => {};
 
 /** One picked photo. The original file is kept so switching HD can redo it. */
 type Attachment = {
@@ -61,7 +66,7 @@ export function MessageComposer({
   onCancelEdit: () => void;
   onSent: () => void;
 }) {
-  const { sendText, sendImages, sendMedia, editMessage, getSnippet, me, partner } = useChat();
+  const { sendText, sendImages, sendVoice, sendMedia, editMessage, getSnippet, me, partner } = useChat();
   const [style, setStyle] = useState<MessageStyle | null>(null);
   const [effect, setEffect] = useState<MessageEffect | null>(null);
   const [stylesOpen, setStylesOpen] = useState(false);
@@ -270,6 +275,72 @@ export function MessageComposer({
     onCancelReply();
     onSent();
     stopTyping();
+  };
+
+  // ------------------------------------------------------------ voice messages
+  const canRecord = useSyncExternalStore(subscribeNoop, voiceSupported, () => false);
+  const [recorder, setRecorder] = useState<Recorder | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [recElapsed, setRecElapsed] = useState(0);
+  const [recLevel, setRecLevel] = useState(0);
+  const [recError, setRecError] = useState<string | null>(null);
+  const [recFull, setRecFull] = useState(false);
+
+  const startVoice = async () => {
+    setRecError(null);
+    setRecFull(false);
+    setStarting(true);
+    try {
+      const rec = await startRecording();
+      haptic("press");
+      setRecElapsed(0);
+      setRecorder(rec);
+    } catch (error) {
+      setRecError(error instanceof RecorderError ? error.message : "Couldn't start recording.");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  // The timer and level meter, and the 5-minute cap (it stops, you choose).
+  useEffect(() => {
+    if (!recorder) return;
+    const tick = setInterval(() => {
+      const elapsed = recorder.elapsedMs();
+      setRecElapsed(elapsed);
+      setRecLevel(recorder.level());
+      if (elapsed >= MAX_VOICE_MS) {
+        clearInterval(tick);
+        setRecFull(true);
+      }
+    }, 100);
+    return () => clearInterval(tick);
+  }, [recorder]);
+
+  // Leaving the chat mid-recording throws it away (and frees the microphone).
+  useEffect(() => () => recorder?.cancel(), [recorder]);
+
+  const cancelVoice = () => {
+    recorder?.cancel();
+    setRecorder(null);
+  };
+
+  const sendVoiceNow = async () => {
+    if (!recorder) return;
+    const rec = recorder;
+    setRecorder(null);
+    try {
+      const recording = await rec.stop();
+      if (recording.durationMs < 500) {
+        setRecError("Too short. Tap the mic and talk, then send.");
+        return;
+      }
+      sendVoice(recording, replyTo);
+      onCancelReply();
+      onSent();
+    } catch (error) {
+      setRecError(error instanceof RecorderError ? error.message : "Couldn't save the recording.");
+    }
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -492,6 +563,51 @@ export function MessageComposer({
         )}
       </AnimatePresence>
 
+      {recError && (
+        <p className="px-4 pt-2 text-small text-danger" role="alert">
+          {recError}
+        </p>
+      )}
+
+      {recorder ? (
+        <div className="flex items-center gap-2 px-4 pt-2" role="group" aria-label="Recording a voice message">
+          <button
+            type="button"
+            onClick={cancelVoice}
+            className="-ml-2.5 flex size-11 shrink-0 items-center justify-center rounded-full text-danger hover:bg-panel-strong"
+            aria-label="Delete recording"
+          >
+            <TrashIcon size={20} />
+          </button>
+          <div className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-[22px] border-2 border-field-border bg-background px-4">
+            <span className={cn("size-2.5 shrink-0 rounded-full bg-danger", !recFull && "animate-pulse")} aria-hidden="true" />
+            <span className="font-mono text-small tabular-nums" aria-live="off">
+              {formatDuration(recElapsed)}
+            </span>
+            {/* A live meter: bars that follow your voice. */}
+            <span className="flex h-6 min-w-0 flex-1 items-center gap-[3px] overflow-hidden" aria-hidden="true">
+              {Array.from({ length: 24 }, (_, i) => (
+                <span
+                  key={i}
+                  className="w-[3px] shrink-0 rounded-full bg-love transition-[height] duration-100"
+                  style={{ height: `${Math.max(3, Math.min(24, recLevel * 28 * (0.55 + 0.45 * Math.abs(Math.sin(i * 1.7 + recElapsed / 180)))))}px` }}
+                />
+              ))}
+            </span>
+            {recFull && <span className="shrink-0 text-meta text-muted-strong">5 min max</span>}
+          </div>
+          <button
+            type="button"
+            onClick={() => void sendVoiceNow()}
+            className="flex size-11 shrink-0 items-center justify-center"
+            aria-label="Send voice message"
+          >
+            <span className="flex size-9 items-center justify-center rounded-full bg-love text-love-foreground">
+              <ArrowUpIcon size={20} strokeWidth={2.6} />
+            </span>
+          </button>
+        </div>
+      ) : (
       <form
         className="flex items-end gap-2 px-4 pt-2"
         onSubmit={(e) => {
@@ -612,6 +728,21 @@ export function MessageComposer({
           )}
         </div>
 
+        {/* Nothing typed: the mic, like iMessage and WhatsApp. */}
+        {canRecord && !editing && !trimmed && attachments.length === 0 ? (
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={() => void startVoice()}
+            disabled={starting}
+            className="flex size-11 shrink-0 items-center justify-center"
+            aria-label="Record a voice message"
+          >
+            <span className="flex size-9 items-center justify-center rounded-full bg-panel-strong text-foreground">
+              <MicIcon size={20} />
+            </span>
+          </motion.button>
+        ) : (
         <motion.button
           type="submit"
           disabled={!canSend}
@@ -631,7 +762,9 @@ export function MessageComposer({
             {editing ? <CheckIcon size={18} /> : <ArrowUpIcon size={20} strokeWidth={2.6} />}
           </span>
         </motion.button>
+        )}
       </form>
+      )}
       <AnimatePresence initial={false}>
         {emojiOpen && (
           <motion.div

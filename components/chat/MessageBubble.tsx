@@ -8,6 +8,7 @@ import { MessageStatus } from "./MessageStatus";
 import { ReplyQuote } from "./ReplyQuote";
 import { MessageGif, MessageSticker } from "./MessageSticker";
 import { MessageImage } from "./MessageImage";
+import { MessageVoice } from "./MessageVoice";
 import { HeartBurst } from "./HeartBurst";
 import { EffectBubble, EffectLetters, isLetterEffect, useMessageEffect } from "./MessageEffect";
 import { formatTime } from "@/lib/time";
@@ -263,7 +264,7 @@ function MessageBubbleImpl({
                 : cn(
                     mine ? "bubble-out bg-outgoing text-outgoing-foreground" : "bubble-in bg-incoming text-incoming-foreground",
                     tail && "bubble-tail",
-                    message.message_type === "image" ? "p-1.5" : "px-4 py-2.5",
+                    message.message_type === "image" ? "p-1.5" : message.message_type === "voice" ? "px-3 py-2" : "px-4 py-2.5",
                   ),
               failed && "opacity-70",
             )}
@@ -296,6 +297,7 @@ function MessageBubbleImpl({
               />
             )}
 
+            {!deleted && message.message_type === "voice" && <MessageVoice message={message} mine={mine} localPreview={localPreview} />}
             {!deleted && message.message_type === "sticker" && <MessageSticker message={message} />}
             {!deleted && message.message_type === "gif" && (
               <MessageGif message={message} tailClass={lastInGroup ? (mine ? "rounded-br-[6px]" : "rounded-bl-[6px]") : ""} />

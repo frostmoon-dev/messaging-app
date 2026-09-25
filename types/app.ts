@@ -10,8 +10,10 @@ export type EventRow = Tables["events"]["Row"];
 export type LocationRow = Tables["locations"]["Row"];
 export type AlertRow = Tables["alerts"]["Row"];
 export type StickerRow = Tables["stickers"]["Row"];
+export type ListRow = Tables["lists"]["Row"];
+export type ListItemRow = Tables["list_items"]["Row"];
 
-export type MessageType = "text" | "image" | "sticker" | "gif";
+export type MessageType = "text" | "image" | "sticker" | "gif" | "voice";
 
 /** Client-only state layered on top of a stored message. */
 export type LocalState = {

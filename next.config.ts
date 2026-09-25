@@ -16,7 +16,8 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' blob: data: ${supabaseOrigin} ${mapTiles} ${giphyMedia}`,
-  `media-src 'self' blob: ${giphyMedia}`,
+  // Voice messages play from Supabase Storage (signed links); GIFs from GIPHY.
+  `media-src 'self' blob: ${supabaseOrigin} ${giphyMedia}`,
   "font-src 'self'",
   `connect-src 'self' ${supabaseOrigin} ${supabaseWs}`,
   "worker-src 'self'",
@@ -33,8 +34,9 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Frame-Options", value: "DENY" },
-  // Location is allowed for this site only (map + SOS); everything else stays off.
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), payment=(), usb=()" },
+  // Location (map + SOS) and the microphone (voice messages) are allowed for
+  // this site only; everything else stays off.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(self), payment=(), usb=()" },
 ];
 
 const nextConfig: NextConfig = {

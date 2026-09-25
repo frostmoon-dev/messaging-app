@@ -318,7 +318,7 @@ export function MessageList({
                   author={mine ? meAuthor : partnerAuthor}
                   replySnippet={snippet}
                   replyAuthorName={snippet ? (snippet.sender_id === me.id ? "You" : partner.display_name) : ""}
-                  localPreview={m.message_type === "image" ? localPreview(m.id) : undefined}
+                  localPreview={m.message_type === "image" || m.message_type === "voice" ? localPreview(m.id) : undefined}
                   onReply={onReply}
                   onJump={onJump}
                   onRetry={retry}
