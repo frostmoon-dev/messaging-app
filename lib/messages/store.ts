@@ -6,9 +6,12 @@ export type ChatState = {
   loadError: string | null;
   hasMore: boolean;
   loadingOlder: boolean;
+  /** Showing this device's copy until the server answers. */
+  fromCache: boolean;
 };
 
 export type ChatAction =
+  | { type: "cached"; rows: MessageRow[]; hasMore: boolean }
   | { type: "loaded"; rows: MessageRow[]; hasMore: boolean }
   | { type: "loadFailed"; error: string }
   | { type: "loadingOlder"; value: boolean }
@@ -26,6 +29,7 @@ export const initialChatState: ChatState = {
   loadError: null,
   hasMore: false,
   loadingOlder: false,
+  fromCache: false,
 };
 
 // Pending messages always sit at the bottom until the server confirms them.
@@ -55,11 +59,20 @@ function merge(current: ChatMessage[], rows: MessageRow[]) {
 
 export function chatReducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
+    case "cached":
+      if (state.loaded) return state;
+      return { ...state, messages: merge(state.messages, action.rows), loaded: true, hasMore: action.hasMore, fromCache: true };
     case "loaded": {
       // Keep anything realtime delivered while the initial fetch was in flight.
+      // Cached rows the server no longer returns (deleted for you, cleared) go.
+      const newest = action.rows.at(-1)?.created_at;
+      const keep = state.fromCache
+        ? state.messages.filter((m) => m.local || (newest !== undefined && m.created_at > newest))
+        : state.messages;
       return {
         ...state,
-        messages: merge(state.messages, action.rows),
+        fromCache: false,
+        messages: merge(keep, action.rows),
         loaded: true,
         loadError: null,
         hasMore: action.hasMore,

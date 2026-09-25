@@ -40,13 +40,35 @@ function cleanName(name: string | null | undefined) {
   return (name ?? "").trim().slice(0, 40) || "Someone";
 }
 
+/** A short, single-line preview of a message for a notification. */
+export function messagePreview(message: { message_type: string; content: string | null }): string {
+  const text = (message.content ?? "").replace(/\s+/g, " ").trim();
+  const clip = (t: string) => (t.length > 140 ? `${t.slice(0, 139)}…` : t);
+  switch (message.message_type) {
+    case "image":
+      return text ? `Photo: ${clip(text)}` : "Sent a photo";
+    case "sticker":
+      return "Sent a sticker";
+    case "gif":
+      return "Sent a GIF";
+    default:
+      return clip(text) || "Sent you a message";
+  }
+}
+
 /**
- * What a new-message notification says. The message text is never
- * included, so nothing private shows on a lock screen or passes through
- * the push service.
+ * What a new-message notification says. With `preview` it shows the
+ * message (the recipient can turn that off in Settings, so nothing private
+ * shows on their lock screen); without it just "Sent you a message".
  */
-export function buildPayload(senderName: string | null | undefined): PushPayload {
-  return { kind: "message", title: `${cleanName(senderName)} ${HEART}`, body: "Sent you a message", url: "/chat", tag: "new-message" };
+export function buildPayload(senderName: string | null | undefined, preview?: string | null): PushPayload {
+  return {
+    kind: "message",
+    title: `${cleanName(senderName)} ${HEART}`,
+    body: preview || "Sent you a message",
+    url: "/chat",
+    tag: "new-message",
+  };
 }
 
 /** Reminders are relative ("in 1 hour"), so no time zone is needed on the server. */

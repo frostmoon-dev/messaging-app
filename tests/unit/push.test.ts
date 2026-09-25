@@ -87,3 +87,16 @@ describe("urlBase64ToUint8Array", () => {
     expect([...urlBase64ToUint8Array("AQID_-8")]).toEqual([1, 2, 3, 255, 239]);
   });
 });
+
+describe("message previews", () => {
+  it("show the text, trimmed to one line", async () => {
+    const { messagePreview, buildPayload } = await import("../../supabase/functions/send-push/push");
+    expect(messagePreview({ message_type: "text", content: "  see you\nat 7  " })).toBe("see you at 7");
+    expect(messagePreview({ message_type: "text", content: "x".repeat(200) })).toHaveLength(140);
+    expect(messagePreview({ message_type: "image", content: null })).toBe("Sent a photo");
+    expect(messagePreview({ message_type: "image", content: "sunset" })).toBe("Photo: sunset");
+    expect(messagePreview({ message_type: "sticker", content: null })).toBe("Sent a sticker");
+    expect(messagePreview({ message_type: "gif", content: "cat" })).toBe("Sent a GIF");
+    expect(buildPayload("Ann", "hi").body).toBe("hi");
+  });
+});

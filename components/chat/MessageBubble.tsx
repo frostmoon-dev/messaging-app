@@ -1,14 +1,17 @@
 "use client";
 
-import { memo, useMemo, useRef } from "react";
-import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
+import { memo, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { Avatar } from "@/components/ui/Avatar";
 import { MoreIcon, PinIcon, ReplyIcon, RetryIcon, StarIcon, TrashIcon } from "@/components/ui/icons";
 import { MessageStatus } from "./MessageStatus";
 import { ReplyQuote } from "./ReplyQuote";
 import { MessageGif, MessageSticker } from "./MessageSticker";
 import { MessageImage } from "./MessageImage";
+import { HeartBurst } from "./HeartBurst";
 import { formatTime } from "@/lib/time";
+import { haptic } from "@/lib/haptics";
+import { styleClass } from "@/lib/messages/styles";
 import { isEmojiOnly, tokenize } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import type { ChatMessage, Profile, ReplySnippet } from "@/types/app";
@@ -34,7 +37,17 @@ type Props = {
   onActions: (id: string) => void;
   /** You starred it (only you see this). */
   starred?: boolean;
+  /** Your id, to find your own reaction. */
+  myId: string;
+  /** person id → emoji. */
+  reactions?: Readonly<Record<string, string>>;
+  onReact: (id: string, emoji: string | null) => void;
+  /** Your newest message, once they've read it: "Seen 14:02". */
+  seenAt?: string | null;
 };
+
+const HEART = "❤️";
+const DOUBLE_TAP_MS = 300;
 
 const LONG_PRESS_MS = 450;
 
@@ -59,6 +72,10 @@ function MessageBubbleImpl({
   onOpenImage,
   onActions,
   starred = false,
+  myId,
+  reactions,
+  onReact,
+  seenAt,
 }: Props) {
   const x = useMotionValue(0);
   const hintOpacity = useTransform(x, [0, SWIPE_THRESHOLD], [0, 1]);
@@ -67,6 +84,18 @@ function MessageBubbleImpl({
   const canAct = !message.local && !deleted;
   // A "Message deleted" marker can still be removed from your view (Delete for me).
   const canOpenActions = !message.local;
+  const myReaction = reactions?.[myId] ?? null;
+  const [burst, setBurst] = useState(0);
+
+  // Double-tap (or double-click) a message: heart it, or take the heart back.
+  const toggleHeart = () => {
+    if (!canAct) return;
+    const adding = myReaction !== HEART;
+    onReact(message.id, adding ? HEART : null);
+    haptic(adding ? "heart" : "press");
+    if (adding) setBurst((n) => n + 1);
+  };
+  const lastTap = useRef<{ t: number; x: number; y: number } | null>(null);
 
   // Long-press (phones): hold still for a moment. Moving (scroll or swipe-to-reply) cancels it.
   const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
@@ -86,7 +115,8 @@ function MessageBubbleImpl({
               press.current = null;
               // iPhone may already have started selecting a word; drop it.
               window.getSelection()?.removeAllRanges();
-              navigator.vibrate?.(10);
+              lastTap.current = null;
+              haptic("press");
               onActions(message.id);
             }, LONG_PRESS_MS),
           };
@@ -94,7 +124,27 @@ function MessageBubbleImpl({
         onPointerMove: (e: React.PointerEvent) => {
           if (press.current && Math.hypot(e.clientX - press.current.x, e.clientY - press.current.y) > 8) cancelPress();
         },
-        onPointerUp: cancelPress,
+        onPointerUp: (e: React.PointerEvent) => {
+          // Still pressed = a short tap that didn't move. Two of them quickly = a heart.
+          const tapped = press.current !== null;
+          cancelPress();
+          if (!tapped || !canAct || message.message_type === "image") return;
+          const now = Date.now();
+          const prev = lastTap.current;
+          if (prev && now - prev.t < DOUBLE_TAP_MS && Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < 30) {
+            lastTap.current = null;
+            e.preventDefault();
+            toggleHeart();
+          } else {
+            lastTap.current = { t: now, x: e.clientX, y: e.clientY };
+          }
+        },
+        onDoubleClick: (e: React.MouseEvent) => {
+          if (message.message_type === "image") return;
+          e.preventDefault();
+          window.getSelection()?.removeAllRanges();
+          toggleHeart();
+        },
         onPointerCancel: cancelPress,
         onContextMenu: (e: React.MouseEvent) => {
           e.preventDefault();
@@ -110,7 +160,17 @@ function MessageBubbleImpl({
   const tokens = useMemo(() => (message.content ? tokenize(message.content) : []), [message.content]);
   const time = formatTime(message.created_at);
   // The time shows under the last message of a group, and on any pinned or starred one (for its mark).
-  const showMeta = lastInGroup || Boolean(message.local) || (!message.deleted_at && (Boolean(message.pinned_at) || starred));
+  const edited = Boolean(message.edited_at) && !deleted;
+  const showMeta =
+    lastInGroup || Boolean(message.local) || Boolean(seenAt) || (!deleted && (Boolean(message.pinned_at) || starred || edited));
+  // Each emoji once, with how many of you picked it.
+  const reactionList = useMemo(() => {
+    const counts = new Map<string, number>();
+    Object.values(reactions ?? {}).forEach((e) => counts.set(e, (counts.get(e) ?? 0) + 1));
+    return [...counts.entries()];
+  }, [reactions]);
+  const reactionCount = Object.keys(reactions ?? {}).length;
+  const styled = message.message_type === "text" && !emojiOnly ? styleClass(message.style) : "";
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.x > SWIPE_THRESHOLD) onReply(message.id);
@@ -222,7 +282,7 @@ function MessageBubbleImpl({
               <p
                 className={cn(
                   "whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
-                  emojiOnly ? "text-4xl leading-tight" : "text-body leading-[1.45]",
+                  emojiOnly ? "text-4xl leading-tight" : styled || "text-body leading-[1.45]",
                   message.message_type === "image" && "px-2 pt-1.5 pb-1",
                 )}
               >
@@ -244,7 +304,36 @@ function MessageBubbleImpl({
               </p>
             )}
           </div>
+          <AnimatePresence>{burst > 0 && <HeartBurst key={burst} />}</AnimatePresence>
         </motion.div>
+
+        {reactionCount > 0 && !deleted && (
+          <motion.button
+            type="button"
+            key={reactionList.map(([e]) => e).join("")}
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 520, damping: 18 }}
+            onClick={() => onActions(message.id)}
+            className={cn(
+              "chat-meta relative z-10 -mt-2.5 flex min-h-7 items-center gap-0.5 rounded-full bg-background-raised px-2 text-[0.9375rem] leading-none",
+              "shadow-[inset_0_0_0_1px_var(--border),var(--shadow-raised)]",
+              mine ? "mr-2" : "ml-2",
+            )}
+            aria-label={`Reactions: ${reactionList.map(([e, n]) => (n > 1 ? `${e} ×${n}` : e)).join(", ")}. Open options`}
+          >
+            {reactionList.map(([e]) => (
+              <span key={e} aria-hidden="true">
+                {e}
+              </span>
+            ))}
+            {reactionCount > 1 && reactionList.length === 1 && (
+              <span className="ml-0.5 font-mono text-meta font-semibold text-muted-strong" aria-hidden="true">
+                {reactionCount}
+              </span>
+            )}
+          </motion.button>
+        )}
 
         {showMeta && (
           <div
@@ -265,8 +354,10 @@ function MessageBubbleImpl({
                 <span className="sr-only">In your favourites.</span>
               </span>
             )}
+            {edited && <span className="font-sans">edited</span>}
             <time dateTime={message.created_at}>{time}</time>
             {mine && <MessageStatus message={message} />}
+            {seenAt && <span className="font-sans font-semibold text-muted-strong">Seen {formatTime(seenAt)}</span>}
           </div>
         )}
         {!showMeta && <span className="sr-only">{time}</span>}

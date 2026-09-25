@@ -197,3 +197,35 @@ export const StarIcon = (p: IconProps) => (
     <path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9Z" />
   </Svg>
 );
+
+export const SmileIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M8.5 14a4.5 4.5 0 0 0 7 0" />
+    <path d="M9.2 9.8h.01M14.8 9.8h.01" strokeWidth={2.6} />
+  </Svg>
+);
+
+export const KeyboardIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="6" width="18" height="12" rx="2.5" />
+    <path d="M7 10h.01M10.3 10h.01M13.7 10h.01M17 10h.01M7 13.5h.01M17 13.5h.01" strokeWidth={2.4} />
+    <path d="M10 14h4" />
+  </Svg>
+);
+
+/** "Aa": text style. */
+export const TextStyleIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m3 18 5-12 5 12M4.8 14h6.4" />
+    <path d="M20.5 12.5v5.5M20.5 15a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0Z" />
+  </Svg>
+);
+
+export const SearchIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 4.5 4.5" />
+  </Svg>
+);
+

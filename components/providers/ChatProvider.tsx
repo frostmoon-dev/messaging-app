@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -30,9 +31,17 @@ import {
   insertMessage,
   markDelivered,
   markRead,
+  editMessage as editMessageRpc,
+  fetchReactions,
+  setReaction as setReactionRpc,
+  type MessageStyle,
   type NewMessage,
+  type Reaction,
 } from "@/lib/messages/api";
+import { readChatCache, writeChatCache } from "@/lib/messages/cache";
+import { haptic } from "@/lib/haptics";
 import { chatReducer, initialChatState } from "@/lib/messages/store";
+import { latestSeen } from "@/lib/presence";
 import { validateMessageText } from "@/lib/messages/validation";
 import { uploadWithProgress } from "@/lib/storage/upload";
 import type { PreparedImage } from "@/lib/storage/image";
@@ -69,7 +78,13 @@ type ChatData = {
   bond: BondRow | null;
   loadOlder: () => Promise<void>;
   reload: () => Promise<void>;
-  sendText: (text: string, replyTo: string | null) => boolean;
+  sendText: (text: string, replyTo: string | null, style?: MessageStyle | null) => boolean;
+  /** Your own text message within 15 minutes. Throws if the server refuses. */
+  editMessage: (id: string, text: string) => Promise<void>;
+  /** message id → person id → emoji. */
+  reactions: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** Your reaction on a message; null takes it away. */
+  react: (id: string, emoji: string | null) => Promise<void>;
   sendImage: (image: PreparedImage, caption: string, replyTo: string | null) => void;
   /** A sticker (own pack path or GIPHY link) or a GIPHY GIF, already stored or hosted, so it sends like text. */
   sendMedia: (media: MediaToSend, replyTo: string | null) => void;
@@ -198,6 +213,7 @@ export function ChatProvider({
     [],
   );
   const partnerRef = useRef(partner);
+  const meRef = useRef(me);
   const partnerOnlineRef = useRef(false);
 
   useEffect(() => {
@@ -206,6 +222,9 @@ export function ChatProvider({
   useEffect(() => {
     partnerRef.current = partner;
   }, [partner]);
+  useEffect(() => {
+    meRef.current = me;
+  }, [me]);
 
   // ------------------------------------------------------------------ receipts
 
@@ -265,10 +284,23 @@ export function ChatProvider({
     }
   }, [supabase, conversationId, resolveSnippets, syncReceipts]);
 
+  // This device's copy first, so the chat shows before the network answers.
+  useLayoutEffect(() => {
+    const cached = readChatCache(conversationId);
+    if (cached?.rows.length) dispatch({ type: "cached", rows: cached.rows, hasMore: cached.hasMore });
+  }, [conversationId]);
+
   useEffect(() => {
     // Initial fetch; results land in the reducer asynchronously.
     void reload();
   }, [reload]);
+
+  // Keep the copy fresh (only once the server has answered, never mid-way).
+  useEffect(() => {
+    if (!state.loaded || state.fromCache) return;
+    const t = setTimeout(() => writeChatCache(conversationId, state.messages, state.hasMore), 800);
+    return () => clearTimeout(t);
+  }, [conversationId, state.loaded, state.fromCache, state.messages, state.hasMore]);
 
   const loadOlder = useCallback(async () => {
     const oldest = messagesRef.current.find((m) => !m.local);
@@ -355,10 +387,18 @@ export function ChatProvider({
       }
 
       try {
-        const saved = await insertMessage(supabase, item.row);
+        const saved = await insertMessage(supabase, item.row).catch((error: { code?: string }) => {
+          // Database without message styles yet: send it plain instead of failing.
+          if (item.row.style && (error?.code === "PGRST204" || error?.code === "42703")) {
+            delete item.row.style;
+            return insertMessage(supabase, item.row);
+          }
+          throw error;
+        });
         outbox.current.delete(id);
         dispatch({ type: "upsert", rows: [saved] });
         playSound("sent");
+        haptic("send");
       } catch (error) {
         // Duplicate key: an earlier attempt actually succeeded.
         if ((error as { code?: string })?.code === "23505") {
@@ -397,7 +437,7 @@ export function ChatProvider({
   }, [session.me.id]);
 
   const sendText = useCallback(
-    (text: string, replyTo: string | null) => {
+    (text: string, replyTo: string | null, style?: MessageStyle | null) => {
       const result = validateMessageText(text);
       if (!result.ok) return false;
       const id = uuid();
@@ -410,6 +450,8 @@ export function ChatProvider({
         image_width: null,
         image_height: null,
         reply_to: replyTo,
+        // Only sent when chosen, so plain messages still work before the database update.
+        ...(style ? { style } : {}),
       };
       outbox.current.set(id, { row });
       dispatch({
@@ -496,6 +538,106 @@ export function ChatProvider({
   );
 
   const retry = useCallback((id: string) => void persist(id), [persist]);
+
+  const editMessage = useCallback(
+    async (id: string, text: string) => {
+      const original = messagesRef.current.find((m) => m.id === id);
+      const result = validateMessageText(text);
+      if (!original || original.local || !result.ok) return;
+      if (result.value === original.content) return;
+      dispatch({ type: "upsert", rows: [{ ...original, content: result.value, edited_at: new Date().toISOString() }] });
+      try {
+        const editedAt = await editMessageRpc(supabase, id, result.value);
+        dispatch({ type: "upsert", rows: [{ ...original, content: result.value, edited_at: editedAt }] });
+      } catch (error) {
+        dispatch({ type: "upsert", rows: [original] });
+        throw error;
+      }
+    },
+    [supabase],
+  );
+
+  // ------------------------------------------------------------------ reactions
+  // Loaded for the messages on screen, and kept live on their own channel so
+  // a database without reactions yet doesn't disturb the chat.
+  const [reactions, setReactions] = useState<Record<string, Record<string, string>>>({});
+  const reactionsAsked = useRef(new Set<string>());
+  const reactionsRef = useRef(reactions);
+  useEffect(() => {
+    reactionsRef.current = reactions;
+  }, [reactions]);
+
+  const applyReaction = useCallback((r: Reaction) => {
+    setReactions((prev) => {
+      const forMessage = { ...(prev[r.message_id] ?? {}) };
+      if (r.emoji) forMessage[r.user_id] = r.emoji;
+      else delete forMessage[r.user_id];
+      return { ...prev, [r.message_id]: forMessage };
+    });
+  }, []);
+
+  useEffect(() => {
+    const ids = state.messages.filter((m) => !m.local && !reactionsAsked.current.has(m.id)).map((m) => m.id);
+    if (!ids.length) return;
+    ids.forEach((id) => reactionsAsked.current.add(id));
+    fetchReactions(supabase, conversationId, ids)
+      .then((rows) => rows.forEach(applyReaction))
+      .catch((error) => {
+        devLog("reactions unavailable", error);
+        ids.forEach((id) => reactionsAsked.current.delete(id));
+      });
+  }, [supabase, conversationId, state.messages, applyReaction]);
+
+  useEffect(() => {
+    // postgres_changes only (no broadcast or presence), so it needs no private topic.
+    const channel = supabase
+      .channel(`reactions:${conversationId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${conversationId}` },
+        (payload) => {
+          const row = payload.new as Reaction;
+          if (!row?.message_id) return;
+          applyReaction(row);
+          if (row.user_id !== session.me.id && row.emoji) haptic("receive");
+        },
+      )
+      .subscribe();
+    // Anything missed while the phone slept: ask again on return.
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      const ids = messagesRef.current.filter((m) => !m.local).map((m) => m.id).slice(-200);
+      fetchReactions(supabase, conversationId, ids)
+        .then((rows) => {
+          setReactions((prev) => {
+            const next = { ...prev };
+            ids.forEach((id) => delete next[id]);
+            rows.forEach((r) => (next[r.message_id] = { ...(next[r.message_id] ?? {}), [r.user_id]: r.emoji! }));
+            return next;
+          });
+        })
+        .catch((error) => devLog("reactions refresh failed", error));
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      void supabase.removeChannel(channel);
+    };
+  }, [supabase, conversationId, session.me.id, applyReaction]);
+
+  const react = useCallback(
+    async (id: string, emoji: string | null) => {
+      const previous = reactionsRef.current[id]?.[session.me.id] ?? null;
+      applyReaction({ message_id: id, user_id: session.me.id, emoji });
+      try {
+        await setReactionRpc(supabase, id, emoji);
+      } catch (error) {
+        applyReaction({ message_id: id, user_id: session.me.id, emoji: previous });
+        throw error;
+      }
+    },
+    [supabase, session.me.id, applyReaction],
+  );
 
   const deleteMessage = useCallback(
     async (id: string) => {
@@ -647,7 +789,8 @@ export function ChatProvider({
         setPartnerTyping(false);
         const away = document.visibilityState !== "visible" || !chatActiveRef.current;
         playSound("received");
-        if (away) void showMessageNotification(partnerRef.current.display_name);
+        haptic("receive");
+        if (away) void showMessageNotification(partnerRef.current.display_name, meRef.current.notification_preview === false ? null : row);
         syncReceipts();
       }
     };
@@ -792,12 +935,61 @@ export function ChatProvider({
 
   // ------------------------------------------------------------------ exposed
 
+  // ------------------------------------------------------------------ presence heartbeat
+  // About every 30 s while the app is on screen: keeps "last seen" right even
+  // when the phone freezes the app before it can say goodbye, and tells the
+  // server you're looking at the chat so it doesn't send you pop-ups for it.
+  const beat = useCallback(() => {
+    const visible = document.visibilityState === "visible";
+    void supabase.rpc("heartbeat", { in_chat: visible && chatActiveRef.current }).then(({ error }) => {
+      // Database not updated yet: fall back to the old one-off write.
+      if (error) void supabase.rpc("touch_last_seen");
+    });
+  }, [supabase]);
+
+  useEffect(() => {
+    beat();
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") beat();
+    }, 30_000);
+    const onVisibility = () => beat();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onVisibility);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onVisibility);
+    };
+  }, [beat]);
+
+  // Coming back to the app: the socket may have slept through your partner's
+  // updates, so read their profile again (last seen, status, avatar).
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      void supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.partner.id)
+        .maybeSingle()
+        .then(({ data }) => data && setPartner(data));
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("online", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("online", refresh);
+    };
+  }, [supabase, session.partner.id]);
+
   const setChatActive = useCallback(
     (active: boolean) => {
       chatActiveRef.current = active;
       if (active) syncReceipts();
+      // Entering or leaving the chat changes whether you should get pop-ups: say so now.
+      beat();
     },
-    [syncReceipts],
+    [syncReceipts, beat],
   );
 
   const getSnippet = useCallback(
@@ -828,6 +1020,9 @@ export function ChatProvider({
       loadOlder,
       reload,
       sendText,
+      editMessage,
+      reactions,
+      react,
       sendImage,
       sendMedia,
       retry,
@@ -847,17 +1042,17 @@ export function ChatProvider({
       setBond,
     }),
     [
-      me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, sendImage,
+      me, partner, conversationId, state, unreadCount, bond, loadOlder, reload, sendText, editMessage, reactions, react, sendImage,
       sendMedia, retry, deleteMessage, clearHistory, hideMessage, pinned, setPinned, starred, toggleStar, discard, getSnippet, ensureLoaded, localPreview, setChatActive, updateMe,
     ],
   );
 
-  const partnerLastSeen = useMemo(() => {
-    const stored = partner.last_seen;
-    if (!presenceLeftAt) return stored;
-    if (!stored) return presenceLeftAt;
-    return stored > presenceLeftAt ? stored : presenceLeftAt;
-  }, [partner.last_seen, presenceLeftAt]);
+  // The latest proof your partner was here: their profile's last_seen, when we
+  // saw them leave, their newest message, or when they read one of yours.
+  const partnerLastSeen = useMemo(
+    () => latestSeen(partner.last_seen, presenceLeftAt, state.messages, partner.id),
+    [partner.last_seen, partner.id, presenceLeftAt, state.messages],
+  );
 
   const presence = useMemo<Presence>(
     () => ({

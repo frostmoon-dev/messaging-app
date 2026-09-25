@@ -349,6 +349,8 @@ export type Database = {
           deleted_at?: string | null
           pinned_at?: string | null
           pinned_by?: string | null
+          edited_at?: string | null
+          style?: string | null
         }
         Insert: {
           content?: string | null
@@ -363,6 +365,7 @@ export type Database = {
           read_at?: string | null
           reply_to?: string | null
           sender_id?: string
+          style?: string | null
         }
         Update: {
           content?: string | null
@@ -413,6 +416,8 @@ export type Database = {
           status_text: string | null
           status_updated_at: string | null
           username: string
+          chat_open_until?: string | null
+          notification_preview?: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -435,6 +440,7 @@ export type Database = {
           status_text?: string | null
           status_updated_at?: string | null
           username?: string
+          notification_preview?: boolean
         }
         Relationships: []
       }
@@ -484,6 +490,30 @@ export type Database = {
         Update: {
           created_at?: string
           message_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      message_reactions: {
+        Row: {
+          conversation_id: string
+          emoji: string | null
+          message_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          emoji?: string | null
+          message_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          conversation_id?: string
+          emoji?: string | null
+          message_id?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -588,6 +618,9 @@ export type Database = {
       delete_message: { Args: { msg: string }; Returns: string | null }
       clear_chat: { Args: { conv: string }; Returns: string }
       pin_message: { Args: { msg: string; pinned: boolean }; Returns: string | null }
+      heartbeat: { Args: { in_chat: boolean }; Returns: undefined }
+      edit_message: { Args: { msg: string; new_content: string }; Returns: string }
+      set_reaction: { Args: { msg: string; reaction: string | null }; Returns: undefined }
       resolve_alert: { Args: { alert: string }; Returns: undefined }
       save_push_subscription: {
         Args: { sub_auth: string; sub_endpoint: string; sub_p256dh: string }

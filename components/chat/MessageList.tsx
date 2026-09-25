@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDownIcon } from "@/components/ui/icons";
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/components/providers/ChatProvider";
 import { MessageBubble } from "./MessageBubble";
@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { formatDayLabel, isSameDay, minutesApart } from "@/lib/time";
 import { useIsTouch } from "@/lib/hooks/useMediaQuery";
-import { cn } from "@/lib/utils";
+import { cn, devLog } from "@/lib/utils";
 
 const GROUP_GAP_MINUTES = 5;
 const BOTTOM_THRESHOLD = 96;
@@ -43,8 +43,23 @@ export function MessageList({
     getSnippet,
     localPreview,
     starred,
+    reactions,
+    react,
   } = useChat();
   const isTouch = useIsTouch();
+
+  // "Seen 14:02" goes under your newest message once they've read it.
+  const seen = useMemo(() => {
+    const newestMine = messages.findLast((m) => m.sender_id === me.id);
+    return newestMine && !newestMine.local && !newestMine.deleted_at && newestMine.read_at
+      ? { id: newestMine.id, at: newestMine.read_at }
+      : null;
+  }, [messages, me.id]);
+
+  const onReact = useCallback(
+    (id: string, emoji: string | null) => void react(id, emoji).catch((error) => devLog("reaction failed", error)),
+    [react],
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -189,6 +204,10 @@ export function MessageList({
                   onOpenImage={onOpenImage}
                   onActions={onActions}
                   starred={starred.has(m.id)}
+                  myId={me.id}
+                  reactions={reactions[m.id]}
+                  onReact={onReact}
+                  seenAt={seen?.id === m.id ? seen.at : null}
                 />
               </Fragment>
             );
