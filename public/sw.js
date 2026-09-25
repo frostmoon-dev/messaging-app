@@ -7,7 +7,7 @@
  *   with the reply box ready.
  * Private data is never cached: only the offline page and icons are stored.
  */
-const CACHE = "napyru-shell-v22";
+const CACHE = "napyru-shell-v23";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/badge-96.png"];
 
 self.addEventListener("install", (event) => {
@@ -103,6 +103,10 @@ self.addEventListener("push", (event) => {
       // Messages, reactions and SOS answers are skipped while you're looking
       // at the app; reminders, alerts and SOS always show.
       if (looking && CAN_SKIP_WHEN_FOCUSED && SKIP_WHEN_FOCUSED.has(kind)) return;
+      // The unread count on the app icon (iPhone 16.4+ Home Screen apps, Android, desktop).
+      if (typeof data.badge === "number" && self.navigator.setAppBadge) {
+        await self.navigator.setAppBadge(data.badge).catch(() => {});
+      }
       const stack = kind === "message" && tag === MESSAGE_TAG ? await stackMessage(title, body) : null;
       return self.registration.showNotification(stack ? stack.title : title, {
         body: stack ? stack.body : body,

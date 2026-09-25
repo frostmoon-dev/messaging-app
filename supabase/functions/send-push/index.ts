@@ -91,12 +91,26 @@ async function resolve(request: Exclude<PushRequest, { kind: "moments" }>): Prom
       .maybeSingle();
     if (error) return { status: 500, error: "lookup failed" };
     if (!data) return { status: 404, error: "message not found" };
-    const who = await sender(data.sender_id);
+    // The recipient's unread count (everything from this sender they haven't
+    // read), for the number on the app icon.
+    const [who, unread] = await Promise.all([
+      sender(data.sender_id),
+      db
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", data.conversation_id)
+        .eq("sender_id", data.sender_id)
+        .is("read_at", null)
+        .is("deleted_at", null),
+    ]);
     const name = who.name;
     return {
       conversationId: data.conversation_id,
       exclude: data.sender_id,
-      payload: withIcon(buildPayload(name, messagePreview(data, name, false)), who),
+      payload: {
+        ...withIcon(buildPayload(name, messagePreview(data, name, false)), who),
+        ...(typeof unread.count === "number" ? { badge: Math.min(unread.count, 999) } : {}),
+      },
       preview: messagePreview(data, name, true),
     };
   }

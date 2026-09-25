@@ -28,6 +28,8 @@ export type PushPayload = {
   silent?: boolean;
   /** The sender's avatar (a short-lived link), shown as the pop-up's picture. */
   icon?: string;
+  /** Unread messages for the recipient: the number on the app icon. */
+  badge?: number;
 };
 
 /** What the database asked for: exactly one thing. */

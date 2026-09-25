@@ -1124,6 +1124,17 @@ export function ChatProvider({
     [state.messages, partner.id],
   );
 
+  // The number on the app icon follows what's unread, and clears once you've read it.
+  useEffect(() => {
+    const nav = navigator as Navigator & {
+      setAppBadge?: (count?: number) => Promise<void>;
+      clearAppBadge?: () => Promise<void>;
+    };
+    if (!nav.setAppBadge) return;
+    const done = unreadCount > 0 ? nav.setAppBadge(unreadCount) : nav.clearAppBadge?.();
+    done?.catch(() => {});
+  }, [unreadCount]);
+
   const data = useMemo<ChatData>(
     () => ({
       me,
