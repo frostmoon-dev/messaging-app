@@ -21,70 +21,79 @@
    - 60/30/10: ~60% page, ~30% panels and bubbles, ~10% accent (actions,
      selection, your own bubbles). */
 
-/* Ink: the default. Monochrome, taken from the app icon's ink drawing:
-   soft black paper, off-white ink, greys for depth. Colour appears only
-   where it carries meaning (errors and SOS are red). */
+/* Ink: the default. Taken from the app icon's ink drawing: warm charcoal
+   paper, warm off-white ink, warm greys for depth. Colour appears only
+   where it carries meaning: red for errors and SOS, green for online,
+   honey (--love) for the moments between the two of you. */
 :root,
 [data-theme="ink"] {
-  --background: #121212;
-  --background-raised: #181818;
-  --foreground: #ececec;
-  --muted: #a3a3a3;
-  --muted-strong: #cfcfcf;
-  --panel: #1e1e1e;
-  --panel-strong: #2a2a2a;
-  --border: #3a3a3a;
-  --field-border: #858585;
-  --accent: #e8e8e8;
-  --accent-hover: #f7f7f7;
-  --accent-text: #ececec;
-  --accent-foreground: #121212;
-  --accent-soft: #303030;
-  --incoming: #262626;
-  --incoming-foreground: #ececec;
-  --incoming-shadow: #3a3a3a;
-  --outgoing: #e8e8e8;
-  --outgoing-foreground: #121212;
-  --outgoing-shadow: #5a5a5a;
+  --background: #151312;
+  --background-raised: #1b1917;
+  --foreground: #efebe6;
+  --muted: #aaa39c;
+  --muted-strong: #d3cdc6;
+  --panel: #1f1c1a;
+  --panel-strong: #2b2724;
+  --border: #3b3632;
+  --field-border: #898179;
+  --accent: #ebe6df;
+  --accent-hover: #f7f3ee;
+  --accent-text: #efebe6;
+  --accent-foreground: #151312;
+  --accent-soft: #312c28;
+  --incoming: #27231f;
+  --incoming-foreground: #efebe6;
+  --incoming-shadow: #3b3632;
+  --outgoing: #ebe6df;
+  --outgoing-foreground: #151312;
+  --outgoing-shadow: #5c554f;
   --online: #5bd08a;
   --danger: #ff8e8e;
-  --focus: #ececec;
-  --frame: #5c5c5c; /* avatar ring: between border and field-border */
+  --focus: #efebe6;
+  --frame: #5f5852; /* avatar ring: between border and field-border */
   /* Light comes from the sky: raised things cast a soft shadow below,
      sunken things (text fields) a shade along their top inside edge.
      Dark themes need stronger shadows to read at all. */
+  /* Love moments only: typing…, Seen, read ticks, reactions, Bond
+     progress and the send button. Honey, never red: red means SOS. */
+  --love: #e9b872;
+  --love-foreground: #151312;
+  --love-soft: #3a2f22;
   --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.35);
   --shadow-float: 0 2px 6px rgb(0 0 0 / 0.35), 0 10px 28px rgb(0 0 0 / 0.3);
   --shadow-inset: inset 0 1px 2px rgb(0 0 0 / 0.45);
   color-scheme: dark;
 }
 
-/* Paper: Ink's daytime twin. Warm paper, soft black ink. */
+/* Paper: Ink's daytime twin. Warm paper, soft brown-black ink. */
 [data-theme="paper"] {
-  --background: #f1f0ed;
-  --background-raised: #f9f8f6;
-  --foreground: #171717;
-  --muted: #585858;
-  --muted-strong: #363636;
-  --panel: #f9f8f6;
-  --panel-strong: #e4e3df;
-  --border: #d0cfcb;
-  --field-border: #767676;
-  --accent: #1c1c1c;
-  --accent-hover: #3a3a3a;
-  --accent-text: #171717;
-  --accent-foreground: #f5f4f2;
-  --accent-soft: #e2e1dd;
-  --incoming: #f9f8f6;
-  --incoming-foreground: #171717;
-  --incoming-shadow: #d0cfcb;
-  --outgoing: #1c1c1c;
-  --outgoing-foreground: #f5f4f2;
-  --outgoing-shadow: #9a9a9a;
+  --background: #f3efe9;
+  --background-raised: #fbf8f4;
+  --foreground: #1b1714;
+  --muted: #5d554d;
+  --muted-strong: #3a342e;
+  --panel: #fbf8f4;
+  --panel-strong: #e8e2d9;
+  --border: #d6cec3;
+  --field-border: #7a7168;
+  --accent: #1f1b17;
+  --accent-hover: #3d3630;
+  --accent-text: #1b1714;
+  --accent-foreground: #f7f3ee;
+  --accent-soft: #e6dfd5;
+  --incoming: #fbf8f4;
+  --incoming-foreground: #1b1714;
+  --incoming-shadow: #d6cec3;
+  --outgoing: #1f1b17;
+  --outgoing-foreground: #f7f3ee;
+  --outgoing-shadow: #a0978d;
   --online: #146b39;
   --danger: #a8182c;
-  --focus: #171717;
-  --frame: #a8a6a1; /* avatar ring: warm grey, between border and field-border */
+  --focus: #1b1714;
+  --frame: #aca296; /* avatar ring: warm grey, between border and field-border */
+  --love: #8a5212;
+  --love-foreground: #f7f3ee;
+  --love-soft: #f0e2cc;
   --shadow-raised: 0 1px 2px rgb(23 23 23 / 0.08);
   --shadow-float: 0 2px 6px rgb(23 23 23 / 0.06), 0 10px 28px rgb(23 23 23 / 0.08);
   --shadow-inset: inset 0 1px 2px rgb(23 23 23 / 0.1);
@@ -95,30 +104,33 @@
    (npm run contrast checks this). */
 @media (prefers-color-scheme: light) {
   [data-theme="system"] {
-    --background: #f1f0ed;
-    --background-raised: #f9f8f6;
-    --foreground: #171717;
-    --muted: #585858;
-    --muted-strong: #363636;
-    --panel: #f9f8f6;
-    --panel-strong: #e4e3df;
-    --border: #d0cfcb;
-    --field-border: #767676;
-    --accent: #1c1c1c;
-    --accent-hover: #3a3a3a;
-    --accent-text: #171717;
-    --accent-foreground: #f5f4f2;
-    --accent-soft: #e2e1dd;
-    --incoming: #f9f8f6;
-    --incoming-foreground: #171717;
-    --incoming-shadow: #d0cfcb;
-    --outgoing: #1c1c1c;
-    --outgoing-foreground: #f5f4f2;
-    --outgoing-shadow: #9a9a9a;
+    --background: #f3efe9;
+    --background-raised: #fbf8f4;
+    --foreground: #1b1714;
+    --muted: #5d554d;
+    --muted-strong: #3a342e;
+    --panel: #fbf8f4;
+    --panel-strong: #e8e2d9;
+    --border: #d6cec3;
+    --field-border: #7a7168;
+    --accent: #1f1b17;
+    --accent-hover: #3d3630;
+    --accent-text: #1b1714;
+    --accent-foreground: #f7f3ee;
+    --accent-soft: #e6dfd5;
+    --incoming: #fbf8f4;
+    --incoming-foreground: #1b1714;
+    --incoming-shadow: #d6cec3;
+    --outgoing: #1f1b17;
+    --outgoing-foreground: #f7f3ee;
+    --outgoing-shadow: #a0978d;
     --online: #146b39;
     --danger: #a8182c;
-    --focus: #171717;
-    --frame: #a8a6a1;
+    --focus: #1b1714;
+    --frame: #aca296;
+    --love: #8a5212;
+    --love-foreground: #f7f3ee;
+    --love-soft: #f0e2cc;
     --shadow-raised: 0 1px 2px rgb(23 23 23 / 0.08);
     --shadow-float: 0 2px 6px rgb(23 23 23 / 0.06), 0 10px 28px rgb(23 23 23 / 0.08);
     --shadow-inset: inset 0 1px 2px rgb(23 23 23 / 0.1);
@@ -148,6 +160,9 @@
   --color-danger: var(--danger);
   --color-online: var(--online);
   --color-focus: var(--focus);
+  --color-love: var(--love);
+  --color-love-foreground: var(--love-foreground);
+  --color-love-soft: var(--love-soft);
   --color-frame: var(--frame);
 
   --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;

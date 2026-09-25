@@ -84,7 +84,7 @@ export function Sidebar() {
           </div>
           <p className="truncate text-small font-semibold">{bond.title}</p>
           <div className="mt-2 h-2 overflow-hidden bg-panel-strong">
-            <div className="h-full bg-accent transition-[width] duration-300" style={{ width: `${bond.progress}%` }} />
+            <div className="h-full bg-love transition-[width] duration-300" style={{ width: `${bond.progress}%` }} />
           </div>
         </Link>
       )}

@@ -16,8 +16,8 @@ export function isThemeId(value: unknown): value is ThemeId {
 
 /** Browser chrome colour for each theme. Matches --background in globals.css. */
 export const THEME_COLORS: Record<FixedThemeId, string> = {
-  ink: "#121212",
-  paper: "#f1f0ed",
+  ink: "#151312",
+  paper: "#f3efe9",
 };
 
 /** What "Automatic" picks for each device setting. */

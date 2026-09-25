@@ -316,8 +316,8 @@ function MessageBubbleImpl({
             transition={{ type: "spring", stiffness: 520, damping: 18 }}
             onClick={() => onActions(message.id)}
             className={cn(
-              "chat-meta relative z-10 -mt-2.5 flex min-h-7 items-center gap-0.5 rounded-full bg-background-raised px-2 text-[0.9375rem] leading-none",
-              "shadow-[inset_0_0_0_1px_var(--border),var(--shadow-raised)]",
+              "chat-meta relative z-10 -mt-2.5 flex min-h-7 items-center gap-0.5 rounded-full bg-love-soft px-2 text-[0.9375rem] leading-none",
+              "shadow-[inset_0_0_0_1.5px_var(--love),var(--shadow-raised)]",
               mine ? "mr-2" : "ml-2",
             )}
             aria-label={`Reactions: ${reactionList.map(([e, n]) => (n > 1 ? `${e} ×${n}` : e)).join(", ")}. Open options`}
@@ -357,7 +357,7 @@ function MessageBubbleImpl({
             {edited && <span className="font-sans">edited</span>}
             <time dateTime={message.created_at}>{time}</time>
             {mine && <MessageStatus message={message} />}
-            {seenAt && <span className="font-sans font-semibold text-muted-strong">Seen {formatTime(seenAt)}</span>}
+            {seenAt && <span className="font-sans font-semibold text-love">Seen {formatTime(seenAt)}</span>}
           </div>
         )}
         {!showMeta && <span className="sr-only">{time}</span>}

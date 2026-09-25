@@ -84,7 +84,7 @@ export function BondScreen() {
             aria-valuenow={progress}
           >
             <motion.div
-              className="h-full rounded-full bg-accent"
+              className="h-full rounded-full bg-love"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}

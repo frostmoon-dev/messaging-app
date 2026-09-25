@@ -63,7 +63,7 @@ export function ChatHeader({ onJump }: { onJump: (id: string) => void }) {
             <span
               className={cn(
                 "shrink-0 font-semibold",
-                partnerTyping ? "text-foreground" : partnerOnline ? "text-online" : "text-muted",
+                partnerTyping ? "text-love" : partnerOnline ? "text-online" : "text-muted",
               )}
             >
               {presence}

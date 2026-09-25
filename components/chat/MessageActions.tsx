@@ -158,7 +158,7 @@ export function MessageActions({
                     onClick={() => pickReaction(emoji)}
                     className={cn(
                       "flex size-11 items-center justify-center rounded-full text-[1.625rem] leading-none transition-transform active:scale-90",
-                      myReaction === emoji ? "bg-accent-soft shadow-[inset_0_0_0_2px_var(--accent)]" : "hover:bg-panel-strong",
+                      myReaction === emoji ? "bg-love-soft shadow-[inset_0_0_0_2px_var(--love)]" : "hover:bg-panel-strong",
                     )}
                     aria-label={myReaction === emoji ? `Remove ${emoji} reaction` : `React ${emoji}`}
                     aria-pressed={myReaction === emoji}
@@ -171,7 +171,7 @@ export function MessageActions({
                   onClick={() => setMoreEmoji(true)}
                   className={cn(
                     "flex size-11 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong hover:text-foreground",
-                    myReaction && !QUICK_REACTIONS.includes(myReaction) && "bg-accent-soft text-[1.625rem] shadow-[inset_0_0_0_2px_var(--accent)]",
+                    myReaction && !QUICK_REACTIONS.includes(myReaction) && "bg-love-soft text-[1.625rem] shadow-[inset_0_0_0_2px_var(--love)]",
                   )}
                   aria-label={myReaction && !QUICK_REACTIONS.includes(myReaction) ? `Your reaction ${myReaction}. More emoji` : "More emoji"}
                 >

@@ -140,10 +140,11 @@ What it adds: quiet hours and reaction pop-ups in Settings → Alerts; the SOS s
 Each theme follows the same rules (tokens in `app/globals.css`, checked by `npm run contrast`):
 
 - **No pure black page and no pure white text.** That pairing makes letters glow and blur ("halation"), worst for people with astigmatism. Dark themes use a dark grey page and off-white text; the light theme is warm paper.
-- **Softer accents on dark backgrounds.** Ink's white accent is off-white, and the reds and greens are slightly desaturated so large areas don't vibrate.
+- **Warm neutrals.** Ink is warm charcoal and Paper is warm paper, not pure grey: it reads as ink on paper, like the icon, at the same contrast.
+- **Softer accents on dark backgrounds.** Ink's white accent is off-white, and the reds, greens and honey are slightly desaturated so large areas don't vibrate.
 - **60 / 30 / 10.** About 60% page, 30% panels and bubbles, 10% accent, which is kept for actions, selection and your own messages.
 - **Contrast floors:** body text ≥ 7:1, secondary text and text on buttons ≥ 4.5:1, field borders ≥ 3:1.
-- **Colour only means something.** Red is for emergencies and green for "online"; everything else is black, white and grey.
+- **Colour only means something.** Red is for emergencies and errors, green for "online", and honey (`--love`) for the moments between you two: typing…, Seen, read ticks, reactions, Bond progress and the send button. Everything else is ink. Honey, not rose, so a heart never looks like an alarm.
 
 ## Scripts
 

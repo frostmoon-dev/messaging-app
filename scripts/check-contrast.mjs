@@ -41,6 +41,11 @@ const PAIRS = [
   ["outgoing-foreground", "outgoing", 4.5],
   ["accent", "background", 3],
   ["accent", "panel", 3],
+  // Honey: text (typing…, Seen), read ticks, the send button and reaction chips.
+  ...SURFACES.map((s) => ["love", s, 4.5]),
+  ["love-foreground", "love", 4.5],
+  ["muted-strong", "love-soft", 4.5],
+  ["foreground", "love-soft", 7],
 ];
 
 let failed = false;

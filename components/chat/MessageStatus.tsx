@@ -17,12 +17,12 @@ const LABELS: Record<ReceiptState, string> = {
   read: "Read",
 };
 
-/** ✓ sent · ✓✓ delivered · accent ✓✓ read. Deliberately quiet. */
+/** ✓ sent · ✓✓ delivered · honey ✓✓ read. Deliberately quiet. */
 export function MessageStatus({ message }: { message: ChatMessage }) {
   const state = receiptState(message);
   const common = "inline-block";
   return (
-    <span className={cn("inline-flex items-center", state === "read" ? "text-accent-text" : "text-muted")}>
+    <span className={cn("inline-flex items-center", state === "read" ? "text-love" : "text-muted")}>
       {state === "sending" && <ClockIcon size={12} className={cn(common, "animate-pulse")} />}
       {state === "failed" && <AlertIcon size={13} className={cn(common, "text-danger")} />}
       {state === "sent" && <CheckIcon size={14} className={common} />}

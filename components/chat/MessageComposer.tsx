@@ -474,7 +474,7 @@ export function MessageComposer({
           onPointerDown={(e) => e.preventDefault()}
           className={cn(
             "pill flex h-11 w-13 shrink-0 items-center justify-center transition-colors",
-            canSend ? "bg-accent text-accent-foreground hover:bg-accent-hover" : "bg-panel-strong text-muted",
+            canSend ? "bg-love text-love-foreground hover:bg-love/90" : "bg-panel-strong text-muted",
           )}
           aria-label={editing ? "Save edit" : "Send message"}
         >
