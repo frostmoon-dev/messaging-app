@@ -1,6 +1,7 @@
 import { readPref, writePref } from "./prefs";
 import { devLog } from "./utils";
 import { pushActive } from "./push";
+import { messagePreview } from "@/supabase/functions/send-push/push";
 
 export function notificationsSupported() {
   return typeof window !== "undefined" && "Notification" in window;
@@ -39,17 +40,20 @@ export async function requestNotificationPermission() {
 }
 
 /**
- * Shows a local notification. Content of the message is deliberately left out
- * so nothing private appears on a lock screen.
+ * Shows a local notification. The message text shows only when you allow it
+ * (Settings → Alerts), so nothing private appears on a lock screen otherwise.
  */
-export async function showMessageNotification(senderName: string) {
+export async function showMessageNotification(
+  senderName: string,
+  message?: { message_type: string; content: string | null } | null,
+) {
   if (!notificationsEnabled()) return;
   // The server already sends a push to this device; showing both would buzz twice.
   if (pushActive()) return;
   // Same wording as the push version (supabase/functions/send-push/push.ts).
   const title = `${senderName.trim().slice(0, 40) || "Someone"} \u2661`;
   const options: NotificationOptions = {
-    body: "Sent you a message",
+    body: message ? messagePreview(message) : "Sent you a message",
     tag: "new-message",
     icon: "/icons/icon-192.png",
     badge: "/icons/badge-96.png",

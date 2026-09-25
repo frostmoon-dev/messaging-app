@@ -15,6 +15,7 @@ import webpush from "web-push";
 import {
   buildAlertPayload,
   buildPayload,
+  messagePreview,
   buildReminderPayload,
   isGone,
   parseRequest,
@@ -39,7 +40,15 @@ const db = createClient(env("SUPABASE_URL"), pickSecretKey(env("SUPABASE_SECRET_
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-type Target = { conversationId: string; exclude: string | null; payload: PushPayload } | { status: number; error: string };
+type Target =
+  | {
+      conversationId: string;
+      exclude: string | null;
+      payload: PushPayload;
+      /** Messages only: what the notification says when the recipient allows a preview. */
+      preview?: string;
+    }
+  | { status: number; error: string };
 
 async function senderName(userId: string) {
   const { data } = await db.from("profiles").select("display_name").eq("id", userId).maybeSingle();
@@ -49,10 +58,20 @@ async function senderName(userId: string) {
 /** Finds who the notification is about and what it should say. */
 async function resolve(request: PushRequest): Promise<Target> {
   if (request.kind === "message") {
-    const { data, error } = await db.from("messages").select("sender_id, conversation_id").eq("id", request.id).maybeSingle();
+    const { data, error } = await db
+      .from("messages")
+      .select("sender_id, conversation_id, content, message_type")
+      .eq("id", request.id)
+      .maybeSingle();
     if (error) return { status: 500, error: "lookup failed" };
     if (!data) return { status: 404, error: "message not found" };
-    return { conversationId: data.conversation_id, exclude: data.sender_id, payload: buildPayload(await senderName(data.sender_id)) };
+    const name = await senderName(data.sender_id);
+    return {
+      conversationId: data.conversation_id,
+      exclude: data.sender_id,
+      payload: buildPayload(name),
+      preview: buildPayload(name, messagePreview(data)).body,
+    };
   }
   if (request.kind === "event") {
     const { data, error } = await db.from("events").select("id, conversation_id, title, remind_minutes").eq("id", request.id).maybeSingle();
@@ -88,16 +107,34 @@ Deno.serve(async (req) => {
   const members = await membersQuery;
   if (members.error) return reply(500, { error: "lookup failed" });
 
-  const recipients = (members.data ?? []).map((m) => m.user_id);
-  if (recipients.length === 0) return reply(200, { sent: 0, removed: 0 });
+  let recipients = (members.data ?? []).map((m) => m.user_id);
+
+  // Messages: skip anyone who is looking at the chat right now (the app
+  // reports that every 30 s), and use each person's preview setting.
+  const showPreview = new Set<string>();
+  if (request.kind === "message") {
+    const { data: prefs, error: prefsError } = await db
+      .from("profiles")
+      .select("id, chat_open_until, notification_preview")
+      .in("id", recipients);
+    if (!prefsError && prefs) {
+      const now = Date.now();
+      const inChat = new Set(prefs.filter((p) => p.chat_open_until && Date.parse(p.chat_open_until) > now).map((p) => p.id));
+      recipients = recipients.filter((id) => !inChat.has(id));
+      for (const p of prefs) if (p.notification_preview !== false) showPreview.add(p.id);
+    }
+    // Older database without these columns: notify everyone, no preview.
+  }
+  if (recipients.length === 0) return reply(200, { sent: 0, removed: 0, skipped: "in chat" });
 
   const { data: subscriptions, error: subsError } = await db
     .from("push_subscriptions")
-    .select("endpoint, p256dh, auth")
+    .select("user_id, endpoint, p256dh, auth")
     .in("user_id", recipients);
   if (subsError) return reply(500, { error: "lookup failed" });
 
-  const payload = JSON.stringify(target.payload);
+  const payloadFor = (userId: string) =>
+    JSON.stringify(target.preview && showPreview.has(userId) ? { ...target.payload, body: target.preview } : target.payload);
   const gone: string[] = [];
   let sent = 0;
 
@@ -108,7 +145,7 @@ Deno.serve(async (req) => {
         // request itself goes out with the runtime's own fetch.
         const request = webpush.generateRequestDetails(
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          payload,
+          payloadFor(s.user_id),
           {
             TTL: 60 * 60 * 24,
             // High urgency lets a sleeping phone wake up and show it straight away.
@@ -134,5 +171,15 @@ Deno.serve(async (req) => {
   );
 
   if (gone.length) await db.from("push_subscriptions").delete().in("endpoint", gone);
+  // A push service accepted it for their phone: that's "delivered" (two ticks),
+  // even if the app stays closed. Receipts only move forward.
+  if (request.kind === "message" && sent > 0) {
+    const { error } = await db
+      .from("messages")
+      .update({ delivered_at: new Date().toISOString() })
+      .eq("id", request.id)
+      .is("delivered_at", null);
+    if (error) console.error("delivered mark failed", error);
+  }
   return reply(200, { sent, removed: gone.length });
 });

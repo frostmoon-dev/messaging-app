@@ -19,6 +19,9 @@ export function ChatWindow() {
   // Looked up live, so the sheet closes itself if the message goes away.
   const actionsMessage = actionsFor ? messages.find((m) => m.id === actionsFor) : undefined;
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  // Looked up live too: an edit stops if the message is deleted meanwhile.
+  const editing = editingId ? (messages.find((m) => m.id === editingId && !m.deleted_at) ?? null) : null;
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [viewer, setViewer] = useState<{ src: string; alt: string } | null>(null);
   const [askNotify, setAskNotify] = useState(false);
@@ -102,9 +105,26 @@ export function ChatWindow() {
         <TypingIndicator />
       </div>
       <NotificationPrompt open={askNotify} onDone={() => setAskNotify(false)} />
-      <MessageComposer replyTo={replyTo} onCancelReply={() => setReplyTo(null)} onSent={onSent} />
+      <MessageComposer
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(null)}
+        editing={editing}
+        onCancelEdit={() => setEditingId(null)}
+        onSent={onSent}
+      />
       {actionsMessage && (
-        <MessageActions message={actionsMessage} onReply={setReplyTo} onClose={() => setActionsFor(null)} />
+        <MessageActions
+          message={actionsMessage}
+          onReply={(id) => {
+            setEditingId(null);
+            setReplyTo(id);
+          }}
+          onEdit={(id) => {
+            setReplyTo(null);
+            setEditingId(id);
+          }}
+          onClose={() => setActionsFor(null)}
+        />
       )}
       {viewer && <ImageViewer src={viewer.src} alt={viewer.alt} onClose={() => setViewer(null)} />}
     </section>

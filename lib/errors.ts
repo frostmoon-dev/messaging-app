@@ -25,12 +25,13 @@ export function friendlyError(error: unknown, fallback: keyof typeof MESSAGES = 
   if (typeof navigator !== "undefined" && navigator.onLine === false) return MESSAGES.offline;
   if (e?.code === "P0429" || e?.message?.includes("RATE_LIMITED")) return MESSAGES.rateLimited;
   // A feature whose migration isn't applied yet: the new message types fail the old
-  // checks (23514), or the new table, column or function doesn't exist (42P01, 42703; PGRST205, PGRST202 from the API).
+  // checks (23514), or the new table, column or function doesn't exist (42P01, 42703; PGRST205, PGRST204, PGRST202 from the API).
   if (
     (e?.code === "23514" && /messages_(body|message_type)_check/.test(e.message ?? "")) ||
     e?.code === "42P01" ||
     e?.code === "42703" ||
     e?.code === "PGRST202" ||
+    e?.code === "PGRST204" ||
     e?.code === "PGRST205"
   ) {
     return MESSAGES.needsUpdate;

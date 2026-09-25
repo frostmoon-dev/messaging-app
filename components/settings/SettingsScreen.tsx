@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import { signOut, setTheme } from "@/lib/auth/actions";
 import { THEMES, SCHEME_COLORS, THEME_COLORS, type ThemeId, isThemeId, DEFAULT_THEME } from "@/lib/themes";
 import { isSoundEnabled, playSound, setSoundEnabled } from "@/lib/sound";
+import { haptic, isHapticsEnabled, setHapticsEnabled } from "@/lib/haptics";
 import {
   notificationPermission,
   notificationsEnabled,
@@ -23,6 +24,7 @@ import { ImageCropper } from "@/components/ui/ImageCropper";
 import { Dialog } from "@/components/ui/Dialog";
 import { uploadWithProgress } from "@/lib/storage/upload";
 import { clearSignedUrlCache } from "@/lib/storage/signed-urls";
+import { clearChatCaches } from "@/lib/messages/cache";
 import { friendlyError, MESSAGES } from "@/lib/errors";
 import { activeStatus } from "@/lib/status";
 import { cn, devLog } from "@/lib/utils";
@@ -315,10 +317,25 @@ function Toggle({ id, label, description, checked, onChange, disabled }: {
 }
 
 function AlertsSection() {
-  const { partner } = useChat();
+  const { partner, me, updateMe } = useChat();
   // Read browser-only values after hydration without an effect.
   const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false);
   const [sound, setSound] = useState<boolean | null>(null);
+  const [haptics, setHaptics] = useState<boolean | null>(null);
+  const hapticsValue = haptics ?? (!hydrated || isHapticsEnabled());
+  const previewOn = me.notification_preview !== false;
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
+  // Stored on your profile, because the server writes the pop-ups.
+  const togglePreview = async (next: boolean) => {
+    setPreviewError(null);
+    updateMe({ notification_preview: next });
+    const { error } = await createClient().from("profiles").update({ notification_preview: next }).eq("id", me.id);
+    if (error) {
+      updateMe({ notification_preview: !next });
+      setPreviewError(friendlyError(error, "save"));
+    }
+  };
   const [permission, setPermission] = useState<ReturnType<typeof notificationPermission> | null>(null);
   const [notifyOn, setNotifyOn] = useState<boolean | null>(null);
 
@@ -363,8 +380,8 @@ function AlertsSection() {
             : permissionValue === "denied"
               ? "Blocked in your browser settings."
               : hydrated && pushSupported()
-                ? `A pop-up when ${partner.display_name} writes, even when the app is closed. No message text is shown.`
-                : `A pop-up when ${partner.display_name} writes while the app is open in the background. No message text is shown.`
+                ? `A pop-up when ${partner.display_name} writes, even when the app is closed. Never while you're in the chat.`
+                : `A pop-up when ${partner.display_name} writes while the app is open in the background.`
         }
         checked={Boolean(notifyValue)}
         disabled={permissionValue === "unsupported" || permissionValue === "denied"}
@@ -375,6 +392,29 @@ function AlertsSection() {
           {pushError}
         </p>
       )}
+      <Toggle
+        id="toggle-preview"
+        label="Show message text"
+        description="The pop-up shows what they wrote. Turn off to show only “Sent you a message” on your lock screen."
+        checked={previewOn}
+        onChange={(next) => void togglePreview(next)}
+      />
+      {previewError && (
+        <p className="text-small text-danger" role="alert">
+          {previewError}
+        </p>
+      )}
+      <Toggle
+        id="toggle-haptics"
+        label="Haptics"
+        description="A soft heartbeat you feel when you send, react or press. On iPhone, only when you tap."
+        checked={Boolean(hapticsValue)}
+        onChange={(next) => {
+          setHapticsEnabled(next);
+          setHaptics(next);
+          if (next) haptic("heart");
+        }}
+      />
       <Toggle
         id="toggle-sound"
         label="Sounds"
@@ -450,6 +490,7 @@ function SignOutSection() {
               await disablePush();
               await createClient().rpc("touch_last_seen");
               clearSignedUrlCache();
+              clearChatCaches();
               await signOut();
             } catch (err) {
               // redirect() throws on purpose; anything else is a real failure.

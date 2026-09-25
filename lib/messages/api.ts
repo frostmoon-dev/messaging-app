@@ -83,7 +83,14 @@ export async function fetchSnippets(supabase: BrowserSupabase, ids: string[]): P
 export type NewMessage = Pick<
   MessageRow,
   "id" | "conversation_id" | "content" | "message_type" | "image_url" | "image_width" | "image_height" | "reply_to"
->;
+> & { style?: MessageStyle | null };
+
+export const MESSAGE_STYLES = ["script", "big", "whisper", "mono"] as const;
+export type MessageStyle = (typeof MESSAGE_STYLES)[number];
+
+export function isMessageStyle(value: unknown): value is MessageStyle {
+  return typeof value === "string" && (MESSAGE_STYLES as readonly string[]).includes(value);
+}
 
 export async function insertMessage(supabase: BrowserSupabase, message: NewMessage) {
   const { data, error } = await supabase.from("messages").insert(message).select(COLUMNS).single();
@@ -159,5 +166,33 @@ export async function fetchStarred(supabase: BrowserSupabase) {
 /** Hides one message from your own view (theirs or yours); the other person keeps it. */
 export async function hideMessage(supabase: BrowserSupabase, id: string) {
   const { error } = await supabase.from("message_hides").insert({ message_id: id });
+  if (error) throw error;
+}
+
+/** Your own text message, within 15 minutes. Returns when it was edited. */
+export async function editMessage(supabase: BrowserSupabase, id: string, content: string) {
+  const { data, error } = await supabase.rpc("edit_message", { msg: id, new_content: content });
+  if (error) throw error;
+  return data;
+}
+
+export type Reaction = { message_id: string; user_id: string; emoji: string | null };
+
+/** Reactions in this chat for the given messages. */
+export async function fetchReactions(supabase: BrowserSupabase, conversationId: string, messageIds: string[]) {
+  if (!messageIds.length) return [] as Reaction[];
+  const { data, error } = await supabase
+    .from("message_reactions")
+    .select("message_id, user_id, emoji")
+    .eq("conversation_id", conversationId)
+    .in("message_id", messageIds)
+    .not("emoji", "is", null);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** One reaction per person per message; null takes yours away. */
+export async function setReaction(supabase: BrowserSupabase, id: string, emoji: string | null) {
+  const { error } = await supabase.rpc("set_reaction", { msg: id, reaction: emoji });
   if (error) throw error;
 }

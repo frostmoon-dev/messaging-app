@@ -7,15 +7,21 @@ A private messenger for exactly two people. Calm, readable, and built around the
 ## Features
 
 - Realtime 1:1 chat: text, emoji, photos, replies (tap the quote to jump back), optimistic sending, retry on failure
-- Receipts: ✓ sent · ✓✓ delivered · red ✓✓ read
-- Typing indicator (Realtime broadcast) and online / last-seen (Realtime presence). No heartbeat rows
+- Receipts: ✓ sent · ✓✓ delivered (their phone got it, even with the app closed) · ✓✓ read, and **“Seen 14:02”** under your newest message once it's read
+- Typing indicator (Realtime broadcast), online (Realtime presence) and an honest **last seen**: a light heartbeat every 30 s while the app is on screen, plus a refresh when you come back to the app
+- **Opens instantly:** the newest messages and photo links are kept on the device (wiped on sign-out), then refreshed from the server
+- **Edit** your own text messages for 15 minutes (shows “edited” on both phones)
+- **Reactions:** double-tap a message for a ❤️ (with a heart burst), or long-press for more reactions and any emoji
+- **Message styles:** tap **Aa** in the message box for Script, Big, Whisper or Typewriter
+- **Emoji panel** in the message box (the smiley): categories, search and recently used, like the iPhone keyboard
+- **Haptics** (Settings → Alerts, on by default): a soft “lub-dub” heartbeat when you send, react or long-press. Android vibrates the pattern; iPhone gives light ticks during taps only
 - Reconnects on its own and fills any gap in messages
 - **Bond** screen (rank, title, progress, stats, all set by hand), **Memories** scrapbook (photos keep their own shape; crop them when adding), daily status with icons (Free to talk, Busy, Studying, At home, Out, Sleeping, Call me)
-- Pop-up notifications through Web Push, even when the app is closed (asked only after you send something). They say who wrote, never what. Optional sounds (off by default)
+- Pop-up notifications through Web Push, even when the app is closed (asked only after you send something). They show the message text; turn **Show message text** off in Settings to show only “Sent you a message”. No pop-ups while you're in the chat. Optional sounds (off by default)
 - **Plans**: a shared calendar. Either of you adds, edits or deletes; reminders ("1 hour before", "1 day before"…) pop up on both phones
 - **Map**: see each other while sharing is on (live while the app is open), send "I'm here", ask "Where are you?", get directions
 - **SOS**: two taps send an emergency alert with your location. The other phone gets an urgent notification that stays on screen, and a full-screen alarm with a siren if Napyru is open
-- Notifications read like "Rafie ♡ · Sent you a message" and never include message text
+- Notifications read like "Rafie ♡ · See you at 8?" (or "Sent you a message" with previews off)
 - Look taken from the app icon (an ink drawing in a circle): round portraits, pill buttons, evenly rounded cards with a hairline ink line, one brush stroke under page titles
 - Themes: **Ink** (default: soft black and white), **Paper** (the light version of Ink), Automatic (Ink at night, Paper by day). The only colours are green for "online" and red for danger
 - **Chat background** (Settings): plain, dots, grid, slash, or your own photo, cropped and dimmed. Saved on the device only; the photo is never uploaded
@@ -73,7 +79,7 @@ npm run dev                 # http://127.0.0.1:3000
 
 Without these steps, notifications only appear while the app is open in the background. With them, the server wakes the phone for every new message.
 
-How it works: a new message → a database trigger (`pg_net`) → the `send-push` Edge Function → the phone's push service → the service worker shows "Ann sent you a message". Message text never leaves the database.
+How it works: a new message → a database trigger (`pg_net`) → the `send-push` Edge Function → the phone's push service → the service worker shows it. The function skips anyone who has the chat open right now, and includes the message text only for people who allow it (Settings → Alerts → Show message text). The text then passes, encrypted, through the phone maker's push service.
 
 1. **Make the keys** (once): `npm run push:keys`. It prints a public and a private key.
 2. **App setting:** add `NEXT_PUBLIC_VAPID_PUBLIC_KEY=<public key>` to `.env.local` and to Vercel (Settings → Environment Variables), then redeploy.
@@ -112,6 +118,13 @@ Tenor isn't an option: Google shut its API down on 30 June 2026.
 ### Delete, clear, pin and favourites
 
 `npx supabase db push` applies `20260928000000_delete_and_clear.sql`: `delete_message`, `clear_chat`, `pin_message`, the `message_stars` table, and a read policy that hides what you cleared. Until it runs, the chat works as before and those actions say the database needs the update. `20260929000000_delete_for_me.sql` adds `message_hides` for “Delete for me”.
+
+### Edits, reactions, styles and smarter pop-ups
+
+1. `npx supabase db push` applies `20260930000000_chat_upgrades.sql`: `heartbeat`, `edit_message`, `set_reaction`, the `message_reactions` table, and the `style`, `edited_at`, `chat_open_until` and `notification_preview` columns.
+2. `npx supabase functions deploy send-push` so pop-ups show the text, skip you while you're in the chat, and mark messages delivered.
+
+Until step 1 runs, the chat works as before; reactions, edits and styles don't save. Until step 2 runs, pop-ups work as before.
 
 **Limits, honestly:** a web app can only read location while it's open, so live sharing pauses when Napyru is closed ("I'm here" and SOS send the location at that moment). The SOS siren plays only when Napyru is open; when it's closed, the phone shows the urgent notification with its normal sound, and silent mode can mute it. SOS is not a replacement for calling emergency services.
 

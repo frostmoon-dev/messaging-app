@@ -3,27 +3,50 @@
 import { useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { CopyIcon, PinIcon, ReplyIcon, StarIcon, TrashIcon } from "@/components/ui/icons";
+import { CopyIcon, EditIcon, PinIcon, PlusIcon, ReplyIcon, StarIcon, TrashIcon } from "@/components/ui/icons";
+import { EmojiPanel, rememberEmoji } from "./EmojiPanel";
+import { haptic } from "@/lib/haptics";
 import { useChat } from "@/components/providers/ChatProvider";
 import { snippetText } from "./ReplyQuote";
 import { friendlyError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/types/app";
 
+const QUICK_REACTIONS = ["❤️", "😂", "😮", "😢", "🥺", "🔥", "👍"];
+export const EDIT_WINDOW_MS = 15 * 60 * 1000;
+
 /**
- * What you can do with one message: reply, copy its text, and (your own
- * only) delete it for both of you. Deleting asks once, in the same sheet.
+ * What you can do with one message: react, reply, copy its text, edit (your
+ * own text, for 15 minutes) and delete. Deleting asks once, in the same sheet.
  */
 export function MessageActions({
   message,
   onReply,
+  onEdit,
   onClose,
 }: {
   message: ChatMessage;
   onReply: (id: string) => void;
+  onEdit: (id: string) => void;
   onClose: () => void;
 }) {
-  const { me, deleteMessage, hideMessage, pinned, setPinned, starred, toggleStar, partner } = useChat();
+  const { me, deleteMessage, hideMessage, pinned, setPinned, starred, toggleStar, partner, reactions, react } = useChat();
+  const myReaction = reactions[message.id]?.[me.id] ?? null;
+  const [moreEmoji, setMoreEmoji] = useState(false);
+  // Read once when the sheet opens: can this still be edited?
+  const [openedAt] = useState(() => Date.now());
+  const editable =
+    message.sender_id === me.id &&
+    message.message_type === "text" &&
+    !message.deleted_at &&
+    openedAt - Date.parse(message.created_at) < EDIT_WINDOW_MS;
+
+  const pickReaction = (emoji: string) => {
+    const next = myReaction === emoji ? null : emoji;
+    if (next) rememberEmoji(next);
+    haptic(next === "❤️" ? "heart" : "press");
+    void run(() => react(message.id, next));
+  };
   const isPinned = pinned.some((p) => p.id === message.id);
   const isStarred = starred.has(message.id);
 
@@ -117,8 +140,45 @@ export function MessageActions({
               </Button>
             </div>
           </div>
+        ) : moreEmoji ? (
+          <div className="flex h-[min(24rem,60dvh)] flex-col">
+            <EmojiPanel onPick={pickReaction} className="flex-1" />
+            <Button variant="ghost" onClick={() => setMoreEmoji(false)} className="mt-1">
+              Back
+            </Button>
+          </div>
         ) : (
           <ul className="flex flex-col">
+            {!deleted && (
+              <li className="mb-2 flex items-center justify-between gap-1 px-1" role="group" aria-label="React">
+                {QUICK_REACTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => pickReaction(emoji)}
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-full text-[1.625rem] leading-none transition-transform active:scale-90",
+                      myReaction === emoji ? "bg-accent-soft shadow-[inset_0_0_0_2px_var(--accent)]" : "hover:bg-panel-strong",
+                    )}
+                    aria-label={myReaction === emoji ? `Remove ${emoji} reaction` : `React ${emoji}`}
+                    aria-pressed={myReaction === emoji}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setMoreEmoji(true)}
+                  className={cn(
+                    "flex size-11 items-center justify-center rounded-full text-muted-strong hover:bg-panel-strong hover:text-foreground",
+                    myReaction && !QUICK_REACTIONS.includes(myReaction) && "bg-accent-soft text-[1.625rem] shadow-[inset_0_0_0_2px_var(--accent)]",
+                  )}
+                  aria-label={myReaction && !QUICK_REACTIONS.includes(myReaction) ? `Your reaction ${myReaction}. More emoji` : "More emoji"}
+                >
+                  {myReaction && !QUICK_REACTIONS.includes(myReaction) ? myReaction : <PlusIcon size={20} />}
+                </button>
+              </li>
+            )}
             {!deleted && (
               <>
                 <Action
@@ -129,6 +189,16 @@ export function MessageActions({
                     onClose();
                   }}
                 />
+                {editable && (
+                  <Action
+                    icon={<EditIcon size={20} />}
+                    label="Edit"
+                    onClick={() => {
+                      onEdit(message.id);
+                      onClose();
+                    }}
+                  />
+                )}
                 {text && <Action icon={<CopyIcon size={20} />} label={copied ? "Copied" : "Copy text"} onClick={() => void copy()} />}
                 <Action
                   icon={<PinIcon size={20} />}

@@ -36,7 +36,8 @@ export async function uploadWithProgress(
     xhr.setRequestHeader("authorization", `Bearer ${token}`);
     xhr.setRequestHeader("apikey", key);
     xhr.setRequestHeader("content-type", contentType);
-    xhr.setRequestHeader("cache-control", "max-age=3600");
+    // Every file has its own path and never changes, so the browser may keep it for a week.
+    xhr.setRequestHeader("cache-control", "max-age=604800");
     xhr.setRequestHeader("x-upsert", opts.upsert ? "true" : "false");
 
     xhr.upload.onprogress = (event) => {
