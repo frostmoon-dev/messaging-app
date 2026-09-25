@@ -15,6 +15,7 @@ import { formatTime } from "@/lib/time";
 import { haptic } from "@/lib/haptics";
 import { styleClass } from "@/lib/messages/styles";
 import { isEmojiOnly, tokenize } from "@/lib/text";
+import { appLinkFor, isIOSHomeScreenApp, openInApp } from "@/lib/links";
 import { cn } from "@/lib/utils";
 import type { ChatMessage, Profile, ReplySnippet } from "@/types/app";
 
@@ -326,6 +327,14 @@ function MessageBubbleImpl({
                       target="_blank"
                       rel="noopener noreferrer nofollow"
                       className="underline underline-offset-2"
+                      onClick={(e) => {
+                        // From the Home Screen, iPhone opens every link in its in-app
+                        // browser; send YouTube, Spotify, Instagram… to their apps.
+                        const app = isIOSHomeScreenApp() ? appLinkFor(t.href) : null;
+                        if (!app) return;
+                        e.preventDefault();
+                        openInApp(app, t.href);
+                      }}
                     >
                       {t.value}
                     </a>

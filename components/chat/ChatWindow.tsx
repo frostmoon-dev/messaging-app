@@ -12,6 +12,7 @@ import { MessageComposer } from "./MessageComposer";
 import { NotificationPrompt } from "./NotificationPrompt";
 import { ImageViewer } from "@/components/ui/ImageViewer";
 import { clearChatNotifications, notificationPermission, promptDismissed } from "@/lib/notifications";
+import { LINK_FALLBACK_EVENT, type LinkFallbackDetail } from "@/lib/links";
 
 export function ChatWindow() {
   const { setChatActive, ensureLoaded, messages } = useChat();
@@ -27,6 +28,22 @@ export function ChatWindow() {
   const [askNotify, setAskNotify] = useState(false);
   const [jumpError, setJumpError] = useState<string | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // A link's app didn't open: offer the web page instead.
+  const [linkFallback, setLinkFallback] = useState<LinkFallbackDetail | null>(null);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onFallback = (e: Event) => {
+      setLinkFallback((e as CustomEvent<LinkFallbackDetail>).detail);
+      clearTimeout(timer);
+      timer = setTimeout(() => setLinkFallback(null), 8000);
+    };
+    window.addEventListener(LINK_FALLBACK_EVENT, onFallback);
+    return () => {
+      window.removeEventListener(LINK_FALLBACK_EVENT, onFallback);
+      clearTimeout(timer);
+    };
+  }, []);
 
   // Tell the provider the chat is on screen, so incoming messages count as read.
   useEffect(() => {
@@ -105,6 +122,7 @@ export function ChatWindow() {
         <AnimatePresence>
           {jumpError && (
             <motion.p
+              key="jump-error"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -113,6 +131,27 @@ export function ChatWindow() {
             >
               {jumpError}
             </motion.p>
+          )}
+          {linkFallback && (
+            <motion.div
+              key="link-fallback"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="relative mx-auto mb-1 flex items-center gap-2 rounded-full bg-panel-strong py-1 pr-1 pl-3 text-small"
+              role="status"
+            >
+              <span>Couldn&apos;t open {linkFallback.app}.</span>
+              <a
+                href={linkFallback.href}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                onClick={() => setLinkFallback(null)}
+                className="rounded-full bg-love px-3 py-1 font-semibold text-love-foreground"
+              >
+                Open in browser
+              </a>
+            </motion.div>
           )}
         </AnimatePresence>
         <TypingIndicator />
