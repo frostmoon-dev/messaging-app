@@ -136,58 +136,82 @@ export function MessageList({
     setBaseline(newest?.created_at ?? "");
   }
 
-  // The scroller is `flex-col-reverse`, so scrollTop 0 is the bottom and the
-  // browser keeps the view anchored to the newest message on its own.
+  // A normal top-to-bottom list, kept on the newest message in code. (It used
+  // to be `flex-col-reverse`, which iPhone Safari sometimes painted at a stale
+  // scroll position after you came back to the chat: a gap at the bottom and
+  // photos drawn over other messages.)
+  // pinned: you're following the newest message, so size changes keep you there.
+  const pinnedRef = useRef(true);
+  const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight;
+
   const scrollToBottom = useCallback((smooth = true) => {
     const el = scrollRef.current;
     if (!el) return;
+    pinnedRef.current = true;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollTo({ top: 0, behavior: smooth && !reduce ? "smooth" : "auto" });
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth && !reduce ? "smooth" : "auto" });
   }, []);
 
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    const bottom = Math.abs(el.scrollTop) < BOTTOM_THRESHOLD;
+    const bottom = distanceFromBottom(el) < BOTTOM_THRESHOLD;
+    pinnedRef.current = bottom;
     setAtBottom(bottom);
     if (bottom) setUnseen(0);
   };
 
-  // React to a new last message: follow my own sends, count partner ones
-  // that arrive while scrolled up.
+  // Arriving at the chat: start at the newest message.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!loaded || !el) return;
+    el.scrollTop = el.scrollHeight;
+    pinnedRef.current = true;
+  }, [loaded]);
+
+  // Whenever anything changes size (a photo or GIF loads, the keyboard opens,
+  // a reaction appears), stay on the newest message if you were there.
+  const heightRef = useRef(0);
+  useEffect(() => {
+    const el = scrollRef.current;
+    const content = contentRef.current;
+    if (!loaded || !el || !content) return;
+    const observer = new ResizeObserver(() => {
+      if (pinnedRef.current) el.scrollTop = el.scrollHeight;
+      heightRef.current = el.scrollHeight;
+    });
+    observer.observe(el);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [loaded]);
+
+  // Older messages loaded above: keep what you were reading in place.
+  const firstIdRef = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const first = messages[0]?.id ?? null;
+    if (firstIdRef.current && first !== firstIdRef.current && !pinnedRef.current) {
+      el.scrollTop += el.scrollHeight - heightRef.current;
+    }
+    firstIdRef.current = first;
+    heightRef.current = el.scrollHeight;
+  });
+
+  // React to a new last message: follow my own sends and, when you're at the
+  // bottom, theirs; count theirs that arrive while you're scrolled up.
   useLayoutEffect(() => {
     const last = messages.at(-1);
     if (!last || last.id === lastIdRef.current) return;
     const isFirst = lastIdRef.current === null;
     lastIdRef.current = last.id;
     if (isFirst) return;
-    if (last.sender_id === me.id) {
+    if (last.sender_id === me.id || pinnedRef.current) {
       scrollToBottom();
-    } else if (!atBottom) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- derived from a new message arriving
+    } else {
       setUnseen((n) => n + 1);
     }
-  }, [messages, me.id, atBottom, scrollToBottom]);
-
-  // Stay pinned to the newest message while photos and GIFs finish loading
-  // (and on arriving at the chat). Chrome keeps a reversed list pinned on its
-  // own; iPhone Safari can leave a gap at the bottom when media changes size.
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const pin = () => {
-      if (Math.abs(el.scrollTop) < BOTTOM_THRESHOLD) el.scrollTop = 0;
-    };
-    const frame = requestAnimationFrame(pin);
-    // load and loadedmetadata don't bubble, so listen while they travel down.
-    el.addEventListener("load", pin, true);
-    el.addEventListener("loadedmetadata", pin, true);
-    return () => {
-      cancelAnimationFrame(frame);
-      el.removeEventListener("load", pin, true);
-      el.removeEventListener("loadedmetadata", pin, true);
-    };
-  }, [loaded]);
+  }, [messages, me.id, scrollToBottom]);
 
   // A Slam shakes the whole chat for a moment, like iMessage.
   useEffect(() => {
@@ -235,7 +259,7 @@ export function MessageList({
         ref={scrollRef}
         onScroll={onScroll}
         // overflow-x hidden: the times wait just off the right edge. pan-y: sideways swipes reach us (pinch still zooms).
-        className="scroll-area relative flex min-h-0 flex-1 flex-col-reverse overflow-x-hidden overflow-y-auto overscroll-contain [touch-action:pan-y_pinch-zoom]"
+        className="scroll-area relative flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain [overflow-anchor:none] [touch-action:pan-y_pinch-zoom]"
         {...swipeHandlers}
         role="log"
         aria-label={`Conversation with ${partner.display_name}`}
@@ -245,7 +269,7 @@ export function MessageList({
       >
         {/* pb-12: room at the end for the typing bubble that floats there. */}
         {/* The header floats over the top (frosted), so the list starts below it. */}
-        <div ref={contentRef} className="flex flex-col pt-[calc(var(--chat-header-h,0px)+1rem)] pb-12">
+        <div ref={contentRef} className="mt-auto flex flex-col pt-[calc(var(--chat-header-h,0px)+1rem)] pb-12">
           <div ref={topRef} aria-hidden="true" />
           {hasMore && (
             <div className="flex justify-center py-3">
