@@ -40,7 +40,9 @@ export function MessageImage({
       type="button"
       // No backing colour once loaded: photos with transparency show the bubble behind them.
       className={cn("relative block max-w-full overflow-hidden", !loaded && "bg-panel-strong", className)}
-      style={{ width: box.width, aspectRatio: `${box.width} / ${box.height}` }}
+      // Explicit height, not aspect-ratio: iPhone Safari can ignore aspect-ratio
+      // on a <button>, and the next message then overlaps the photo.
+      style={{ width: box.width, height: box.height }}
       onClick={() => src && onOpen(src, alt)}
       disabled={!src}
       aria-label={`Open ${alt.toLowerCase()}`}

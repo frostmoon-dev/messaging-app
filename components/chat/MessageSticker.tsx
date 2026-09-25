@@ -68,8 +68,12 @@ export function MessageGif({ message, tailClass }: { message: ChatMessage; tailC
     <button
       type="button"
       onClick={() => setPlaying((p) => !p)}
-      className={cn("relative block max-w-full overflow-hidden rounded-[20px] bg-panel-strong", tailClass)}
-      style={{ width: box.width, aspectRatio: `${box.width} / ${box.height}` }}
+      // Explicit height, not aspect-ratio: iPhone Safari can ignore aspect-ratio
+      // on a <button>, leaving the box half as tall as the video, so the
+      // next message slid on top of it. translateZ(0) makes Safari clip the
+      // video to the rounded corners.
+      className={cn("relative block max-w-full overflow-hidden rounded-[20px] bg-panel-strong [transform:translateZ(0)]", tailClass)}
+      style={{ width: box.width, height: box.height }}
       aria-label={`${label}. ${playing ? "Pause" : "Play"}.`}
     >
       <video
